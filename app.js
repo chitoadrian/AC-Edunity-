@@ -40,6 +40,102 @@ function saveUsers(users) {
     localStorage.setItem('simulatedUsers', JSON.stringify(users));
 }
 
+// Mensajes visuales propios de AC Study. Evitan ventanas nativas del navegador.
+let toastTimeout = null;
+
+function notify(message, type = 'info') {
+    let toast = document.getElementById('app-toast');
+
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'app-toast';
+        toast.className = 'app-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        document.body.appendChild(toast);
+    }
+
+    toast.textContent = message;
+    toast.className = `app-toast ${type} show`;
+
+    window.clearTimeout(toastTimeout);
+    toastTimeout = window.setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3200);
+}
+
+function setAuthMessage(pageId, message, type = 'error') {
+    const page = document.getElementById(`${pageId}-page`);
+    const card = page ? page.querySelector('.auth-card') : null;
+    if (!card) {
+        notify(message, type);
+        return;
+    }
+
+    let messageBox = card.querySelector('.auth-message');
+    if (!messageBox) {
+        messageBox = document.createElement('div');
+        messageBox.className = 'auth-message';
+        messageBox.setAttribute('role', 'status');
+        card.appendChild(messageBox);
+    }
+
+    messageBox.textContent = message;
+    messageBox.className = `auth-message ${type}`;
+}
+
+function clearAuthMessages() {
+    document.querySelectorAll('.auth-message').forEach(message => message.remove());
+}
+
+function openQuickForm(config) {
+    const existingModal = document.querySelector('.quick-modal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'quick-modal';
+    modal.innerHTML = `
+        <div class="quick-modal-card" role="dialog" aria-modal="true" aria-label="${escapeHTML(config.title)}">
+            <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
+            <h3>${escapeHTML(config.title)}</h3>
+            <form class="quick-modal-form">
+                ${config.fields.map(field => `
+                    <label>
+                        <span>${escapeHTML(field.label)}</span>
+                        <input
+                            type="${field.type || 'text'}"
+                            name="${escapeHTML(field.name)}"
+                            value="${escapeHTML(field.value || '')}"
+                            placeholder="${escapeHTML(field.placeholder || '')}"
+                            required
+                        >
+                    </label>
+                `).join('')}
+                <button class="btn-primary btn-small" type="submit">${escapeHTML(config.submitLabel || 'Guardar')}</button>
+            </form>
+        </div>
+    `;
+
+    const closeModal = () => modal.remove();
+    modal.addEventListener('click', event => {
+        if (event.target === modal || event.target.classList.contains('quick-modal-close')) {
+            closeModal();
+        }
+    });
+
+    modal.querySelector('form').addEventListener('submit', event => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const values = Object.fromEntries(formData.entries());
+        closeModal();
+        config.onSubmit(values);
+    });
+
+    document.body.appendChild(modal);
+    const firstInput = modal.querySelector('input');
+    if (firstInput) firstInput.focus();
+}
+
 // ============================================
 // INICIALIZACIÓN
 // ============================================
@@ -107,10 +203,12 @@ function showLanding() {
 }
 
 function showLogin() {
+    clearAuthMessages();
     showPage('login-page');
 }
 
 function showRegister() {
+    clearAuthMessages();
     showPage('register-page');
 }
 
@@ -159,6 +257,7 @@ function updateProfileInfo() {
 
 function handleLogin(event) {
     event.preventDefault();
+    clearAuthMessages();
 
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value.trim();
@@ -179,20 +278,22 @@ function handleLogin(event) {
         document.getElementById('login-password').value = '';
 
         showApp();
+        notify('Sesion iniciada correctamente.', 'success');
     } else {
-        alert('Email o contraseña incorrectos.\n\nPrueba:\nEmail: adrian@example.com\nContraseña: password123');
+        setAuthMessage('login', 'Email o contrasena incorrectos. Revisa tus datos o crea una cuenta nueva.', 'error');
     }
 }
 
 function handleRegister(event) {
     event.preventDefault();
+    clearAuthMessages();
 
     const name = document.getElementById('register-name').value.trim();
     const email = document.getElementById('register-email').value.trim();
     const password = document.getElementById('register-password').value.trim();
 
     if (!name || !email || !password) {
-        alert('Por favor completa todos los campos');
+        setAuthMessage('register', 'Completa nombre, email y contrasena para crear tu cuenta.', 'error');
         return;
     }
 
@@ -218,14 +319,14 @@ function handleRegister(event) {
     document.getElementById('register-password').value = '';
 
     showApp();
+    notify('Cuenta creada correctamente. Ya puedes personalizar AC Study.', 'success');
 }
 
 function handleLogout() {
-    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-        currentUser = null;
-        localStorage.removeItem('currentUser');
-        showLanding();
-    }
+    currentUser = null;
+    localStorage.removeItem('currentUser');
+    showLanding();
+    notify('Sesion cerrada.', 'info');
 }
 
 // ============================================
@@ -361,11 +462,22 @@ function filterTasks(filter, button) {
 }
 
 function addTaskUI() {
-    const topic = prompt('¿Cuál es tu nueva tarea?');
-    if (!topic) return;
+    openQuickForm({
+        title: 'Nueva tarea',
+        submitLabel: 'Crear tarea',
+        fields: [
+            { name: 'topic', label: 'Tarea', placeholder: 'Ej: Resolver ejercicios de algebra' },
+            { name: 'subject', label: 'Materia', placeholder: 'Ej: Matematica' }
+        ],
+        onSubmit: values => createTask(values.topic, values.subject)
+    });
+}
 
-    const subject = prompt('¿Para qué materia? (Matemática, Física, Programación, Inglés)');
-    if (!subject) return;
+function createTask(topic, subject) {
+    if (!topic || !subject) {
+        notify('Completa la tarea y la materia.', 'error');
+        return;
+    }
 
     const tasksList = document.getElementById('tasks-list');
 
@@ -377,15 +489,15 @@ function addTaskUI() {
             <input type="checkbox" onclick="toggleTask(this)">
         </div>
         <div class="task-content">
-            <h4>${topic}</h4>
-            <p class="task-subject">📌 ${subject}</p>
+            <h4>${escapeHTML(topic)}</h4>
+            <p class="task-subject">Materia: ${escapeHTML(subject)}</p>
             <p class="task-date">Vence: Próximamente</p>
         </div>
         <div class="task-priority medium">Media</div>
     `;
 
     tasksList.appendChild(newTask);
-    alert('¡Tarea agregada correctamente!');
+    notify('Tarea agregada correctamente.', 'success');
 }
 
 // ============================================
@@ -406,23 +518,29 @@ function saveSubjects(subjects) {
 }
 
 function addSubjectUI() {
-    const name = prompt('Nombre de la nueva materia:');
-    if (!name) return;
+    openQuickForm({
+        title: 'Nueva materia',
+        submitLabel: 'Crear materia',
+        fields: [
+            { name: 'name', label: 'Nombre de la materia', placeholder: 'Ej: Quimica' },
+            { name: 'tasks', label: 'Tareas pendientes', type: 'number', value: '0' }
+        ],
+        onSubmit: values => {
+            const subject = {
+                name: values.name.trim(),
+                tasks: values.tasks.trim() || '0',
+                progress: 0,
+                color: 'custom'
+            };
 
-    const tasks = prompt('¿Cuántas tareas pendientes tiene esta materia?', '0') || '0';
-    const subject = {
-        name: name.trim(),
-        tasks: tasks.trim(),
-        progress: 0,
-        color: 'custom'
-    };
-
-    const subjects = getSavedSubjects();
-    subjects.push(subject);
-    saveSubjects(subjects);
-    renderSubjectCard(subject);
-    updateSubjectCounter();
-    alert(`Materia "${subject.name}" creada correctamente.`);
+            const subjects = getSavedSubjects();
+            subjects.push(subject);
+            saveSubjects(subjects);
+            renderSubjectCard(subject);
+            updateSubjectCounter();
+            notify(`Materia "${subject.name}" creada correctamente.`, 'success');
+        }
+    });
 }
 
 function renderSavedSubjects() {
@@ -459,8 +577,13 @@ function renderSubjectCard(subject) {
             <div class="progress-fill" style="width: ${subject.progress}%; background: linear-gradient(90deg, #7c3aed, #06b6d4)"></div>
         </div>
         <p class="last-activity">Última actividad: creada por el estudiante</p>
-        <button class="btn-secondary btn-small" onclick="alert('Abriendo materia personalizada...')">Acceder →</button>
+        <button class="btn-secondary btn-small" type="button">Acceder</button>
     `;
+
+    const accessButton = card.querySelector('button');
+    if (accessButton) {
+        accessButton.addEventListener('click', () => openSubject(subject.name));
+    }
 
     grid.appendChild(card);
 }
@@ -489,6 +612,14 @@ function escapeHTML(value) {
         .replaceAll("'", '&#039;');
 }
 
+function openSubject(subjectName) {
+    notify(`Abriendo ${subjectName}. En la siguiente version tendra su panel propio.`, 'info');
+}
+
+function openResource(resourceName) {
+    notify(`Abriendo ${resourceName}. Vista simulada por ahora.`, 'info');
+}
+
 // ============================================
 // NOTAS
 // ============================================
@@ -510,7 +641,7 @@ function addGrade(event) {
     const value = parseFloat(document.getElementById('grade-value').value);
 
     if (value < 0 || value > 10) {
-        alert('La nota debe estar entre 0 y 10');
+        notify('La nota debe estar entre 0 y 10.', 'error');
         return;
     }
 
@@ -544,7 +675,7 @@ function addGrade(event) {
             updateAverageGrade(gradeCard);
         }
 
-        alert(`Nota ${value} registrada para ${subject}`);
+        notify(`Nota ${value} registrada para ${subject}.`, 'success');
     }
 
     // Limpiar formulario
@@ -571,7 +702,7 @@ function generateSummary() {
     const topic = document.getElementById('ai-topic').value.trim();
 
     if (!topic) {
-        alert('Por favor ingresa un tema');
+        notify('Ingresa un tema para usar el asistente IA.', 'error');
         return;
     }
 
@@ -597,7 +728,7 @@ function generateQuestions() {
     const topic = document.getElementById('ai-topic').value.trim();
 
     if (!topic) {
-        alert('Por favor ingresa un tema');
+        notify('Ingresa un tema para usar el asistente IA.', 'error');
         return;
     }
 
@@ -620,7 +751,7 @@ function generateFlashcards() {
     const topic = document.getElementById('ai-topic').value.trim();
 
     if (!topic) {
-        alert('Por favor ingresa un tema');
+        notify('Ingresa un tema para usar el asistente IA.', 'error');
         return;
     }
 
@@ -671,7 +802,7 @@ function copyToClipboard() {
     const content = document.getElementById('result-content').textContent;
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(content).then(() => {
-            alert('✓ Contenido copiado al portapapeles');
+            notify('Contenido copiado al portapapeles.', 'success');
         }).catch(() => {
             fallbackCopy(content);
         });
@@ -699,25 +830,30 @@ function saveEvents(events) {
 }
 
 function addCalendarEventUI() {
-    const title = prompt('Nombre del evento académico:');
-    if (!title) return;
+    openQuickForm({
+        title: 'Nuevo evento',
+        submitLabel: 'Agregar evento',
+        fields: [
+            { name: 'title', label: 'Evento academico', placeholder: 'Ej: Exposicion de proyecto' },
+            { name: 'day', label: 'Dia del mes', type: 'number', value: '18' },
+            { name: 'type', label: 'Tipo', value: 'exposicion' },
+            { name: 'time', label: 'Hora o detalle', value: 'Por definir' }
+        ],
+        onSubmit: values => {
+            const event = {
+                title: values.title.trim(),
+                day: values.day.trim().padStart(2, '0'),
+                type: values.type.trim() || 'evento',
+                time: values.time.trim() || 'Por definir'
+            };
 
-    const day = prompt('Día del mes:', '18') || '18';
-    const type = prompt('Tipo de evento: examen, entrega, exposición o clase', 'exposición') || 'evento';
-    const time = prompt('Hora o detalle:', 'Por definir') || 'Por definir';
-
-    const event = {
-        title: title.trim(),
-        day: day.trim().padStart(2, '0'),
-        type: type.trim(),
-        time: time.trim()
-    };
-
-    const events = getSavedEvents();
-    events.push(event);
-    saveEvents(events);
-    renderCalendarEvent(event);
-    alert(`Evento "${event.title}" agregado al calendario.`);
+            const events = getSavedEvents();
+            events.push(event);
+            saveEvents(events);
+            renderCalendarEvent(event);
+            notify(`Evento "${event.title}" agregado al calendario.`, 'success');
+        }
+    });
 }
 
 function renderSavedCalendarEvents() {
@@ -754,7 +890,7 @@ function fallbackCopy(content) {
     textarea.select();
     document.execCommand('copy');
     document.body.removeChild(textarea);
-    alert('✓ Contenido copiado al portapapeles');
+    notify('Contenido copiado al portapapeles.', 'success');
 }
 
 function downloadResult() {
@@ -833,7 +969,7 @@ function generateCalendar() {
 // ============================================
 
 function downloadResource(filename) {
-    alert(`📥 Descargando ${filename}...\n\nEn una versión real, esto descargaría el archivo.`);
+    notify(`Descarga simulada: ${filename}.`, 'info');
 }
 
 // ============================================
