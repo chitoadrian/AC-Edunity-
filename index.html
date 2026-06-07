@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AC Study - Gestión Educativa Inteligente Personalizada</title>
-    <link rel="stylesheet" href="style.css?v=20260607-profile-dynamic">
+    <link rel="stylesheet" href="style.css?v=20260607-calificaciones">
 </head>
 <body>
     <!-- LANDING PAGE -->
@@ -268,7 +268,7 @@
                 </a>
                 <a href="#" onclick="navigateTo('grades')" class="nav-item" data-section="grades">
                     <span class="nav-icon">📊</span>
-                    <span class="nav-label">Notas</span>
+                    <span class="nav-label">Calificaciones</span>
                 </a>
                 <a href="#" onclick="navigateTo('attendance')" class="nav-item" data-section="attendance">
                     <span class="nav-icon">🗓️</span>
@@ -763,14 +763,14 @@
             <!-- GRADES SECTION -->
             <section id="grades" class="section">
                 <div class="section-header">
-                    <h1>Notas</h1>
+                    <h1>Calificaciones</h1>
                     <p class="subtitle">Registra y monitorea tu desempeño académico</p>
-                    <button class="btn-primary btn-small" onclick="showAddGradeForm()">+ Registrar nota</button>
+                    <button class="btn-primary btn-small" onclick="showAddGradeForm()">+ Registrar calificacion</button>
                 </div>
 
                 <div class="grades-container">
                     <div class="add-grade-form" id="add-grade-form" style="display: none;">
-                        <h3>Registrar nueva nota</h3>
+                        <h3>Registrar nueva calificacion</h3>
                         <form onsubmit="addGrade(event)">
                             <div class="form-group">
                                 <label>Materia</label>
@@ -787,10 +787,10 @@
                                 <input type="text" id="grade-evaluation" placeholder="ej: Quiz 1, Parcial 2..." required>
                             </div>
                             <div class="form-group">
-                                <label>Nota (0-10)</label>
+                                <label>Calificacion (0-10)</label>
                                 <input type="number" id="grade-value" min="0" max="10" step="0.1" required>
                             </div>
-                            <button type="submit" class="btn-primary">Guardar nota</button>
+                            <button type="submit" class="btn-primary">Guardar calificacion</button>
                             <button type="button" class="btn-secondary" onclick="hideAddGradeForm()">Cancelar</button>
                         </form>
                     </div>
@@ -1164,6 +1164,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=20260607-profile-dynamic"></script>
+    <script src="app.js?v=20260607-calificaciones"></script>
 </body>
 </html>

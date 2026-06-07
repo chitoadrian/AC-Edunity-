@@ -2151,8 +2151,8 @@ function openGradeForm(gradeId = null) {
     const workspace = loadWorkspace();
     const grade = workspace.grades.find(item => item.id === gradeId);
     openQuickForm({
-        title: grade ? 'Editar nota' : 'Registrar nota',
-        submitLabel: grade ? 'Actualizar nota' : 'Guardar nota',
+        title: grade ? 'Editar calificacion' : 'Registrar calificacion',
+        submitLabel: grade ? 'Actualizar calificacion' : 'Guardar calificacion',
         fields: [
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: grade?.subject || '' },
             { name: 'evaluation', label: 'Actividad', value: grade?.evaluation || '', placeholder: 'Ej: Parcial 1' },
@@ -2163,7 +2163,7 @@ function openGradeForm(gradeId = null) {
         onSubmit: values => {
             const value = Number(values.value);
             if (Number.isNaN(value) || value < 0 || value > 10) {
-                notify('La nota debe estar entre 0 y 10.', 'error');
+                notify('La calificacion debe estar entre 0 y 10.', 'error');
                 return;
             }
 
@@ -2178,15 +2178,15 @@ function openGradeForm(gradeId = null) {
             if (gradeId) {
                 const item = fresh.grades.find(entry => entry.id === gradeId);
                 if (item) Object.assign(item, payload);
-                addRecent(fresh, `Editaste una nota de ${payload.subject}.`);
+                addRecent(fresh, `Editaste una calificacion de ${payload.subject}.`);
             } else {
                 fresh.grades.push({ id: createId(), ...payload });
                 addXP(fresh, 20);
-                addRecent(fresh, `Registraste una nota en ${payload.subject}.`);
+                addRecent(fresh, `Registraste una calificacion en ${payload.subject}.`);
             }
             saveWorkspace(fresh);
             refreshWorkspaceUI();
-            notify(gradeId ? 'Nota actualizada.' : 'Nota registrada.', 'success');
+            notify(gradeId ? 'Calificacion actualizada.' : 'Calificacion registrada.', 'success');
         }
     });
 }
@@ -2195,10 +2195,10 @@ function deleteGrade(gradeId) {
     const workspace = loadWorkspace();
     const grade = workspace.grades.find(item => item.id === gradeId);
     workspace.grades = workspace.grades.filter(item => item.id !== gradeId);
-    if (grade) addRecent(workspace, `Eliminaste una nota de ${grade.subject}.`);
+    if (grade) addRecent(workspace, `Eliminaste una calificacion de ${grade.subject}.`);
     saveWorkspace(workspace);
     refreshWorkspaceUI();
-    notify('Nota eliminada.', 'info');
+    notify('Calificacion eliminada.', 'info');
 }
 
 function setGradeSort(mode) {
@@ -2211,7 +2211,7 @@ function renderGrades(workspace) {
     if (!container) return;
 
     if (!workspace.grades.length) {
-        container.innerHTML = emptyStateHTML('No has registrado notas.', 'Agregar nota', 'showAddGradeForm()');
+        container.innerHTML = emptyStateHTML('No has registrado calificaciones.', 'Agregar calificacion', 'showAddGradeForm()');
         return;
     }
 
@@ -2519,7 +2519,7 @@ function renderDashboard(workspace) {
             ${dashboardCard('subjects', 'Materias Activas', workspace.subjects.length, workspace.subjects.length ? 'Materias creadas por ti' : 'Sin materias todavia', workspace.subjects.length ? 100 : 0)}
             ${dashboardCard('tasks', 'Tareas Pendientes', pending, `${completed} completadas`, workspace.tasks.length ? Math.round((completed / workspace.tasks.length) * 100) : 0)}
             ${dashboardCard('calendar', 'Proximo Evento', nextEvent ? nextEvent.title : 'Sin eventos', nextEvent ? `${nextEvent.day} - ${nextEvent.type}` : 'Agenda tu primer examen o entrega', nextEvent ? 70 : 0)}
-            ${dashboardCard('grades', 'Promedio Actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} notas registradas` : 'Aun no hay notas', average ? average * 10 : 0)}
+            ${dashboardCard('grades', 'Promedio Actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} calificaciones registradas` : 'Sin calificaciones', average ? average * 10 : 0)}
             ${dashboardCard('xp', 'XP Acumulado', workspace.xp || 0, `Nivel ${level}`, Math.min(100, ((workspace.xp || 0) % 250) / 2.5))}
             ${dashboardCard('streak', 'Racha de Estudio', workspace.streak || 0, 'dias activos', workspace.streak ? 100 : 0)}
             ${dashboardCard('assistant', 'Recomendacion IA', workspace.resources.length ? 'Repasa un PDF' : 'Sube un apunte', workspace.resources.length ? 'AC Assistant puede crear cuestionarios' : 'Sube tus apuntes y estudia con ayuda de AC Assistant', workspace.resources.length ? 85 : 25)}
@@ -2993,7 +2993,7 @@ function renderProfile(workspace) {
             </div>
             <div class="profile-metric">
                 <span>Promedio</span>
-                <strong class="${workspace.grades.length ? '' : 'empty-profile-value'}">${workspace.grades.length ? average.toFixed(2) : 'Sin notas'}</strong>
+                <strong class="${workspace.grades.length ? '' : 'empty-profile-value'}">${workspace.grades.length ? average.toFixed(2) : 'Sin calificaciones'}</strong>
             </div>
         </div>
     `;
