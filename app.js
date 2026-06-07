@@ -221,6 +221,7 @@ function initializeApp() {
     generateCalendar();
     renderSavedSubjects();
     renderSavedCalendarEvents();
+    initStudyPet();
 }
 
 // ============================================
@@ -3011,6 +3012,73 @@ function refreshWorkspaceUI() {
     renderBackpack(workspace);
     renderProfile(workspace);
     updateGradeSubjectOptions(workspace);
+}
+
+function initStudyPet() {
+    const pet = document.getElementById('study-pet');
+    if (!pet || pet.dataset.ready === 'true') return;
+
+    pet.dataset.ready = 'true';
+    let dragging = false;
+    let moved = false;
+    let offsetX = 0;
+    let offsetY = 0;
+    let startX = 0;
+    let startY = 0;
+
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+    pet.addEventListener('pointerdown', event => {
+        if (event.button !== undefined && event.button !== 0) return;
+        dragging = true;
+        moved = false;
+        pet.classList.add('dragging');
+        pet.setPointerCapture(event.pointerId);
+
+        const rect = pet.getBoundingClientRect();
+        startX = event.clientX;
+        startY = event.clientY;
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+    });
+
+    pet.addEventListener('pointermove', event => {
+        if (!dragging) return;
+        const distance = Math.abs(event.clientX - startX) + Math.abs(event.clientY - startY);
+        if (distance > 6) moved = true;
+
+        const width = pet.offsetWidth;
+        const height = pet.offsetHeight;
+        const left = clamp(event.clientX - offsetX, 8, window.innerWidth - width - 8);
+        const top = clamp(event.clientY - offsetY, 8, window.innerHeight - height - 8);
+
+        pet.style.left = `${left}px`;
+        pet.style.top = `${top}px`;
+        pet.style.right = 'auto';
+        pet.style.bottom = 'auto';
+    });
+
+    const stopDrag = event => {
+        if (!dragging) return;
+        dragging = false;
+        pet.classList.remove('dragging');
+        if (pet.hasPointerCapture(event.pointerId)) pet.releasePointerCapture(event.pointerId);
+    };
+
+    pet.addEventListener('pointerup', stopDrag);
+    pet.addEventListener('pointercancel', stopDrag);
+
+    pet.addEventListener('click', () => {
+        if (moved) return;
+        showRegister();
+    });
+
+    pet.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            showRegister();
+        }
+    });
 }
 
 if (document.readyState === 'loading') {
