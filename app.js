@@ -2887,6 +2887,63 @@ function practiceWithResource(resourceId) {
     notify('Este recurso no tiene el archivo PDF guardado. Editalo y vuelve a subir el PDF.', 'error');
 }
 
+function createPdfObjectUrl(dataUrl, fallbackMime = 'application/pdf') {
+    const [header, data] = String(dataUrl || '').split(',');
+    if (!header || !data) throw new Error('Invalid PDF data URL');
+
+    const mimeMatch = header.match(/data:([^;]+)/);
+    const mime = mimeMatch ? mimeMatch[1] : fallbackMime;
+    const binary = atob(data);
+    const bytes = [];
+
+    for (let index = 0; index < binary.length; index += 1024) {
+        const slice = binary.slice(index, index + 1024);
+        const numbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i += 1) {
+            numbers[i] = slice.charCodeAt(i);
+        }
+        bytes.push(new Uint8Array(numbers));
+    }
+
+    return URL.createObjectURL(new Blob(bytes, { type: mime || fallbackMime }));
+}
+
+function practiceWithResource(resourceId) {
+    const resource = loadWorkspace().resources.find(item => item.id === resourceId);
+    if (!resource) return;
+
+    if (!resource.fileDataUrl) {
+        notify('Este recurso no tiene el archivo PDF guardado. Editalo y vuelve a subir el PDF.', 'error');
+        return;
+    }
+
+    let pdfUrl = '';
+    try {
+        pdfUrl = createPdfObjectUrl(resource.fileDataUrl, resource.fileMime || 'application/pdf');
+    } catch (error) {
+        notify('No se pudo preparar el PDF. Vuelve a subir el archivo.', 'error');
+        return;
+    }
+
+    const tab = window.open('', '_blank');
+    if (tab) {
+        tab.document.title = resource.fileName || resource.title || 'PDF';
+        tab.document.body.innerHTML = '<p style="font-family: Arial, sans-serif; padding: 24px;">Abriendo PDF...</p>';
+        tab.location.href = pdfUrl;
+        markResourceAIUsed(resourceId, 'Abriste un PDF desde Mochila Digital.');
+        notify('PDF abierto en una nueva pestaña.', 'success');
+        return;
+    }
+
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.click();
+    markResourceAIUsed(resourceId, 'Abriste un PDF desde Mochila Digital.');
+    notify('PDF abierto. Si no aparece, permite ventanas emergentes para esta pagina.', 'info');
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
