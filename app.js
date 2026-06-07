@@ -2716,6 +2716,49 @@ function renderBackpack(workspace) {
     container.querySelectorAll('[data-resource-delete]').forEach(button => button.addEventListener('click', () => deleteResource(button.dataset.resourceDelete)));
 }
 
+function renderProgress(workspace) {
+    const container = document.querySelector('.progress-container');
+    if (!container) return;
+
+    const level = getLevel(workspace.xp);
+    const xpProgress = Math.min(100, ((workspace.xp || 0) % 250) / 2.5);
+    const achievements = [
+        { name: 'Primera materia', icon: 'subject', unlocked: workspace.subjects.length > 0 },
+        { name: 'Primera tarea', icon: 'task', unlocked: workspace.tasks.length > 0 },
+        { name: 'Tarea completada', icon: 'done', unlocked: workspace.tasks.some(task => task.status === 'completed') },
+        { name: 'Primer apunte', icon: 'note', unlocked: workspace.resources.length > 0 },
+        { name: 'Uso de IA', icon: 'ai', unlocked: workspace.resources.some(resource => resource.usedAI) }
+    ];
+
+    container.innerHTML = `
+        <div class="level-display">
+            <div class="level-card">
+                <div class="level-number">${level}</div>
+                <p>NIVEL ACTUAL</p>
+                <div class="xp-bar"><div class="xp-fill" style="width:${xpProgress}%"></div></div>
+                <p class="xp-text">${workspace.xp || 0} XP acumulado</p>
+            </div>
+            <div class="stats-row">
+                <div class="progress-stat"><span class="stat-label">Racha Actual</span><span class="stat-value">${workspace.streak || 0} dias</span></div>
+                <div class="progress-stat"><span class="stat-label">Logros</span><span class="stat-value">${achievements.filter(item => item.unlocked).length}/${achievements.length}</span></div>
+                <div class="progress-stat"><span class="stat-label">Estado</span><span class="stat-value">${workspace.xp ? 'En progreso' : 'Inicial'}</span></div>
+            </div>
+        </div>
+        ${workspace.xp ? '' : `<div class="card">${emptyStateHTML('Tu progreso aparecera cuando empieces a usar la plataforma.', 'Crear primera materia', 'addSubjectUI()')}</div>`}
+        <div class="achievements-section">
+            <h3>Logros</h3>
+            <div class="achievements-grid">
+                ${achievements.map(item => `
+                    <div class="achievement ${item.unlocked ? 'unlocked' : 'locked'}">
+                        <div class="achievement-icon achievement-${escapeHTML(item.icon)}" aria-hidden="true"></div>
+                        <p>${escapeHTML(item.name)}</p>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {

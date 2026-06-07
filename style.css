@@ -5916,6 +5916,100 @@ body.light-theme .resource-card {
     }
 }
 
+/* Progreso: logros sin caracteres rotos */
+#progress .achievement {
+    min-height: 190px;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#progress .achievement-icon {
+    position: relative;
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: transparent !important;
+    font-size: 0 !important;
+    line-height: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--color-purple), var(--color-cyan));
+    box-shadow: 0 16px 30px rgba(73, 204, 249, 0.18);
+}
+
+#progress .achievement-icon::before,
+#progress .achievement-icon::after {
+    content: "";
+    position: absolute;
+}
+
+#progress .achievement-subject::before {
+    width: 26px;
+    height: 32px;
+    border-radius: 5px;
+    background: #49ccf9;
+    box-shadow: 8px 5px 0 #fd71af, -7px 8px 0 #ffc800;
+}
+
+#progress .achievement-task::before {
+    width: 30px;
+    height: 34px;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: inset 0 9px 0 rgba(123, 104, 238, 0.30);
+}
+
+#progress .achievement-task::after {
+    width: 16px;
+    height: 9px;
+    left: 21px;
+    top: 27px;
+    border-left: 4px solid #00c875;
+    border-bottom: 4px solid #00c875;
+    transform: rotate(-45deg);
+}
+
+#progress .achievement-done::before {
+    width: 34px;
+    height: 20px;
+    left: 13px;
+    top: 18px;
+    border-left: 7px solid #ffffff;
+    border-bottom: 7px solid #ffffff;
+    transform: rotate(-45deg);
+}
+
+#progress .achievement-note::before {
+    width: 30px;
+    height: 38px;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: inset 0 10px 0 rgba(255, 200, 0, 0.32);
+}
+
+#progress .achievement-ai::before {
+    width: 34px;
+    height: 26px;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow:
+        inset 8px 8px 0 -7px #1e1f25,
+        inset -8px 8px 0 -7px #1e1f25,
+        0 -10px 0 -7px #ffc800;
+}
+
+#progress .achievement.locked .achievement-icon {
+    background: linear-gradient(135deg, #374151, #1f2937);
+    box-shadow: none;
+    filter: grayscale(1);
+}
+
+#progress .achievement.locked .achievement-icon::before,
+#progress .achievement.locked .achievement-icon::after {
+    opacity: 0.55;
+}
+
 /* Marca AC Study */
 .nav-logo,
 .sidebar-logo {
