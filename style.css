@@ -5479,3 +5479,105 @@ body.light-theme .benefits-path span {
         min-height: auto;
     }
 }
+
+/* Dashboard sin caracteres rotos */
+#dashboard .stat-icon {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    overflow: hidden;
+    color: transparent;
+    font-size: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--color-purple), var(--color-cyan));
+    box-shadow: 0 14px 26px rgba(73, 204, 249, 0.18);
+}
+
+#dashboard .stat-icon::before,
+#dashboard .stat-icon::after {
+    content: "";
+    position: absolute;
+}
+
+#dashboard .stat-icon-subjects::before {
+    width: 22px;
+    height: 28px;
+    left: 12px;
+    top: 9px;
+    border-radius: 4px;
+    background: #b5ff71;
+    box-shadow: 7px 4px 0 #fd71af, 14px 8px 0 #ffffff;
+}
+
+#dashboard .stat-icon-tasks::before {
+    width: 24px;
+    height: 24px;
+    left: 11px;
+    top: 11px;
+    border: 4px solid #ffffff;
+    border-radius: 9px;
+}
+
+#dashboard .stat-icon-tasks::after {
+    width: 14px;
+    height: 8px;
+    left: 16px;
+    top: 17px;
+    border-left: 4px solid #00c875;
+    border-bottom: 4px solid #00c875;
+    transform: rotate(-45deg);
+}
+
+#dashboard .stat-icon-calendar::before {
+    width: 28px;
+    height: 26px;
+    left: 9px;
+    top: 11px;
+    border-radius: 6px;
+    background:
+        linear-gradient(#fd71af 0 28%, transparent 29%),
+        linear-gradient(90deg, transparent 31%, rgba(30,31,37,0.20) 32% 35%, transparent 36% 64%, rgba(30,31,37,0.20) 65% 68%, transparent 69%),
+        #ffffff;
+}
+
+#dashboard .stat-icon-grades::before {
+    width: 28px;
+    height: 22px;
+    left: 9px;
+    top: 13px;
+    border-left: 5px solid #ffffff;
+    border-bottom: 5px solid #ffffff;
+    transform: skew(-12deg);
+}
+
+#dashboard .stat-icon-xp::before {
+    width: 28px;
+    height: 28px;
+    left: 9px;
+    top: 9px;
+    clip-path: polygon(50% 0, 61% 33%, 98% 35%, 68% 56%, 79% 92%, 50% 70%, 21% 92%, 32% 56%, 2% 35%, 39% 33%);
+    background: #ffc800;
+}
+
+#dashboard .stat-icon-streak::before {
+    width: 22px;
+    height: 30px;
+    left: 12px;
+    top: 8px;
+    border-radius: 16px 16px 16px 4px;
+    background: linear-gradient(180deg, #ffc800, #fd71af);
+    transform: rotate(18deg);
+}
+
+#dashboard .stat-icon-assistant::before {
+    width: 28px;
+    height: 22px;
+    left: 9px;
+    top: 14px;
+    border-radius: 9px;
+    background: #ffffff;
+    box-shadow: inset 7px 7px 0 -6px #1e1f25, inset -7px 7px 0 -6px #1e1f25;
+}

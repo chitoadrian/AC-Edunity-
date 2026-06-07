@@ -2487,6 +2487,81 @@ document.addEventListener('keypress', (e) => {
 });
 
 // Inicializar la aplicaciÃ³n cuando se carga la pÃ¡gina
+// Dashboard limpio sin emojis para evitar caracteres rotos por codificacion.
+function renderDashboard(workspace) {
+    const section = document.getElementById('dashboard');
+    if (!section) return;
+
+    const firstName = currentUser?.name ? currentUser.name.split(' ')[0] : 'Estudiante';
+    const pending = workspace.tasks.filter(task => task.status !== 'completed').length;
+    const completed = workspace.tasks.filter(task => task.status === 'completed').length;
+    const nextEvent = getNextEvent(workspace);
+    const average = getAverageGrade(workspace);
+    const level = getLevel(workspace.xp);
+    const isEmpty = !workspace.subjects.length && !workspace.tasks.length && !workspace.events.length && !workspace.grades.length && !workspace.resources.length;
+
+    section.innerHTML = `
+        <div class="section-header">
+            <h1>Hola ${escapeHTML(firstName)}</h1>
+            <p class="subtitle">${isEmpty ? 'Bienvenido a AC Study. Empieza creando tu primera materia.' : 'Este es el resumen actualizado de tu espacio academico.'}</p>
+        </div>
+
+        <div class="dashboard-grid">
+            ${dashboardCard('subjects', 'Materias Activas', workspace.subjects.length, workspace.subjects.length ? 'Materias creadas por ti' : 'Sin materias todavia', workspace.subjects.length ? 100 : 0)}
+            ${dashboardCard('tasks', 'Tareas Pendientes', pending, `${completed} completadas`, workspace.tasks.length ? Math.round((completed / workspace.tasks.length) * 100) : 0)}
+            ${dashboardCard('calendar', 'Proximo Evento', nextEvent ? nextEvent.title : 'Sin eventos', nextEvent ? `${nextEvent.day} - ${nextEvent.type}` : 'Agenda tu primer examen o entrega', nextEvent ? 70 : 0)}
+            ${dashboardCard('grades', 'Promedio Actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} notas registradas` : 'Aun no hay notas', average ? average * 10 : 0)}
+            ${dashboardCard('xp', 'XP Acumulado', workspace.xp || 0, `Nivel ${level}`, Math.min(100, ((workspace.xp || 0) % 250) / 2.5))}
+            ${dashboardCard('streak', 'Racha de Estudio', workspace.streak || 0, 'dias activos', workspace.streak ? 100 : 0)}
+            ${dashboardCard('assistant', 'Recomendacion IA', workspace.resources.length ? 'Repasa un PDF' : 'Sube un apunte', workspace.resources.length ? 'AC Assistant puede crear cuestionarios' : 'Sube tus apuntes y estudia con ayuda de AC Assistant', workspace.resources.length ? 85 : 25)}
+        </div>
+
+        <div class="dashboard-row">
+            <div class="card starter-card">
+                <h3>Centro del estudiante</h3>
+                <ol class="starter-list">
+                    <li class="${workspace.subjects.length ? 'done' : ''}">Crea una materia</li>
+                    <li class="${workspace.tasks.length ? 'done' : ''}">Agrega una tarea</li>
+                    <li class="${workspace.events.length ? 'done' : ''}">Agenda un examen</li>
+                    <li class="${workspace.resources.length ? 'done' : ''}">Sube un apunte</li>
+                    <li class="${workspace.resources.some(resource => resource.usedAI) ? 'done' : ''}">Pregunta a la IA</li>
+                </ol>
+            </div>
+
+            <div class="card">
+                <h3>Actividad reciente</h3>
+                ${workspace.recent.length ? `
+                    <ul class="activity-list">${workspace.recent.map(item => `
+                        <li><span class="activity-time">${escapeHTML(item.time)}</span><span class="activity-text">${escapeHTML(item.text)}</span></li>
+                    `).join('')}</ul>
+                ` : emptyStateHTML('Tu actividad aparecera cuando empieces a usar la plataforma.', 'Crear primera materia', 'addSubjectUI()')}
+            </div>
+
+            <div class="card weekly-progress-card">
+                <h3>Progreso semanal</h3>
+                <div class="weekly-chart" aria-label="Progreso semanal simulado">
+                    ${[15, 20, 25, 30, 35, 40, Math.min(95, 20 + completed * 12)].map(value => `<span class="week-day" style="height:${value}%"></span>`).join('')}
+                </div>
+                <p class="chart-caption">${completed ? `Has completado ${completed} tarea(s).` : 'Tu grafico crecera cuando completes actividades.'}</p>
+            </div>
+        </div>
+    `;
+}
+
+function dashboardCard(icon, label, value, subtext, progress) {
+    return `
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-icon stat-icon-${escapeHTML(icon)}" aria-hidden="true"></span>
+                <span class="stat-label">${escapeHTML(label)}</span>
+            </div>
+            <div class="stat-value">${escapeHTML(value)}</div>
+            <div class="stat-subtext">${escapeHTML(subtext)}</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${Math.max(0, Math.min(100, progress))}%"></div></div>
+        </div>
+    `;
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
