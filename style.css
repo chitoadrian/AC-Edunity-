@@ -6369,3 +6369,616 @@ body.light-theme .resource-card {
         font-size: 20px;
     }
 }
+
+/* Escala compacta final: estilo SaaS mas limpio y menos ampliado */
+:root {
+    --container: 1180px;
+    --text-base: 15px;
+    --text-lg: 18px;
+    --text-xl: 24px;
+    --title-section: 40px;
+    --title-hero: 64px;
+    --space-section: 72px;
+    --card-padding: 28px;
+    --radius-card: 24px;
+}
+
+html {
+    font-size: var(--text-base);
+}
+
+body {
+    font-size: var(--text-base);
+}
+
+.landing-nav {
+    min-height: 64px !important;
+    width: min(var(--container), calc(100% - 40px)) !important;
+    padding: 12px 18px !important;
+    margin: 14px auto 0 !important;
+    border-radius: 20px !important;
+}
+
+.nav-logo,
+.sidebar-logo {
+    gap: 8px !important;
+    font-size: 22px !important;
+}
+
+.nav-logo .brand-logo,
+.sidebar-logo .brand-logo {
+    width: 38px !important;
+    height: 38px !important;
+    flex-basis: 38px !important;
+}
+
+.nav-links {
+    gap: 22px !important;
+}
+
+.nav-links a {
+    font-size: 14px !important;
+}
+
+.nav-actions {
+    gap: 10px !important;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost,
+.btn-small,
+.sidebar-theme,
+.sidebar-logout,
+.resource-actions button,
+.task-actions button,
+.subject-actions button {
+    min-height: 38px !important;
+    padding: 9px 16px !important;
+    border-radius: 16px !important;
+    font-size: 14px !important;
+}
+
+#landing-page .hero,
+#landing-page .features,
+#landing-page .benefits,
+#landing-page .about-project,
+#landing-page .use-benefits {
+    width: min(var(--container), calc(100% - 40px)) !important;
+    max-width: var(--container) !important;
+    margin-inline: auto !important;
+}
+
+#landing-page .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.82fr) !important;
+    gap: 44px !important;
+    padding: 50px 0 var(--space-section) !important;
+}
+
+#landing-page .hero-content h1,
+.hero-content h1 {
+    max-width: 680px !important;
+    font-size: clamp(2.1rem, 5vw, 4rem) !important;
+    line-height: 1.02 !important;
+}
+
+#landing-page .hero-content p,
+.hero-content p {
+    max-width: 570px !important;
+    font-size: var(--text-lg) !important;
+    line-height: 1.65 !important;
+}
+
+.hero-badge,
+.section-eyebrow {
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+}
+
+.hero-actions {
+    gap: 12px !important;
+    margin-top: 26px !important;
+}
+
+#landing-page .hero-visual {
+    min-height: 420px !important;
+    gap: 12px !important;
+    grid-template-columns: repeat(4, minmax(72px, 1fr)) !important;
+}
+
+#landing-page .dashboard-mockup {
+    max-width: 560px !important;
+    min-height: 390px !important;
+    padding: 22px !important;
+    border-radius: var(--radius-card) !important;
+}
+
+.mockup-top {
+    margin-bottom: 18px !important;
+}
+
+.mockup-top strong {
+    font-size: 12px !important;
+}
+
+.mockup-grid {
+    gap: 12px !important;
+}
+
+#landing-page .mockup-card,
+.mockup-card {
+    min-height: 92px !important;
+    padding: 14px !important;
+    border-radius: 16px !important;
+}
+
+#landing-page .mockup-card.wide:first-child {
+    min-height: 112px !important;
+}
+
+.mockup-card small {
+    margin-bottom: 8px !important;
+    font-size: 12px !important;
+}
+
+.mockup-card b {
+    font-size: 32px !important;
+}
+
+#landing-page .hero-visual .floating-card {
+    min-height: 104px !important;
+    padding: 14px 10px !important;
+    border-radius: 18px !important;
+}
+
+#landing-page .floating-card .icon {
+    width: 58px !important;
+    height: 58px !important;
+    border-radius: 18px !important;
+}
+
+#landing-page .floating-card .icon::before {
+    transform: scale(0.82);
+}
+
+.features,
+.benefits,
+.about-project,
+.use-benefits {
+    padding-block: var(--space-section) !important;
+}
+
+.features h2,
+.benefits h2,
+.about-text h2,
+.use-benefits h2 {
+    font-size: clamp(2rem, 4vw, var(--title-section)) !important;
+    line-height: 1.12 !important;
+}
+
+.features-grid,
+.benefits-grid,
+.use-benefits-grid {
+    gap: 18px !important;
+}
+
+.feature-card,
+.benefit-card,
+.use-benefit-card {
+    min-height: 220px !important;
+    padding: 24px !important;
+    border-radius: var(--radius-card) !important;
+}
+
+.feature-card h3,
+.benefit-card h3,
+.use-benefit-card h3 {
+    font-size: 22px !important;
+}
+
+.feature-card p,
+.benefit-card p,
+.use-benefit-card p,
+.about-description {
+    font-size: 15px !important;
+    line-height: 1.65 !important;
+}
+
+.feature-icon,
+.benefit-icon,
+.use-benefit-icon {
+    width: 54px !important;
+    height: 54px !important;
+    font-size: 26px !important;
+}
+
+.auth-page {
+    padding: 28px 18px !important;
+}
+
+.auth-card {
+    max-width: 380px !important;
+    padding: 30px !important;
+    border-radius: var(--radius-card) !important;
+}
+
+.auth-card h2 {
+    font-size: 25px !important;
+}
+
+.form-group label {
+    font-size: 13px !important;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+.quick-modal-card input,
+.quick-modal-card select,
+.quick-modal-card textarea {
+    min-height: 42px !important;
+    padding: 11px 13px !important;
+    font-size: 14px !important;
+    border-radius: 14px !important;
+}
+
+.sidebar {
+    width: 236px !important;
+    min-width: 236px !important;
+}
+
+.sidebar-header {
+    min-height: 66px !important;
+    padding: 16px 18px !important;
+}
+
+.sidebar-logo {
+    font-size: 20px !important;
+}
+
+.sidebar-logo .brand-logo {
+    width: 40px !important;
+    height: 40px !important;
+    flex-basis: 40px !important;
+}
+
+.sidebar-nav {
+    padding: 12px 10px 18px !important;
+}
+
+.nav-item {
+    min-height: 46px !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    gap: 10px !important;
+}
+
+.nav-icon {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    font-size: 17px !important;
+    border-radius: 11px !important;
+}
+
+.nav-label {
+    font-size: 14px !important;
+}
+
+.sidebar-footer {
+    padding: 12px !important;
+    gap: 10px !important;
+}
+
+.main-content {
+    width: calc(100% - 236px) !important;
+    margin-left: 236px !important;
+    padding: 26px 28px 38px !important;
+}
+
+.section {
+    max-width: var(--container) !important;
+    margin: 0 auto !important;
+}
+
+.section-header {
+    margin-bottom: 24px !important;
+}
+
+.section-header h1 {
+    font-size: clamp(28px, 3vw, var(--title-section)) !important;
+    line-height: 1.1 !important;
+}
+
+.subtitle,
+.section-header .subtitle {
+    font-size: 16px !important;
+    line-height: 1.55 !important;
+}
+
+.dashboard-grid,
+.subjects-grid,
+.grades-grid,
+.backpack-container,
+.use-benefits-grid {
+    gap: 18px !important;
+}
+
+.dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
+}
+
+.card,
+.stat-card,
+.subject-card,
+.task-item,
+.calendar-container,
+.grade-card,
+.attendance-card,
+.quick-modal-card,
+.resource-card,
+.progress-stat,
+.achievement {
+    border-radius: var(--radius-card) !important;
+}
+
+.card,
+.stat-card,
+.subject-card,
+.calendar-container,
+.grade-card,
+.attendance-card,
+.quick-modal-card,
+.progress-stat {
+    padding: var(--card-padding) !important;
+}
+
+.stat-card {
+    min-height: 188px !important;
+}
+
+.stat-header {
+    gap: 12px !important;
+}
+
+.stat-icon {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 20px !important;
+    border-radius: 14px !important;
+}
+
+.stat-label,
+.stat-subtext,
+.stat-name,
+.resource-type,
+.resource-date {
+    font-size: 13px !important;
+}
+
+.stat-value {
+    font-size: 30px !important;
+    line-height: 1.1 !important;
+}
+
+.subject-card {
+    min-height: 260px !important;
+}
+
+.subject-header h3,
+.task-content h4,
+.resource-card h4,
+.card h3 {
+    font-size: 20px !important;
+}
+
+.subject-icon,
+.resource-icon,
+#backpack .resource-card > .resource-icon {
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+}
+
+.task-item {
+    padding: 18px !important;
+    gap: 14px !important;
+}
+
+.task-checkbox {
+    width: 22px !important;
+    height: 22px !important;
+}
+
+.task-priority,
+.task-status,
+.subject-color-badge {
+    font-size: 12px !important;
+    padding: 7px 10px !important;
+    border-radius: 999px !important;
+}
+
+.calendar-grid {
+    gap: 8px !important;
+}
+
+.calendar-day {
+    min-height: 78px !important;
+    padding: 8px !important;
+}
+
+.ai-container,
+.level-display,
+.dashboard-row {
+    gap: 18px !important;
+}
+
+.assistant-chat,
+.ai-output-section {
+    border-radius: var(--radius-card) !important;
+}
+
+.achievement {
+    min-height: 150px !important;
+    padding: 18px !important;
+}
+
+.achievement-icon {
+    width: 58px !important;
+    height: 58px !important;
+}
+
+#backpack .resource-card {
+    max-width: 460px !important;
+    padding: 24px !important;
+    gap: 16px !important;
+}
+
+.resource-actions {
+    gap: 10px !important;
+}
+
+.study-pet {
+    right: 18px !important;
+    bottom: 18px !important;
+    grid-template-columns: minmax(150px, 210px) 72px !important;
+    gap: 9px !important;
+}
+
+.pet-bubble {
+    padding: 11px 13px !important;
+    font-size: 13px !important;
+    border-radius: 15px 15px 6px 15px !important;
+}
+
+.pet-parrot {
+    width: 72px !important;
+    height: 82px !important;
+}
+
+.pet-parrot::before {
+    left: -10px !important;
+    top: 50px !important;
+    width: 34px !important;
+    height: 42px !important;
+}
+
+.pet-wing {
+    width: 36px !important;
+    height: 36px !important;
+    top: 40px !important;
+}
+
+.pet-eye {
+    left: 36px !important;
+    top: 20px !important;
+    width: 17px !important;
+    height: 17px !important;
+}
+
+.pet-eye::after {
+    left: 5px !important;
+    top: 5px !important;
+}
+
+.pet-beak {
+    left: 49px !important;
+    top: 31px !important;
+    width: 23px !important;
+    height: 16px !important;
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --title-hero: 44px;
+        --title-section: 34px;
+        --space-section: 56px;
+        --card-padding: 22px;
+    }
+
+    #landing-page .hero {
+        grid-template-columns: 1fr !important;
+        gap: 32px !important;
+    }
+
+    #landing-page .hero-content h1,
+    .hero-content h1 {
+        font-size: clamp(2rem, 6vw, 44px) !important;
+    }
+
+    .sidebar {
+        width: 216px !important;
+        min-width: 216px !important;
+    }
+
+    .main-content {
+        width: calc(100% - 216px) !important;
+        margin-left: 216px !important;
+        padding: 24px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --text-base: 14px;
+        --space-section: 48px;
+        --card-padding: 20px;
+        --radius-card: 20px;
+    }
+
+    .landing-nav {
+        width: min(100% - 24px, var(--container)) !important;
+        padding: 12px 14px !important;
+    }
+
+    #landing-page .hero,
+    #landing-page .features,
+    #landing-page .benefits,
+    #landing-page .about-project,
+    #landing-page .use-benefits {
+        width: min(100% - 28px, var(--container)) !important;
+    }
+
+    #landing-page .hero-content h1,
+    .hero-content h1 {
+        font-size: 34px !important;
+    }
+
+    #landing-page .hero-content p,
+    .hero-content p {
+        font-size: 16px !important;
+    }
+
+    #landing-page .hero-visual {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        min-height: auto !important;
+    }
+
+    .sidebar {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .main-content {
+        width: 100% !important;
+        margin-left: 0 !important;
+        padding: 18px 14px 32px !important;
+    }
+
+    .section-header h1 {
+        font-size: 30px !important;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .study-pet {
+        grid-template-columns: minmax(128px, 176px) 62px !important;
+    }
+
+    .pet-parrot {
+        width: 62px !important;
+        height: 72px !important;
+    }
+}
