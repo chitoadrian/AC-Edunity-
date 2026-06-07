@@ -440,7 +440,9 @@ function toggleTheme() {
 
 function updateThemeIcon(icon) {
     document.querySelectorAll('.theme-toggle').forEach(btn => {
-        btn.textContent = icon;
+        btn.textContent = '';
+        btn.setAttribute('aria-label', isDarkTheme ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+        btn.classList.toggle('is-light', !isDarkTheme);
     });
 }
 
