@@ -5020,27 +5020,61 @@ body {
 }
 
 #landing-page .floating-card .icon::before {
-    color: #ffffff;
-    font-size: 28px;
-    font-weight: 900;
-    letter-spacing: 0;
+    content: "";
+    position: absolute;
 }
 
 #landing-page .card-1 .icon::before {
-    content: "OK";
+    width: 34px;
+    height: 38px;
+    left: 18px;
+    top: 17px;
+    border-radius: 5px 5px 3px 3px;
+    background: linear-gradient(135deg, #b5ff71, #49ccf9);
+    box-shadow:
+        10px 5px 0 -1px #fd71af,
+        20px 10px 0 -2px #49ccf9,
+        0 39px 0 -17px rgba(255, 255, 255, 0.88),
+        10px 44px 0 -20px rgba(255, 255, 255, 0.70);
 }
 
 #landing-page .card-2 .icon::before {
-    content: "AI";
+    width: 36px;
+    height: 26px;
+    left: 18px;
+    top: 25px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #ffffff, #b9c5ff);
+    box-shadow:
+        inset 9px 8px 0 -7px #1e1f25,
+        inset -9px 8px 0 -7px #1e1f25,
+        0 -11px 0 -8px #ffc800,
+        -15px 2px 0 -10px #fd71af,
+        15px 2px 0 -10px #fd71af;
 }
 
 #landing-page .card-3 .icon::before {
-    content: "CAL";
-    font-size: 22px;
+    width: 40px;
+    height: 36px;
+    left: 16px;
+    top: 19px;
+    border-radius: 8px;
+    background:
+        linear-gradient(#49ccf9 0 28%, transparent 29%),
+        linear-gradient(90deg, transparent 31%, rgba(255,255,255,0.65) 32% 34%, transparent 35% 64%, rgba(255,255,255,0.65) 65% 67%, transparent 68%),
+        linear-gradient(180deg, transparent 50%, rgba(255,255,255,0.65) 51% 54%, transparent 55%),
+        #ffffff;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
 }
 
 #landing-page .card-4 .icon::before {
-    content: "XP";
+    width: 42px;
+    height: 34px;
+    left: 15px;
+    top: 19px;
+    clip-path: polygon(50% 0, 61% 33%, 98% 35%, 68% 56%, 79% 92%, 50% 70%, 21% 92%, 32% 56%, 2% 35%, 39% 33%);
+    background: linear-gradient(135deg, #ffc800, #fd71af 58%, #ffffff);
+    filter: drop-shadow(0 8px 12px rgba(253, 113, 175, 0.22));
 }
 
 .theme-toggle {
@@ -5055,25 +5089,31 @@ body {
     line-height: 0;
     border: 1px solid rgba(73, 204, 249, 0.28);
     border-radius: 50%;
-    background:
-        radial-gradient(circle at 68% 32%, #f8fafc 0 13px, transparent 14px),
-        linear-gradient(135deg, rgba(123, 104, 238, 0.18), rgba(73, 204, 249, 0.10));
+    background: linear-gradient(135deg, rgba(123, 104, 238, 0.18), rgba(73, 204, 249, 0.10));
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .theme-toggle::before {
     content: "";
     position: absolute;
-    inset: 10px;
+    width: 22px;
+    height: 22px;
+    left: 12px;
+    top: 11px;
     border-radius: 50%;
-    background: #f8fafc;
-    box-shadow: -8px 0 0 0 rgba(17, 19, 26, 0.92);
+    background: #dbeafe;
+    box-shadow:
+        8px -3px 0 1px rgba(17, 19, 26, 0.98),
+        0 0 18px rgba(73, 204, 249, 0.34);
     transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
 .theme-toggle.is-light::before,
 body.light-theme .theme-toggle::before {
-    inset: 11px;
+    width: 22px;
+    height: 22px;
+    left: 12px;
+    top: 11px;
     background: #ffc800;
     box-shadow:
         0 -13px 0 -8px #ffc800,
@@ -5089,9 +5129,7 @@ body.light-theme .theme-toggle::before {
 .theme-toggle:hover {
     transform: translateY(-2px);
     border-color: var(--color-cyan);
-    background:
-        radial-gradient(circle at 68% 32%, rgba(255, 255, 255, 0.95) 0 13px, transparent 14px),
-        linear-gradient(135deg, rgba(123, 104, 238, 0.28), rgba(73, 204, 249, 0.18));
+    background: linear-gradient(135deg, rgba(123, 104, 238, 0.28), rgba(73, 204, 249, 0.18));
 }
 
 @media (max-width: 768px) {
