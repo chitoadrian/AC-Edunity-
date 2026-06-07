@@ -2944,6 +2944,75 @@ function practiceWithResource(resourceId) {
     notify('PDF abierto. Si no aparece, permite ventanas emergentes para esta pagina.', 'info');
 }
 
+function getDisplayStreak(workspace) {
+    return currentUser?.email ? Math.max(1, Number(workspace.streak || 0)) : 0;
+}
+
+function renderProfile(workspace) {
+    const profileLayout = document.querySelector('#profile .profile-layout');
+    if (!profileLayout) return;
+
+    const name = currentUser?.name || 'Estudiante AC';
+    const initials = name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0].toUpperCase())
+        .join('') || 'AC';
+    const level = getLevel(workspace.xp);
+    const average = getAverageGrade(workspace);
+    const streak = getDisplayStreak(workspace);
+
+    profileLayout.innerHTML = `
+        <div class="profile-card">
+            <div class="profile-avatar">${escapeHTML(initials)}</div>
+            <div class="profile-details">
+                <span class="profile-role">Estudiante</span>
+                <h2 id="profile-name">${escapeHTML(name)}</h2>
+                <p>Estudiante de Informatica desarrollando AC Study como proyecto de grado.</p>
+                <div class="profile-tags">
+                    <span>Organizacion academica</span>
+                    <span>IA educativa</span>
+                    <span>Productividad</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-metrics">
+            <div class="profile-metric">
+                <span>Nivel</span>
+                <strong>${level}</strong>
+            </div>
+            <div class="profile-metric">
+                <span>XP</span>
+                <strong>${workspace.xp || 0}</strong>
+            </div>
+            <div class="profile-metric">
+                <span>Racha</span>
+                <strong>${streak} ${streak === 1 ? 'dia' : 'dias'}</strong>
+            </div>
+            <div class="profile-metric">
+                <span>Promedio</span>
+                <strong class="${workspace.grades.length ? '' : 'empty-profile-value'}">${workspace.grades.length ? average.toFixed(2) : 'Sin notas'}</strong>
+            </div>
+        </div>
+    `;
+}
+
+function refreshWorkspaceUI() {
+    const workspace = loadWorkspace();
+    renderDashboard(workspace);
+    renderSubjects(workspace);
+    renderTasks(workspace);
+    renderCalendarSection(workspace);
+    renderGrades(workspace);
+    renderAttendance(workspace);
+    renderProgress(workspace);
+    renderBackpack(workspace);
+    renderProfile(workspace);
+    updateGradeSubjectOptions(workspace);
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {

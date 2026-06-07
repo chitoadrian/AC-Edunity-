@@ -3677,6 +3677,11 @@ body.light-theme .auth-card {
     background-clip: text;
 }
 
+.profile-metric strong.empty-profile-value {
+    font-size: 22px;
+    line-height: 1.2;
+}
+
 @keyframes growBar {
     from {
         transform: scaleY(0.35);
