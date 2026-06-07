@@ -5581,3 +5581,39 @@ body.light-theme .benefits-path span {
     background: #ffffff;
     box-shadow: inset 7px 7px 0 -6px #1e1f25, inset -7px 7px 0 -6px #1e1f25;
 }
+
+/* Estados vacios sin texto roto */
+.empty-state .empty-icon {
+    position: relative;
+    overflow: hidden;
+    color: transparent !important;
+    font-size: 0 !important;
+    line-height: 0;
+}
+
+.empty-state .empty-icon::before {
+    content: "";
+    position: absolute;
+    width: 28px;
+    height: 34px;
+    left: 13px;
+    top: 10px;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow:
+        inset 0 9px 0 rgba(73, 204, 249, 0.70),
+        9px 6px 0 -2px rgba(253, 113, 175, 0.95),
+        -8px 10px 0 -4px rgba(255, 200, 0, 0.95);
+}
+
+.empty-state .empty-icon::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 10px;
+    left: 18px;
+    top: 24px;
+    border-left: 4px solid #00c875;
+    border-bottom: 4px solid #00c875;
+    transform: rotate(-45deg);
+}

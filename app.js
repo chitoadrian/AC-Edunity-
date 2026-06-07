@@ -2562,6 +2562,16 @@ function dashboardCard(icon, label, value, subtext, progress) {
     `;
 }
 
+function emptyStateHTML(message, buttonText, action) {
+    return `
+        <div class="empty-state">
+            <div class="empty-icon" aria-hidden="true"></div>
+            <h3>${escapeHTML(message)}</h3>
+            <button class="btn-primary btn-small" onclick="${action}">${escapeHTML(buttonText)}</button>
+        </div>
+    `;
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
