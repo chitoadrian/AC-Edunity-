@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AC Study - Gestión Educativa Inteligente Personalizada</title>
-    <link rel="stylesheet" href="style.css?v=20260607-card-fit">
+    <link rel="stylesheet" href="style.css?v=20260609-language-selector">
 </head>
 <body>
     <!-- LANDING PAGE -->
@@ -21,6 +21,18 @@
                 <a href="#benefits-use">Beneficios</a>
             </div>
             <div class="nav-actions">
+                <div class="language-selector" id="language-selector">
+                    <button class="language-toggle" type="button" onclick="toggleLanguageMenu()" aria-label="Cambiar idioma">
+                        <span class="language-flag" id="current-language-flag">🇪🇸</span>
+                        <span class="language-arrow">⌄</span>
+                    </button>
+                    <div class="language-menu" id="language-menu">
+                        <button type="button" onclick="setLanguage('es')"><span>🇪🇸</span> Español</button>
+                        <button type="button" onclick="setLanguage('en')"><span>🇺🇸</span> English</button>
+                        <button type="button" onclick="setLanguage('pt')"><span>🇧🇷</span> Português</button>
+                        <button type="button" onclick="setLanguage('de')"><span>🇩🇪</span> Deutsch</button>
+                    </div>
+                </div>
                 <button class="btn-secondary" onclick="showLogin()">Inicia sesión</button>
                 <button class="btn-primary" onclick="showRegister()">Registrarse</button>
                 <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
@@ -1174,6 +1186,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=20260607-card-fit"></script>
+    <script src="app.js?v=20260609-language-selector"></script>
 </body>
 </html>

@@ -222,6 +222,7 @@ function initializeApp() {
     renderSavedSubjects();
     renderSavedCalendarEvents();
     initStudyPet();
+    initLanguageSelector();
 }
 
 // ============================================
@@ -3012,6 +3013,396 @@ function refreshWorkspaceUI() {
     renderBackpack(workspace);
     renderProfile(workspace);
     updateGradeSubjectOptions(workspace);
+}
+
+const languageFlags = { es: '🇪🇸', en: '🇺🇸', pt: '🇧🇷', de: '🇩🇪' };
+let currentLanguage = localStorage.getItem('acStudyLanguage') || 'es';
+let translatingPage = false;
+const originalTextNodes = new WeakMap();
+const translatedAttributes = ['placeholder', 'title', 'aria-label'];
+
+const translations = {
+    en: {
+        'Inicio': 'Home',
+        'Funciones': 'Features',
+        'IA': 'AI',
+        'Beneficios': 'Benefits',
+        'Inicia sesión': 'Sign in',
+        'Registrarse': 'Sign up',
+        'Cambiar tema': 'Change theme',
+        'Registrate gratis e inicia tu estudio': 'Sign up for free and start studying',
+        'Gestión Educativa Inteligente Personalizada': 'Personalized Intelligent Educational Management',
+        'Organiza tus estudios. Aprende mejor con IA.': 'Organize your studies. Learn better with AI.',
+        'AC Study combina planificacion academica, inteligencia artificial y herramientas de productividad para ayudarte a alcanzar tus objetivos.': 'AC Study combines academic planning, artificial intelligence and productivity tools to help you reach your goals.',
+        'Comenzar gratis': 'Start for free',
+        'Panel AC Study': 'AC Study Panel',
+        'Progreso semanal': 'Weekly progress',
+        'Tareas': 'Tasks',
+        'XP': 'XP',
+        'Listo para resumir tus apuntes': 'Ready to summarize your notes',
+        'Todo tu estudio organizado en un solo lugar': 'All your study organized in one place',
+        'Organizacion': 'Organization',
+        'Materias, tareas y calendario con una experiencia clara para estudiar sin desorden.': 'Subjects, tasks and calendar with a clear experience to study without clutter.',
+        'Aprendizaje': 'Learning',
+        'IA simulada, flashcards, cuestionarios y explicaciones sencillas para repasar mejor.': 'Simulated AI, flashcards, quizzes and simple explanations to review better.',
+        'Seguimiento': 'Tracking',
+        'Notas, promedio, XP, logros y progreso visual para medir tu avance academico.': 'Grades, average, XP, achievements and visual progress to measure your academic growth.',
+        'Mochila': 'Backpack',
+        'Apuntes, PDFs simulados y recursos conectados con AC Assistant para practicar.': 'Notes, simulated PDFs and resources connected with AC Assistant for practice.',
+        'Acerca de AC Study': 'About AC Study',
+        'Beneficios de usar AC Study': 'Benefits of using AC Study',
+        'AC Study ayuda a que cada estudiante construya su propio espacio academico, organice sus pendientes y aprenda con apoyo inteligente sin perder el control de su rutina.': 'AC Study helps each student build their own academic space, organize pending work and learn with smart support without losing control of their routine.',
+        'Menos desorden': 'Less clutter',
+        'Centraliza materias, tareas, notas, calendario y apuntes en una sola plataforma facil de revisar.': 'Centralize subjects, tasks, grades, calendar and notes in one easy-to-review platform.',
+        'Mas enfoque': 'More focus',
+        'Recibe una guia clara de primeros pasos para empezar sin sentir que la pagina esta vacia.': 'Get a clear first-steps guide to start without feeling the page is empty.',
+        'Aprendizaje guiado': 'Guided learning',
+        'Usa AC Assistant para resumir apuntes, generar preguntas, crear flashcards y entender temas complejos.': 'Use AC Assistant to summarize notes, generate questions, create flashcards and understand complex topics.',
+        'Progreso visible': 'Visible progress',
+        'Visualiza tu avance con XP, racha, logros y estadisticas que motivan a seguir estudiando.': 'See your progress with XP, streaks, achievements and stats that motivate you to keep studying.',
+        'Empieza': 'Start',
+        'Organiza': 'Organize',
+        'Estudia': 'Study',
+        'Mejora': 'Improve',
+        '¿No tienes cuenta?': "Don't have an account?",
+        'Regístrate aquí': 'Sign up here',
+        '← Volver': '← Back',
+        'Crear cuenta': 'Create account',
+        'Nombre completo': 'Full name',
+        'Contraseña': 'Password',
+        '¿Ya tienes cuenta?': 'Already have an account?',
+        'Inicia sesión aquí': 'Sign in here',
+        'Menu': 'Menu',
+        'Materias': 'Subjects',
+        'Calendario': 'Calendar',
+        'Calificaciones': 'Grades',
+        'Asistencia': 'Attendance',
+        'AC Assistant': 'AC Assistant',
+        'Progreso': 'Progress',
+        'Perfil': 'Profile',
+        'Cerrar sesión': 'Log out',
+        'Hola Adrian 👋': 'Hi Adrian 👋',
+        'Este es el resumen actualizado de tu espacio academico.': 'This is the updated summary of your academic space.',
+        'Materias activas': 'Active subjects',
+        'Tareas pendientes': 'Pending tasks',
+        'Proximo evento': 'Next event',
+        'Promedio actual': 'Current average',
+        'XP acumulado': 'Total XP',
+        'Racha de estudio': 'Study streak',
+        'Recomendacion IA': 'AI recommendation',
+        'Actividades recientes': 'Recent activity',
+        'Primeros pasos': 'First steps',
+        'Crear primera materia': 'Create first subject',
+        'Agregar tarea': 'Add task',
+        'Agendar evento': 'Schedule event',
+        'Agregar nota': 'Add grade',
+        'Registrar asistencia': 'Register attendance',
+        'Subir primer apunte': 'Upload first note',
+        'Mochila Digital': 'Digital Backpack',
+        'Asistente IA': 'AI Assistant',
+        'Crear y organizar tus asignaturas en un solo lugar': 'Create and organize your subjects in one place',
+        '+ Nueva materia': '+ New subject',
+        '+ Nueva tarea': '+ New task',
+        '+ Nuevo evento': '+ New event',
+        '+ Registrar nota': '+ Add grade',
+        '+ Registrar asistencia': '+ Add attendance',
+        '+ Subir PDF simulado': '+ Upload simulated PDF',
+        'Editar': 'Edit',
+        'Eliminar': 'Delete',
+        'Guardar': 'Save',
+        'Actualizar': 'Update',
+        'Cancelar': 'Cancel',
+        'Pendiente': 'Pending',
+        'Completada': 'Completed',
+        'Proxima': 'Upcoming',
+        'Importante': 'Important',
+        'Mas tarde': 'Later',
+        'Ahora': 'Now',
+        'Tus recursos guardados y archivos academicos': 'Your saved resources and academic files',
+        'Preguntar a la IA': 'Ask AI',
+        'Practicar con PDF': 'Practice with PDF',
+        'Tu progreso': 'Your progress',
+        'Logros': 'Achievements',
+        'Nivel': 'Level',
+        'Racha': 'Streak',
+        'Promedio': 'Average',
+        'Bienvenido a AC Study. Empieza creando tu primera materia.': 'Welcome to AC Study. Start by creating your first subject.',
+        'Tu actividad aparecera cuando empieces a usar la plataforma.': 'Your activity will appear when you start using the platform.',
+        'No tienes materias registradas todavia.': 'You do not have subjects yet.',
+        'No tienes tareas pendientes.': 'You have no pending tasks.',
+        'No tienes eventos programados.': 'You have no scheduled events.',
+        'No has registrado notas.': 'You have not added grades yet.',
+        'No has registrado calificaciones.': 'You have not added grades yet.',
+        'Agregar calificacion': 'Add grade',
+        'Tu progreso aparecera cuando empieces a usar la plataforma.': 'Your progress will appear when you start using the platform.',
+        'No has subido apuntes todavia.': 'You have not uploaded notes yet.',
+        'Subir primer PDF': 'Upload first PDF'
+    },
+    pt: {
+        'Inicio': 'Início',
+        'Funciones': 'Funções',
+        'IA': 'IA',
+        'Beneficios': 'Benefícios',
+        'Inicia sesión': 'Entrar',
+        'Registrarse': 'Cadastrar-se',
+        'Cambiar tema': 'Alterar tema',
+        'Registrate gratis e inicia tu estudio': 'Cadastre-se grátis e comece a estudar',
+        'Gestión Educativa Inteligente Personalizada': 'Gestão Educacional Inteligente Personalizada',
+        'Organiza tus estudios. Aprende mejor con IA.': 'Organize seus estudos. Aprenda melhor com IA.',
+        'AC Study combina planificacion academica, inteligencia artificial y herramientas de productividad para ayudarte a alcanzar tus objetivos.': 'AC Study combina planejamento acadêmico, inteligência artificial e ferramentas de produtividade para ajudar você a alcançar seus objetivos.',
+        'Comenzar gratis': 'Começar grátis',
+        'Panel AC Study': 'Painel AC Study',
+        'Progreso semanal': 'Progresso semanal',
+        'Tareas': 'Tarefas',
+        'Listo para resumir tus apuntes': 'Pronto para resumir suas anotações',
+        'Todo tu estudio organizado en un solo lugar': 'Todo o seu estudo organizado em um só lugar',
+        'Organizacion': 'Organização',
+        'Materias, tareas y calendario con una experiencia clara para estudiar sin desorden.': 'Matérias, tarefas e calendário com uma experiência clara para estudar sem bagunça.',
+        'Aprendizaje': 'Aprendizagem',
+        'Seguimiento': 'Acompanhamento',
+        'Mochila': 'Mochila',
+        'Acerca de AC Study': 'Sobre o AC Study',
+        'Beneficios de usar AC Study': 'Benefícios de usar AC Study',
+        'Menos desorden': 'Menos desordem',
+        'Mas enfoque': 'Mais foco',
+        'Aprendizaje guiado': 'Aprendizagem guiada',
+        'Progreso visible': 'Progresso visível',
+        'Empieza': 'Comece',
+        'Organiza': 'Organize',
+        'Estudia': 'Estude',
+        'Mejora': 'Melhore',
+        'Crear cuenta': 'Criar conta',
+        'Nombre completo': 'Nome completo',
+        'Contraseña': 'Senha',
+        'Menu': 'Menu',
+        'Materias': 'Matérias',
+        'Calendario': 'Calendário',
+        'Calificaciones': 'Notas',
+        'Asistencia': 'Presença',
+        'Progreso': 'Progresso',
+        'Perfil': 'Perfil',
+        'Cerrar sesión': 'Sair',
+        'Hola Adrian 👋': 'Olá Adrian 👋',
+        'Materias activas': 'Matérias ativas',
+        'Tareas pendientes': 'Tarefas pendentes',
+        'Proximo evento': 'Próximo evento',
+        'Promedio actual': 'Média atual',
+        'XP acumulado': 'XP acumulado',
+        'Racha de estudio': 'Sequência de estudo',
+        'Mochila Digital': 'Mochila Digital',
+        'Asistente IA': 'Assistente IA',
+        '+ Nueva materia': '+ Nova matéria',
+        '+ Nueva tarea': '+ Nova tarefa',
+        '+ Nuevo evento': '+ Novo evento',
+        '+ Registrar nota': '+ Registrar nota',
+        '+ Registrar asistencia': '+ Registrar presença',
+        '+ Subir PDF simulado': '+ Enviar PDF simulado',
+        'Editar': 'Editar',
+        'Eliminar': 'Excluir',
+        'Guardar': 'Salvar',
+        'Actualizar': 'Atualizar',
+        'Cancelar': 'Cancelar',
+        'Pendiente': 'Pendente',
+        'Completada': 'Concluída',
+        'Proxima': 'Próxima',
+        'Importante': 'Importante',
+        'Mas tarde': 'Mais tarde',
+        'Ahora': 'Agora',
+        'Preguntar a la IA': 'Perguntar à IA',
+        'Practicar con PDF': 'Praticar com PDF',
+        'Tu progreso': 'Seu progresso',
+        'Logros': 'Conquistas',
+        'Nivel': 'Nível',
+        'Racha': 'Sequência',
+        'Promedio': 'Média',
+        'Bienvenido a AC Study. Empieza creando tu primera materia.': 'Bem-vindo ao AC Study. Comece criando sua primeira matéria.',
+        'Tu actividad aparecera cuando empieces a usar la plataforma.': 'Sua atividade aparecerá quando você começar a usar a plataforma.',
+        'No tienes materias registradas todavia.': 'Você ainda não tem matérias registradas.',
+        'No tienes tareas pendientes.': 'Você não tem tarefas pendentes.',
+        'No tienes eventos programados.': 'Você não tem eventos programados.',
+        'No has registrado notas.': 'Você ainda não registrou notas.',
+        'No has registrado calificaciones.': 'Você ainda não registrou notas.',
+        'Agregar calificacion': 'Adicionar nota',
+        'Tu progreso aparecera cuando empieces a usar la plataforma.': 'Seu progresso aparecerá quando você começar a usar a plataforma.',
+        'No has subido apuntes todavia.': 'Você ainda não enviou anotações.',
+        'Subir primer PDF': 'Enviar primeiro PDF'
+    },
+    de: {
+        'Inicio': 'Start',
+        'Funciones': 'Funktionen',
+        'IA': 'KI',
+        'Beneficios': 'Vorteile',
+        'Inicia sesión': 'Anmelden',
+        'Registrarse': 'Registrieren',
+        'Cambiar tema': 'Design wechseln',
+        'Registrate gratis e inicia tu estudio': 'Registriere dich kostenlos und starte dein Lernen',
+        'Gestión Educativa Inteligente Personalizada': 'Personalisierte intelligente Bildungsverwaltung',
+        'Organiza tus estudios. Aprende mejor con IA.': 'Organisiere dein Studium. Lerne besser mit KI.',
+        'Comenzar gratis': 'Kostenlos starten',
+        'Panel AC Study': 'AC Study Panel',
+        'Progreso semanal': 'Wöchentlicher Fortschritt',
+        'Tareas': 'Aufgaben',
+        'Listo para resumir tus apuntes': 'Bereit, deine Notizen zusammenzufassen',
+        'Todo tu estudio organizado en un solo lugar': 'Dein gesamtes Lernen an einem Ort organisiert',
+        'Organizacion': 'Organisation',
+        'Aprendizaje': 'Lernen',
+        'Seguimiento': 'Nachverfolgung',
+        'Mochila': 'Rucksack',
+        'Acerca de AC Study': 'Über AC Study',
+        'Beneficios de usar AC Study': 'Vorteile von AC Study',
+        'Menos desorden': 'Weniger Chaos',
+        'Mas enfoque': 'Mehr Fokus',
+        'Aprendizaje guiado': 'Geführtes Lernen',
+        'Progreso visible': 'Sichtbarer Fortschritt',
+        'Empieza': 'Starten',
+        'Organiza': 'Organisieren',
+        'Estudia': 'Lernen',
+        'Mejora': 'Verbessern',
+        'Crear cuenta': 'Konto erstellen',
+        'Nombre completo': 'Vollständiger Name',
+        'Contraseña': 'Passwort',
+        'Menu': 'Menü',
+        'Materias': 'Fächer',
+        'Calendario': 'Kalender',
+        'Calificaciones': 'Noten',
+        'Asistencia': 'Anwesenheit',
+        'Progreso': 'Fortschritt',
+        'Perfil': 'Profil',
+        'Cerrar sesión': 'Abmelden',
+        'Hola Adrian 👋': 'Hallo Adrian 👋',
+        'Materias activas': 'Aktive Fächer',
+        'Tareas pendientes': 'Offene Aufgaben',
+        'Proximo evento': 'Nächstes Ereignis',
+        'Promedio actual': 'Aktueller Durchschnitt',
+        'XP acumulado': 'Gesammelte XP',
+        'Racha de estudio': 'Lernserie',
+        'Mochila Digital': 'Digitaler Rucksack',
+        'Asistente IA': 'KI-Assistent',
+        '+ Nueva materia': '+ Neues Fach',
+        '+ Nueva tarea': '+ Neue Aufgabe',
+        '+ Nuevo evento': '+ Neues Ereignis',
+        '+ Registrar nota': '+ Note eintragen',
+        '+ Registrar asistencia': '+ Anwesenheit eintragen',
+        '+ Subir PDF simulado': '+ Simuliertes PDF hochladen',
+        'Editar': 'Bearbeiten',
+        'Eliminar': 'Löschen',
+        'Guardar': 'Speichern',
+        'Actualizar': 'Aktualisieren',
+        'Cancelar': 'Abbrechen',
+        'Pendiente': 'Offen',
+        'Completada': 'Erledigt',
+        'Proxima': 'Bevorstehend',
+        'Importante': 'Wichtig',
+        'Mas tarde': 'Später',
+        'Ahora': 'Jetzt',
+        'Preguntar a la IA': 'KI fragen',
+        'Practicar con PDF': 'Mit PDF üben',
+        'Tu progreso': 'Dein Fortschritt',
+        'Logros': 'Erfolge',
+        'Nivel': 'Level',
+        'Racha': 'Serie',
+        'Promedio': 'Durchschnitt',
+        'Bienvenido a AC Study. Empieza creando tu primera materia.': 'Willkommen bei AC Study. Erstelle zuerst dein erstes Fach.',
+        'Tu actividad aparecera cuando empieces a usar la plataforma.': 'Deine Aktivität erscheint, wenn du die Plattform nutzt.',
+        'No tienes materias registradas todavia.': 'Du hast noch keine Fächer registriert.',
+        'No tienes tareas pendientes.': 'Du hast keine offenen Aufgaben.',
+        'No tienes eventos programados.': 'Du hast keine geplanten Ereignisse.',
+        'No has registrado notas.': 'Du hast noch keine Noten eingetragen.',
+        'No has registrado calificaciones.': 'Du hast noch keine Noten eingetragen.',
+        'Agregar calificacion': 'Note hinzufügen',
+        'Tu progreso aparecera cuando empieces a usar la plataforma.': 'Dein Fortschritt erscheint, wenn du die Plattform nutzt.',
+        'No has subido apuntes todavia.': 'Du hast noch keine Notizen hochgeladen.',
+        'Subir primer PDF': 'Erstes PDF hochladen'
+    }
+};
+
+function cleanI18nText(text) {
+    return text.replace(/\s+/g, ' ').trim();
+}
+
+function translateText(original) {
+    const clean = cleanI18nText(original);
+    if (!clean || currentLanguage === 'es') return original;
+    return translations[currentLanguage]?.[clean] || original;
+}
+
+function translateTextNode(node) {
+    if (!originalTextNodes.has(node)) originalTextNodes.set(node, node.nodeValue);
+    const translated = translateText(originalTextNodes.get(node));
+    if (node.nodeValue !== translated) node.nodeValue = translated;
+}
+
+function translateElementAttributes(element) {
+    translatedAttributes.forEach(attribute => {
+        if (!element.hasAttribute(attribute)) return;
+        const key = `data-i18n-original-${attribute}`;
+        if (!element.hasAttribute(key)) element.setAttribute(key, element.getAttribute(attribute));
+        element.setAttribute(attribute, translateText(element.getAttribute(key)));
+    });
+}
+
+function translatePage(root = document.body) {
+    if (!root) return;
+    translatingPage = true;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+            const parent = node.parentElement;
+            if (!parent || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+            return cleanI18nText(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        }
+    });
+
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(translateTextNode);
+
+    if (root.nodeType === Node.ELEMENT_NODE) {
+        translateElementAttributes(root);
+        root.querySelectorAll('*').forEach(translateElementAttributes);
+    }
+
+    document.documentElement.lang = currentLanguage;
+    translatingPage = false;
+}
+
+function updateLanguageButton() {
+    const flag = document.getElementById('current-language-flag');
+    if (flag) flag.textContent = languageFlags[currentLanguage] || languageFlags.es;
+}
+
+function toggleLanguageMenu() {
+    document.getElementById('language-selector')?.classList.toggle('open');
+}
+
+function setLanguage(language) {
+    currentLanguage = language;
+    localStorage.setItem('acStudyLanguage', language);
+    document.getElementById('language-selector')?.classList.remove('open');
+    updateLanguageButton();
+    translatePage();
+}
+
+function initLanguageSelector() {
+    updateLanguageButton();
+    translatePage();
+
+    document.addEventListener('click', event => {
+        const selector = document.getElementById('language-selector');
+        if (selector && !selector.contains(event.target)) selector.classList.remove('open');
+    });
+
+    const observer = new MutationObserver(mutations => {
+        if (translatingPage || currentLanguage === 'es') return;
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) translateTextNode(node);
+                if (node.nodeType === Node.ELEMENT_NODE) translatePage(node);
+            });
+        });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
 }
 
 function initStudyPet() {
