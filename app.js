@@ -1024,6 +1024,8 @@ function getWorkspaceKey() {
     return `acStudyWorkspace:${currentUser?.email || 'guest'}`;
 }
 
+const gradebookResetVersion = 'period-gradebook-v1';
+
 function renderSavedSubjects() {}
 
 function renderSavedCalendarEvents() {}
@@ -1046,7 +1048,17 @@ function loadWorkspace() {
     if (!currentUser?.email) return getEmptyWorkspace();
 
     try {
-        return { ...getEmptyWorkspace(), ...JSON.parse(localStorage.getItem(getWorkspaceKey())) };
+        const workspace = { ...getEmptyWorkspace(), ...JSON.parse(localStorage.getItem(getWorkspaceKey())) };
+        if (workspace.gradebookResetVersion !== gradebookResetVersion) {
+            workspace.grades = [];
+            workspace.gradebookResetVersion = gradebookResetVersion;
+            workspace.recent = [
+                { text: 'La libreta de calificaciones inicio desde cero con el nuevo sistema por periodos.', time: 'Ahora' },
+                ...(workspace.recent || [])
+            ].slice(0, 6);
+            localStorage.setItem(getWorkspaceKey(), JSON.stringify(workspace));
+        }
+        return workspace;
     } catch (error) {
         localStorage.removeItem(getWorkspaceKey());
         return getEmptyWorkspace();
