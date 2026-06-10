@@ -2208,17 +2208,26 @@ function renderGrades(workspace) {
     }
 
     const average = getAverageGrade(workspace);
-    const sorted = [...workspace.grades].sort((a, b) => {
-        if (gradeSortMode === 'date') return (b.date || '').localeCompare(a.date || '');
-        if (gradeSortMode === 'high') return Number(b.value) - Number(a.value);
-        if (gradeSortMode === 'low') return Number(a.value) - Number(b.value);
-        return a.subject.localeCompare(b.subject);
-    });
+    const grouped = workspace.grades.reduce((acc, grade) => {
+        const subject = grade.subject || 'General';
+        acc[subject] = acc[subject] || [];
+        acc[subject].push(grade);
+        return acc;
+    }, {});
 
-    const subjectAverages = workspace.subjects.map(subject => ({
-        name: subject.name,
-        average: getSubjectAverage(workspace, subject.name)
-    })).filter(item => item.average);
+    const subjectRows = Object.entries(grouped).map(([subject, grades]) => {
+        const sortedGrades = [...grades].sort((a, b) => {
+            if (gradeSortMode === 'date') return (b.date || '').localeCompare(a.date || '');
+            if (gradeSortMode === 'high') return Number(b.value) - Number(a.value);
+            if (gradeSortMode === 'low') return Number(a.value) - Number(b.value);
+            return (a.evaluation || '').localeCompare(b.evaluation || '');
+        });
+        const subjectAverage = sortedGrades.reduce((sum, grade) => sum + Number(grade.value || 0), 0) / sortedGrades.length;
+        return { subject, grades: sortedGrades, average: subjectAverage };
+    }).sort((a, b) => a.subject.localeCompare(b.subject));
+
+    if (gradeSortMode === 'high') subjectRows.sort((a, b) => b.average - a.average);
+    if (gradeSortMode === 'low') subjectRows.sort((a, b) => a.average - b.average);
 
     container.innerHTML = `
         <div class="grades-toolbar">
@@ -2233,25 +2242,40 @@ function renderGrades(workspace) {
                 <option value="low" ${gradeSortMode === 'low' ? 'selected' : ''}>Nota menor</option>
             </select>
         </div>
-        <div class="subject-average-strip">
-            ${subjectAverages.map(item => `<span>${escapeHTML(item.name)}: ${item.average.toFixed(2)}</span>`).join('')}
-        </div>
-        <div class="grades-grid">
-            ${sorted.map(grade => `
-                <div class="grade-card">
-                    <h3>${escapeHTML(grade.subject)}</h3>
-                    <div class="grades-list">
-                        <div class="grade-item"><span class="grade-name">${escapeHTML(grade.evaluation)}</span><span class="grade-value">${Number(grade.value).toFixed(1)}</span></div>
-                        <div class="grade-item"><span class="grade-name">Fecha</span><span>${escapeHTML(grade.date || 'Sin fecha')}</span></div>
-                        <div class="grade-item"><span class="grade-name">Estado</span><span class="grade-status ${getGradeStatus(grade.value).replace(' ', '-')}">${getGradeStatus(grade.value)}</span></div>
+        <div class="gradebook-panel">
+            <div class="gradebook-header">
+                <span>Materia</span>
+                <span>Calificaciones registradas</span>
+                <span>Promedio</span>
+            </div>
+            <div class="gradebook-body">
+                ${subjectRows.map(row => `
+                    <div class="gradebook-row">
+                        <div class="gradebook-subject">
+                            <strong>${escapeHTML(row.subject)}</strong>
+                            <small>${row.grades.length} ${row.grades.length === 1 ? 'calificacion' : 'calificaciones'}</small>
+                        </div>
+                        <div class="gradebook-scores">
+                            ${row.grades.map(grade => {
+                                const value = Number(grade.value || 0);
+                                const status = getGradeStatus(value).replace(' ', '-');
+                                return `
+                                    <div class="gradebook-score ${status}" title="${escapeHTML(grade.evaluation || 'Calificacion')} - ${escapeHTML(grade.date || 'Sin fecha')}">
+                                        <button class="score-action score-edit" data-grade-edit="${escapeHTML(grade.id)}" aria-label="Editar calificacion">↗</button>
+                                        <span class="score-value">${value.toFixed(value % 1 === 0 ? 0 : 1)}</span>
+                                        <span class="score-label">${escapeHTML(grade.evaluation || 'Nota')}</span>
+                                        <button class="score-action score-delete" data-grade-delete="${escapeHTML(grade.id)}" aria-label="Eliminar calificacion">×</button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div class="gradebook-average">
+                            <strong>${row.average.toFixed(2)}</strong>
+                            <span class="grade-status ${getGradeStatus(row.average).replace(' ', '-')}">${getGradeStatus(row.average)}</span>
+                        </div>
                     </div>
-                    ${grade.observation ? `<p class="grade-note">${escapeHTML(grade.observation)}</p>` : ''}
-                    <div class="card-actions">
-                        <button class="btn-secondary btn-small" data-grade-edit="${escapeHTML(grade.id)}">Editar</button>
-                        <button class="btn-danger btn-small" data-grade-delete="${escapeHTML(grade.id)}">Eliminar</button>
-                    </div>
-                </div>
-            `).join('')}
+                `).join('')}
+            </div>
         </div>
     `;
 
