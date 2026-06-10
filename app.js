@@ -1083,8 +1083,17 @@ function getLevel(xp) {
 
 function getAverageGrade(workspace) {
     if (!workspace.grades.length) return 0;
-    const total = workspace.grades.reduce((sum, grade) => sum + getGradeFinalValue(grade), 0);
-    return total / workspace.grades.length;
+    const grouped = workspace.grades.reduce((acc, grade) => {
+        const subject = grade.subject || 'General';
+        acc[subject] = acc[subject] || [];
+        acc[subject].push(grade);
+        return acc;
+    }, {});
+    const subjectAverages = Object.values(grouped)
+        .map(grades => getSubjectGradeSummary(grades).average)
+        .filter(value => value !== null);
+    if (!subjectAverages.length) return 0;
+    return subjectAverages.reduce((sum, value) => sum + value, 0) / subjectAverages.length;
 }
 
 function getNextEvent(workspace) {
@@ -2198,14 +2207,87 @@ function formatGradeValue(value) {
     return numeric.toFixed(numeric % 1 === 0 ? 0 : 2).replace(/\.00$/, '');
 }
 
-function openGradeForm(gradeId = null) {
+const gradePeriods = [
+    { value: 'p1', label: 'Periodo 1' },
+    { value: 'p2', label: 'Periodo 2' },
+    { value: 'p3', label: 'Periodo 3' }
+];
+
+const gradeCategories = [
+    { value: 'partial1', label: 'Parcial 1' },
+    { value: 'partial2', label: 'Parcial 2' },
+    { value: 'exam', label: 'Examen del periodo' }
+];
+
+function getGradePeriod(grade) {
+    return grade?.period || 'p1';
+}
+
+function getGradeCategory(grade) {
+    if (grade?.category) return grade.category;
+    const text = `${grade?.evaluation || ''}`.toLowerCase();
+    if (text.includes('examen')) return 'exam';
+    if (text.includes('parcial 2') || text.includes('parcial dos')) return 'partial2';
+    return 'partial1';
+}
+
+function getGradeCategoryLabel(category) {
+    return gradeCategories.find(item => item.value === category)?.label || 'Parcial 1';
+}
+
+function getGradePeriodLabel(period) {
+    return gradePeriods.find(item => item.value === period)?.label || 'Periodo 1';
+}
+
+function averageNumbers(values) {
+    const valid = values.filter(value => value !== null && !Number.isNaN(Number(value)));
+    if (!valid.length) return null;
+    return valid.reduce((sum, value) => sum + Number(value), 0) / valid.length;
+}
+
+function getCategoryGrades(grades, period, category) {
+    return grades.filter(grade => getGradePeriod(grade) === period && getGradeCategory(grade) === category);
+}
+
+function getCategoryAverage(grades, period, category) {
+    const values = getCategoryGrades(grades, period, category).map(getGradeFinalValue);
+    return averageNumbers(values);
+}
+
+function calculatePeriodAverage(partial1, partial2, exam) {
+    const partialAverage = averageNumbers([partial1, partial2]);
+    if (partialAverage !== null && exam !== null) return partialAverage * 0.70 + exam * 0.30;
+    if (partialAverage !== null) return partialAverage;
+    if (exam !== null) return exam;
+    return null;
+}
+
+function getSubjectGradeSummary(grades) {
+    const periods = gradePeriods.map(period => {
+        const partial1 = getCategoryAverage(grades, period.value, 'partial1');
+        const partial2 = getCategoryAverage(grades, period.value, 'partial2');
+        const exam = getCategoryAverage(grades, period.value, 'exam');
+        const average = calculatePeriodAverage(partial1, partial2, exam);
+        return { ...period, partial1, partial2, exam, average };
+    });
+    const average = averageNumbers(periods.map(period => period.average));
+    return { periods, average };
+}
+
+function openGradeForm(gradeId = null, defaults = {}) {
     const workspace = loadWorkspace();
     const grade = workspace.grades.find(item => item.id === gradeId);
+    const selectedPeriod = grade ? getGradePeriod(grade) : (defaults.period || 'p1');
+    const selectedCategory = grade ? getGradeCategory(grade) : (defaults.category || 'partial1');
+    const selectedSubject = grade?.subject || defaults.subject || '';
+    const suggestedEvaluation = `${getGradeCategoryLabel(selectedCategory)} - ${getGradePeriodLabel(selectedPeriod)}`;
     const subjectOptions = getSubjectOptions(workspace).map(option => {
         const value = typeof option === 'string' ? option : option.value;
         const label = typeof option === 'string' ? option : option.label;
-        return `<option value="${escapeHTML(value)}" ${String(grade?.subject || '') === String(value) ? 'selected' : ''}>${escapeHTML(label)}</option>`;
+        return `<option value="${escapeHTML(value)}" ${String(selectedSubject) === String(value) ? 'selected' : ''}>${escapeHTML(label)}</option>`;
     }).join('');
+    const periodOptions = gradePeriods.map(option => `<option value="${option.value}" ${selectedPeriod === option.value ? 'selected' : ''}>${option.label}</option>`).join('');
+    const categoryOptions = gradeCategories.map(option => `<option value="${option.value}" ${selectedCategory === option.value ? 'selected' : ''}>${option.label}</option>`).join('');
     const items = getGradeItems(grade);
     const initialItems = items.length ? items : [{ activity: '', date: '', value: '' }];
 
@@ -2223,9 +2305,19 @@ function openGradeForm(gradeId = null) {
                     <span>Materia</span>
                     <select name="subject" required>${subjectOptions}</select>
                 </label>
+                <div class="grade-period-row">
+                    <label>
+                        <span>Periodo</span>
+                        <select name="period" required>${periodOptions}</select>
+                    </label>
+                    <label>
+                        <span>Tipo de nota</span>
+                        <select name="category" required>${categoryOptions}</select>
+                    </label>
+                </div>
                 <label>
                     <span>Grupo de calificacion</span>
-                    <input name="evaluation" value="${escapeHTML(grade?.evaluation || '')}" placeholder="Ej: Tarea 100% del Parcial 1" required>
+                    <input name="evaluation" value="${escapeHTML(grade?.evaluation || suggestedEvaluation)}" placeholder="Ej: Tarea 100% del Parcial 1" required>
                 </label>
                 <div class="grade-items-builder">
                     <div class="grade-items-head">
@@ -2314,6 +2406,8 @@ function openGradeForm(gradeId = null) {
         const fresh = loadWorkspace();
         const payload = {
             subject: form.subject.value,
+            period: form.period.value,
+            category: form.category.value,
             evaluation: form.evaluation.value.trim(),
             value,
             date: gradeItems[0]?.date || '',
@@ -2375,18 +2469,26 @@ function renderGrades(workspace) {
     }, {});
 
     const subjectRows = Object.entries(grouped).map(([subject, grades]) => {
-        const sortedGrades = [...grades].sort((a, b) => {
-            if (gradeSortMode === 'date') return (b.date || '').localeCompare(a.date || '');
-            if (gradeSortMode === 'high') return getGradeFinalValue(b) - getGradeFinalValue(a);
-            if (gradeSortMode === 'low') return getGradeFinalValue(a) - getGradeFinalValue(b);
-            return (a.evaluation || '').localeCompare(b.evaluation || '');
-        });
-        const subjectAverage = sortedGrades.reduce((sum, grade) => sum + getGradeFinalValue(grade), 0) / sortedGrades.length;
-        return { subject, grades: sortedGrades, average: subjectAverage };
+        const summary = getSubjectGradeSummary(grades);
+        return { subject, grades, summary, average: summary.average };
     }).sort((a, b) => a.subject.localeCompare(b.subject));
 
-    if (gradeSortMode === 'high') subjectRows.sort((a, b) => b.average - a.average);
-    if (gradeSortMode === 'low') subjectRows.sort((a, b) => a.average - b.average);
+    if (gradeSortMode === 'high') subjectRows.sort((a, b) => (b.average || 0) - (a.average || 0));
+    if (gradeSortMode === 'low') subjectRows.sort((a, b) => (a.average || 0) - (b.average || 0));
+
+    const renderCell = (row, period, category = null) => {
+        const value = category ? getCategoryAverage(row.grades, period.value, category) : period.average;
+        const grades = category ? getCategoryGrades(row.grades, period.value, category) : [];
+        const status = value === null ? 'empty' : getGradeStatus(value).replace(' ', '-');
+        const label = category ? getGradeCategoryLabel(category) : period.label;
+        const title = category ? `${row.subject} - ${period.label} - ${label}` : `${row.subject} - ${period.label}`;
+        return `
+            <button class="period-grade-cell ${status}" type="button" data-grade-add="true" data-subject="${escapeHTML(row.subject)}" data-period="${escapeHTML(period.value)}" data-category="${escapeHTML(category || 'partial1')}" title="${escapeHTML(title)}">
+                <strong>${value === null ? '--' : formatGradeValue(value)}</strong>
+                <span>${category ? (grades.length ? `${grades.length} nota${grades.length === 1 ? '' : 's'}` : 'Agregar') : 'Periodo'}</span>
+            </button>
+        `;
+    };
 
     container.innerHTML = `
         <div class="grades-toolbar">
@@ -2394,55 +2496,50 @@ function renderGrades(workspace) {
                 <strong>Promedio general: ${average.toFixed(2)}</strong>
                 <span class="grade-status ${getGradeStatus(average).replace(' ', '-')}">${getGradeStatus(average)}</span>
             </div>
+            <div class="grade-formula-note">Formula: promedio de parciales 70% + examen 30%.</div>
             <select onchange="setGradeSort(this.value)">
                 <option value="subject" ${gradeSortMode === 'subject' ? 'selected' : ''}>Ordenar por materia</option>
-                <option value="date" ${gradeSortMode === 'date' ? 'selected' : ''}>Ordenar por fecha</option>
-                <option value="high" ${gradeSortMode === 'high' ? 'selected' : ''}>Nota mayor</option>
-                <option value="low" ${gradeSortMode === 'low' ? 'selected' : ''}>Nota menor</option>
+                <option value="high" ${gradeSortMode === 'high' ? 'selected' : ''}>Promedio mayor</option>
+                <option value="low" ${gradeSortMode === 'low' ? 'selected' : ''}>Promedio menor</option>
             </select>
         </div>
-        <div class="gradebook-panel">
-            <div class="gradebook-header">
-                <span>Materia</span>
-                <span>Calificaciones registradas</span>
-                <span>Promedio</span>
-            </div>
-            <div class="gradebook-body">
+        <div class="period-gradebook-panel">
+            <div class="period-gradebook-table">
+                <div class="period-head subject-head">Asignatura</div>
+                <div class="period-head average-head">Promedio</div>
+                ${gradePeriods.map(period => `
+                    <div class="period-head period-average-head">${escapeHTML(period.label)}</div>
+                    <div class="period-head partial-head">Parcial 1</div>
+                    <div class="period-head partial-head">Parcial 2</div>
+                    <div class="period-head exam-head">Examen</div>
+                `).join('')}
                 ${subjectRows.map(row => `
-                    <div class="gradebook-row">
-                        <div class="gradebook-subject">
-                            <strong>${escapeHTML(row.subject)}</strong>
-                            <small>${row.grades.length} ${row.grades.length === 1 ? 'calificacion' : 'calificaciones'}</small>
-                        </div>
-                        <div class="gradebook-scores">
-                            ${row.grades.map(grade => {
-                                const items = getGradeItems(grade);
-                                const value = getGradeFinalValue(grade);
-                                const status = getGradeStatus(value).replace(' ', '-');
-                                const itemLabel = items.length === 1 ? '1 actividad' : `${items.length} actividades`;
-                                return `
-                                    <div class="gradebook-score ${status} ${items.length > 1 ? 'has-items' : ''}" title="${escapeHTML(grade.evaluation || 'Calificacion')} - ${escapeHTML(itemLabel)}">
-                                        <button class="score-action score-edit" data-grade-edit="${escapeHTML(grade.id)}" aria-label="Editar calificacion">Editar</button>
-                                        <span class="score-value">${formatGradeValue(value)}</span>
-                                        <span class="score-label">${escapeHTML(grade.evaluation || 'Nota')}</span>
-                                        <span class="score-count">${escapeHTML(itemLabel)}</span>
-                                        <button class="score-action score-delete" data-grade-delete="${escapeHTML(grade.id)}" aria-label="Eliminar calificacion">Eliminar</button>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                        <div class="gradebook-average">
-                            <strong>${row.average.toFixed(2)}</strong>
-                            <span class="grade-status ${getGradeStatus(row.average).replace(' ', '-')}">${getGradeStatus(row.average)}</span>
-                        </div>
+                    <div class="period-subject-cell">
+                        <strong>${escapeHTML(row.subject)}</strong>
+                        <small>${row.grades.length} ${row.grades.length === 1 ? 'calificacion' : 'calificaciones'}</small>
                     </div>
+                    <div class="period-average-cell ${row.average === null ? 'empty' : getGradeStatus(row.average).replace(' ', '-')}">
+                        <strong>${row.average === null ? '--' : row.average.toFixed(2)}</strong>
+                        <span>${row.average === null ? 'Sin datos' : getGradeStatus(row.average)}</span>
+                    </div>
+                    ${row.summary.periods.map(period => `
+                        ${renderCell(row, period)}
+                        ${renderCell(row, period, 'partial1')}
+                        ${renderCell(row, period, 'partial2')}
+                        ${renderCell(row, period, 'exam')}
+                    `).join('')}
                 `).join('')}
             </div>
         </div>
     `;
 
-    container.querySelectorAll('[data-grade-edit]').forEach(button => button.addEventListener('click', () => openGradeForm(button.dataset.gradeEdit)));
-    container.querySelectorAll('[data-grade-delete]').forEach(button => button.addEventListener('click', () => deleteGrade(button.dataset.gradeDelete)));
+    container.querySelectorAll('[data-grade-add]').forEach(button => {
+        button.addEventListener('click', () => openGradeForm(null, {
+            subject: button.dataset.subject,
+            period: button.dataset.period,
+            category: button.dataset.category
+        }));
+    });
 }
 function addResourceUI() {
     openResourceForm();

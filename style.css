@@ -8014,3 +8014,205 @@ body.light-theme #dashboard .progress-bar {
         width: 100%;
     }
 }
+
+/* Libreta por periodos en Calificaciones */
+.grade-formula-note {
+    padding: 8px 12px;
+    border: 1px solid rgba(73, 204, 249, 0.22);
+    border-radius: 999px;
+    background: rgba(73, 204, 249, 0.09);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.period-gradebook-panel {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid rgba(73, 204, 249, 0.24);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.035);
+    box-shadow: 0 20px 46px rgba(0, 0, 0, 0.18);
+}
+
+.period-gradebook-table {
+    display: grid;
+    grid-template-columns: minmax(190px, 230px) 104px repeat(12, 92px);
+    min-width: 1438px;
+}
+
+.period-head,
+.period-subject-cell,
+.period-average-cell,
+.period-grade-cell {
+    min-height: 74px;
+    border-right: 1px solid rgba(255, 255, 255, 0.10);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.period-head {
+    display: grid;
+    place-items: center;
+    padding: 10px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 950;
+    text-align: center;
+    line-height: 1.15;
+    text-transform: uppercase;
+}
+
+.subject-head {
+    justify-items: start;
+    padding-left: 18px;
+    background: rgba(15, 23, 42, 0.42);
+}
+
+.average-head {
+    background: linear-gradient(135deg, #64748b, #334155);
+}
+
+.period-average-head {
+    background: linear-gradient(135deg, #2f80d2, #2563eb);
+}
+
+.partial-head {
+    background: linear-gradient(135deg, #78a967, #5f9b4d);
+}
+
+.exam-head {
+    background: linear-gradient(135deg, #e06b55, #d94f3d);
+}
+
+.period-subject-cell {
+    display: grid;
+    align-content: center;
+    gap: 5px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.period-subject-cell strong {
+    color: #ffffff;
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.period-subject-cell small {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.period-average-cell,
+.period-grade-cell {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 4px;
+    padding: 10px 6px;
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.period-grade-cell {
+    border-top: 0;
+    border-left: 0;
+    cursor: pointer;
+    transition: background 160ms ease, transform 160ms ease;
+}
+
+.period-grade-cell:hover {
+    background: rgba(73, 204, 249, 0.12);
+}
+
+.period-average-cell strong,
+.period-grade-cell strong {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 950;
+    line-height: 1;
+}
+
+.period-average-cell span,
+.period-grade-cell span {
+    color: var(--text-tertiary);
+    font-size: 10px;
+    font-weight: 850;
+    line-height: 1.2;
+}
+
+.period-grade-cell.empty strong {
+    color: rgba(226, 232, 240, 0.34);
+}
+
+.period-grade-cell.empty span {
+    color: #49ccf9;
+}
+
+.period-average-cell.reprobado strong,
+.period-grade-cell.reprobado strong {
+    color: #ff7b7b;
+}
+
+.period-average-cell.aprobado strong,
+.period-average-cell.excelente strong,
+.period-grade-cell.aprobado strong,
+.period-grade-cell.excelente strong {
+    color: #eaf3ff;
+}
+
+.grade-period-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+body.light-theme .grade-formula-note {
+    background: #eef6ff;
+    border-color: rgba(14, 165, 233, 0.22);
+    color: #475569;
+}
+
+body.light-theme .period-gradebook-panel {
+    background: #ffffff;
+    border-color: rgba(71, 85, 105, 0.16);
+    box-shadow: 0 20px 44px rgba(15, 23, 42, 0.10);
+}
+
+body.light-theme .period-head,
+body.light-theme .period-subject-cell,
+body.light-theme .period-average-cell,
+body.light-theme .period-grade-cell {
+    border-color: rgba(15, 23, 42, 0.10);
+}
+
+body.light-theme .period-subject-cell,
+body.light-theme .period-average-cell,
+body.light-theme .period-grade-cell {
+    background: #ffffff;
+}
+
+body.light-theme .period-subject-cell strong,
+body.light-theme .period-average-cell strong,
+body.light-theme .period-grade-cell.aprobado strong,
+body.light-theme .period-grade-cell.excelente strong {
+    color: #172033;
+}
+
+body.light-theme .period-subject-cell small,
+body.light-theme .period-average-cell span,
+body.light-theme .period-grade-cell span {
+    color: #64748b;
+}
+
+body.light-theme .period-grade-cell:hover {
+    background: #eef6ff;
+}
+
+@media (max-width: 700px) {
+    .grade-period-row {
+        grid-template-columns: 1fr;
+    }
+}
