@@ -8295,6 +8295,15 @@ body.light-theme .grade-bucket-item {
 }
 
 /* Fondo animado para login y registro */
+#login-page,
+#register-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 12% 26%, rgba(123, 104, 238, 0.34), transparent 18%),
+        radial-gradient(circle at 86% 24%, rgba(73, 204, 249, 0.28), transparent 20%),
+        linear-gradient(125deg, #18054c 0%, #232065 42%, #1057e7 100%) !important;
+}
+
 #login-page .auth-container,
 #register-page .auth-container {
     position: relative;
@@ -8307,6 +8316,113 @@ body.light-theme .grade-bucket-item {
         radial-gradient(circle at 86% 24%, rgba(73, 204, 249, 0.28), transparent 20%),
         radial-gradient(circle at 62% 78%, rgba(253, 113, 175, 0.22), transparent 18%),
         linear-gradient(125deg, #18054c 0%, #232065 42%, #1057e7 100%) !important;
+}
+
+#login-page .auth-bg-scene,
+#register-page .auth-bg-scene {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+#login-page .auth-star,
+#register-page .auth-star {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: 0 0 18px rgba(73, 204, 249, 0.72);
+    animation: authTwinkle 3s ease-in-out infinite;
+}
+
+#login-page .star-a,
+#register-page .star-a {
+    left: 13%;
+    top: 21%;
+}
+
+#login-page .star-b,
+#register-page .star-b {
+    right: 18%;
+    top: 29%;
+    animation-delay: 0.8s;
+}
+
+#login-page .star-c,
+#register-page .star-c {
+    left: 72%;
+    bottom: 18%;
+    animation-delay: 1.5s;
+}
+
+#login-page .auth-planet,
+#register-page .auth-planet {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(0.2px);
+    opacity: 0.72;
+    animation: authOrbitFloat 9s ease-in-out infinite;
+}
+
+#login-page .planet-left,
+#register-page .planet-left {
+    left: 5%;
+    top: 42%;
+    width: 150px;
+    height: 150px;
+    background:
+        radial-gradient(circle at 38% 34%, rgba(255, 255, 255, 0.34), transparent 28%),
+        radial-gradient(circle, rgba(123, 104, 238, 0.68) 0 44%, rgba(73, 204, 249, 0.16) 46% 58%, transparent 60%);
+}
+
+#login-page .planet-right,
+#register-page .planet-right {
+    right: 8%;
+    top: 38%;
+    width: 126px;
+    height: 126px;
+    border-radius: 28px;
+    background:
+        linear-gradient(135deg, rgba(73, 204, 249, 0.22), rgba(123, 104, 238, 0.54)),
+        rgba(255, 255, 255, 0.08);
+    transform: rotate(16deg);
+    animation-delay: 1s;
+}
+
+#login-page .auth-floating-card,
+#register-page .auth-floating-card {
+    position: absolute;
+    width: 132px;
+    height: 94px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(12px);
+    animation: authCardDrift 8s ease-in-out infinite;
+}
+
+#login-page .float-books,
+#register-page .float-books {
+    left: 18%;
+    bottom: 13%;
+    background:
+        linear-gradient(135deg, #b5ff71, #49ccf9) 28px 22px / 42px 50px no-repeat,
+        linear-gradient(135deg, #fd71af, #7b68ee) 58px 34px / 42px 44px no-repeat,
+        rgba(255, 255, 255, 0.10);
+}
+
+#login-page .float-ai,
+#register-page .float-ai {
+    right: 20%;
+    bottom: 14%;
+    background:
+        radial-gradient(circle at 50% 47%, #ffffff 0 22px, transparent 23px),
+        linear-gradient(135deg, #7b68ee, #49ccf9);
+    animation-delay: 1.3s;
 }
 
 #login-page .auth-container::before,
@@ -8344,7 +8460,7 @@ body.light-theme .grade-bucket-item {
 #login-page .auth-card,
 #register-page .auth-card {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     width: min(440px, 100%);
     max-width: 440px !important;
     padding: 34px !important;
@@ -8443,6 +8559,14 @@ body.light-theme #register-page .auth-container {
         linear-gradient(125deg, #eef2ff 0%, #e0f7ff 48%, #dbeafe 100%) !important;
 }
 
+body.light-theme #login-page,
+body.light-theme #register-page {
+    background:
+        radial-gradient(circle at 12% 26%, rgba(123, 104, 238, 0.18), transparent 18%),
+        radial-gradient(circle at 86% 24%, rgba(73, 204, 249, 0.20), transparent 20%),
+        linear-gradient(125deg, #eef2ff 0%, #e0f7ff 48%, #dbeafe 100%) !important;
+}
+
 body.light-theme #login-page .auth-card,
 body.light-theme #register-page .auth-card {
     background: rgba(255, 255, 255, 0.86) !important;
@@ -8497,6 +8621,35 @@ body.light-theme #register-page .form-group input {
     }
     50% {
         transform: translateY(14px) rotate(6deg);
+    }
+}
+
+@keyframes authTwinkle {
+    0%, 100% {
+        opacity: 0.28;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.25);
+    }
+}
+
+@keyframes authOrbitFloat {
+    0%, 100% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    50% {
+        transform: translate3d(18px, -16px, 0) rotate(8deg);
+    }
+}
+
+@keyframes authCardDrift {
+    0%, 100% {
+        transform: translate3d(0, 0, 0) rotate(-4deg);
+    }
+    50% {
+        transform: translate3d(0, -18px, 0) rotate(4deg);
     }
 }
 
