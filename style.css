@@ -9174,7 +9174,141 @@ body.light-theme .tutor-composer {
         max-width: 100%;
     }
 
-    .tutor-composer-bar {
+.tutor-composer-bar {
         flex-wrap: wrap;
     }
+}
+
+/* Limpieza de iconos: evita emojis rotos por codificacion */
+.theme-toggle::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: block;
+    background: #eaf6ff;
+    box-shadow: inset -6px -4px 0 #86b8ff;
+}
+
+body.light-theme .theme-toggle::before {
+    background: #ffc800;
+    box-shadow: 0 0 0 5px rgba(255, 200, 0, 0.18);
+}
+
+.feature-icon {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+}
+
+.feature-icon::before {
+    content: "";
+    width: 15px;
+    height: 8px;
+    border-left: 3px solid #ffffff;
+    border-bottom: 3px solid #ffffff;
+    transform: rotate(-45deg);
+}
+
+.benefit-card:nth-child(1) .benefit-icon::before,
+.benefit-card:nth-child(2) .benefit-icon::before,
+.benefit-card:nth-child(3) .benefit-icon::before,
+.benefit-card:nth-child(4) .benefit-icon::before {
+    content: "";
+    display: block;
+    width: 30px;
+    height: 30px;
+    margin: auto;
+}
+
+.benefit-card:nth-child(1) .benefit-icon::before {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #7b68ee 0 45%, #49ccf9 46%);
+    box-shadow: 10px 8px 0 rgba(253, 113, 175, 0.75);
+}
+
+.benefit-card:nth-child(2) .benefit-icon::before {
+    border-radius: 999px 999px 12px 12px;
+    background:
+        radial-gradient(circle at 35% 48%, #111827 0 8%, transparent 9%),
+        radial-gradient(circle at 65% 48%, #111827 0 8%, transparent 9%),
+        linear-gradient(135deg, #ffffff 0 62%, #49ccf9 63%);
+}
+
+.benefit-card:nth-child(3) .benefit-icon::before {
+    border-radius: 8px;
+    background:
+        linear-gradient(#49ccf9 0 18%, transparent 19%),
+        linear-gradient(90deg, transparent 31%, rgba(123, 104, 238, 0.75) 32% 38%, transparent 39% 63%, rgba(123, 104, 238, 0.75) 64% 70%, transparent 71%),
+        #ffffff;
+}
+
+.benefit-card:nth-child(4) .benefit-icon::before {
+    clip-path: polygon(50% 0, 62% 34%, 98% 34%, 68% 55%, 80% 92%, 50% 70%, 20% 92%, 32% 55%, 2% 34%, 38% 34%);
+    background: linear-gradient(135deg, #ffc800, #fd71af);
+}
+
+.nav-icon-menu::before,
+.nav-icon-subjects::before,
+.nav-icon-tasks::before,
+.nav-icon-calendar::before,
+.nav-icon-grades::before,
+.nav-icon-attendance::before,
+.nav-icon-progress::before,
+.nav-icon-backpack::before,
+.nav-icon-profile::before {
+    content: "";
+    display: block;
+    width: 20px;
+    height: 20px;
+}
+
+.nav-icon-menu::before {
+    border-radius: 6px;
+    background: linear-gradient(135deg, #fd71af 0 45%, #49ccf9 46%);
+}
+
+.nav-icon-subjects::before {
+    border-radius: 5px;
+    background: #90f28a;
+    box-shadow: 7px 5px 0 #fd71af, 12px 9px 0 #49ccf9;
+}
+
+.nav-icon-tasks::before {
+    width: 16px;
+    height: 9px;
+    border-left: 4px solid #ffffff;
+    border-bottom: 4px solid #ffffff;
+    transform: rotate(-45deg);
+}
+
+.nav-icon-calendar::before,
+.nav-icon-attendance::before {
+    border-radius: 6px;
+    background: linear-gradient(#49ccf9 0 25%, #ffffff 26%);
+}
+
+.nav-icon-grades::before {
+    border-radius: 5px;
+    background:
+        linear-gradient(90deg, #00c875 0 22%, transparent 23% 38%, #49ccf9 39% 61%, transparent 62% 76%, #fd71af 77%),
+        #ffffff;
+}
+
+.nav-icon-progress::before {
+    clip-path: polygon(50% 0, 62% 34%, 98% 34%, 68% 55%, 80% 92%, 50% 70%, 20% 92%, 32% 55%, 2% 34%, 38% 34%);
+    background: #ffc800;
+}
+
+.nav-icon-backpack::before {
+    border-radius: 7px 7px 9px 9px;
+    background: linear-gradient(135deg, #fd71af, #7b68ee);
+    box-shadow: inset 0 5px 0 rgba(255, 255, 255, 0.45);
+}
+
+.nav-icon-profile::before {
+    border-radius: 999px 999px 8px 8px;
+    background:
+        radial-gradient(circle at 50% 28%, #ffffff 0 22%, transparent 23%),
+        linear-gradient(135deg, #7b68ee, #49ccf9);
 }

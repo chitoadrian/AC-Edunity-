@@ -1,5 +1,5 @@
 /* ============================================
-   AC STUDY - LÃ“GICA PRINCIPAL
+   AC STUDY - LOGICA PRINCIPAL
    JavaScript puro - Funcionalidades SPA
    ============================================ */
 
@@ -187,17 +187,17 @@ function renderQuickField(field) {
 }
 
 // ============================================
-// INICIALIZACIÃ“N
+// INICIALIZACION
 // ============================================
 
 function initializeApp() {
     // Cargar tema guardado
     if (isDarkTheme) {
         document.body.classList.remove('light-theme');
-        updateThemeIcon('ðŸŒ™');
+        updateThemeIcon('theme');
     } else {
         document.body.classList.add('light-theme');
-        updateThemeIcon('â˜€ï¸');
+        updateThemeIcon('theme');
     }
 
     // Al abrir el link publico siempre se muestra primero el menu principal.
@@ -216,23 +216,23 @@ function initializeApp() {
 }
 
 // ============================================
-// NAVEGACIÃ“N DE PÃGINAS
+// NAVEGACION DE PAGINAS
 // ============================================
 
 function showPage(pageId) {
     const selectedPage = document.getElementById(pageId);
     if (!selectedPage) return;
 
-    // Ocultar todas las pÃ¡ginas
+    // Ocultar todas las paginas
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
 
-    // Mostrar pÃ¡gina seleccionada
+    // Mostrar pagina seleccionada
     selectedPage.classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Si es la app, mostrar la secciÃ³n por defecto
+    // Si es la app, mostrar la seccion por defecto
     if (pageId === 'app-page' && !currentUser) {
         showLanding();
     }
@@ -268,7 +268,7 @@ function updateDashboardGreeting() {
     const dashboardTitle = document.querySelector('#dashboard .section-header h1');
     if (dashboardTitle) {
         const firstName = currentUser?.name ? currentUser.name.split(' ')[0] : 'Adrian';
-        dashboardTitle.textContent = `Hola ${firstName} ðŸ‘‹`;
+        dashboardTitle.textContent = `Hola ${firstName}`;
     }
 
     updateProfileInfo();
@@ -294,7 +294,7 @@ function updateProfileInfo() {
 }
 
 // ============================================
-// AUTENTICACIÃ“N
+// AUTENTICACION
 // ============================================
 
 function handleLogin(event) {
@@ -372,7 +372,7 @@ function handleLogout() {
 }
 
 // ============================================
-// NAVEGACIÃ“N SPA
+// NAVEGACION SPA
 // ============================================
 
 function navigateTo(sectionId, evt) {
@@ -388,7 +388,7 @@ function navigateTo(sectionId, evt) {
         item.classList.remove('active');
     });
 
-    // Agregar clase active a la secciÃ³n seleccionada
+    // Agregar clase active a la seccion seleccionada
     const section = document.getElementById(sectionId);
     if (section) {
         section.classList.add('active');
@@ -422,11 +422,11 @@ function toggleTheme() {
     if (isDarkTheme) {
         document.body.classList.remove('light-theme');
         localStorage.setItem('theme', 'dark');
-        updateThemeIcon('ðŸŒ™');
+        updateThemeIcon('theme');
     } else {
         document.body.classList.add('light-theme');
         localStorage.setItem('theme', 'light');
-        updateThemeIcon('â˜€ï¸');
+        updateThemeIcon('theme');
     }
 }
 
@@ -482,7 +482,7 @@ function toggleTask(checkbox) {
 }
 
 function filterTasks(filter, button) {
-    // Actualizar botÃ³n activo
+    // Actualizar boton activo
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
@@ -510,7 +510,7 @@ function addTaskUI() {
         title: 'Nueva tarea',
         submitLabel: 'Crear tarea',
         fields: [
-            { name: 'topic', label: 'Tarea', placeholder: 'Ej: Resolver ejercicios de algebra' },
+            { name: 'topic', label: 'Tarea', placeholder: 'Ej: Resolver ejercicios' },
             { name: 'subject', label: 'Materia', placeholder: 'Ej: Matematica' }
         ],
         onSubmit: values => createTask(values.topic, values.subject)
@@ -535,7 +535,7 @@ function createTask(topic, subject) {
         <div class="task-content">
             <h4>${escapeHTML(topic)}</h4>
             <p class="task-subject">Materia: ${escapeHTML(subject)}</p>
-            <p class="task-date">Vence: PrÃ³ximamente</p>
+            <p class="task-date">Vence: Proximamente</p>
         </div>
         <div class="task-priority medium">Media</div>
     `;
@@ -566,7 +566,7 @@ function addSubjectUI() {
         title: 'Nueva materia',
         submitLabel: 'Crear materia',
         fields: [
-            { name: 'name', label: 'Nombre de la materia', placeholder: 'Ej: Quimica' },
+            { name: 'name', label: 'Nombre de la materia', placeholder: 'Ej: Matematica' },
             { name: 'tasks', label: 'Tareas pendientes', type: 'number', value: '0' }
         ],
         onSubmit: values => {
@@ -601,7 +601,7 @@ function renderSubjectCard(subject) {
     card.innerHTML = `
         <div class="subject-header">
             <h3>${escapeHTML(subject.name)}</h3>
-            <span class="subject-icon">ðŸ“˜</span>
+            <span class="subject-icon"></span>
         </div>
         <div class="subject-stats">
             <div class="stat">
@@ -620,7 +620,7 @@ function renderSubjectCard(subject) {
         <div class="progress-bar">
             <div class="progress-fill" style="width: ${subject.progress}%; background: linear-gradient(90deg, #7c3aed, #06b6d4)"></div>
         </div>
-        <p class="last-activity">Ãšltima actividad: creada por el estudiante</p>
+        <p class="last-activity">Ultima actividad: creada por el estudiante</p>
         <button class="btn-secondary btn-small" type="button">Acceder</button>
     `;
 
@@ -691,10 +691,10 @@ function addGrade(event) {
 
     // Encontrar la tarjeta de la materia y agregar la nota
     const subjectEmojis = {
-        'MatemÃ¡tica': 'ðŸ“',
-        'FÃ­sica': 'âš›ï¸',
-        'ProgramaciÃ³n': 'ðŸ’»',
-        'InglÃ©s': 'ðŸŒ'
+        'Matematica': '',
+        'Fisica': '',
+        'Programacion': '',
+        'Ingles': ''
     };
 
     const gradeCard = Array.from(document.querySelectorAll('.grade-card')).find(card => {
@@ -751,21 +751,21 @@ function generateSummary() {
     }
 
     const summaries = {
-        default: `ðŸ“š Resumen de: ${topic}\n\n` +
+        default: ` Resumen de: ${topic}\n\n` +
             `Este es un resumen generado simuladamente sobre "${topic}".\n\n` +
             `Puntos principales:\n` +
-            `â€¢ DefiniciÃ³n: ExplicaciÃ³n detallada del concepto\n` +
-            `â€¢ CaracterÃ­sticas: Propiedades principales del tema\n` +
-            `â€¢ Aplicaciones: Usos prÃ¡cticos en la vida real\n` +
-            `â€¢ Ejemplos: Casos de estudio relevantes\n` +
-            `â€¢ Importancia: Por quÃ© es importante aprender esto\n\n` +
+            ` Definicion: Explicacion detallada del concepto\n` +
+            ` Caracteristicas: Propiedades principales del tema\n` +
+            ` Aplicaciones: Usos practicos en la vida real\n` +
+            ` Ejemplos: Casos de estudio relevantes\n` +
+            ` Importancia: Por que es importante aprender esto\n\n` +
             `Este resumen fue generado para ayudarte a estudiar de manera eficiente. ` +
             `Utiliza este contenido como base para tu aprendizaje.`
     };
 
     const summary = summaries.default;
 
-    showAIResult('ðŸ“ Resumen Generado', summary);
+    showAIResult(' Resumen Generado', summary);
 }
 
 function generateQuestions() {
@@ -776,19 +776,19 @@ function generateQuestions() {
         return;
     }
 
-    const questions = `â“ Preguntas de PrÃ¡ctica: ${topic}\n\n` +
-        `1. Â¿CuÃ¡les son los conceptos principales de ${topic}?\n` +
-        `   Respuesta: [Tu respuesta aquÃ­]\n\n` +
-        `2. Â¿CÃ³mo se aplica ${topic} en la prÃ¡ctica?\n` +
-        `   Respuesta: [Tu respuesta aquÃ­]\n\n` +
-        `3. Â¿CuÃ¡les son los errores comunes al estudiar ${topic}?\n` +
-        `   Respuesta: [Tu respuesta aquÃ­]\n\n` +
-        `4. Explica la relaciÃ³n entre ${topic} y otros temas relacionados.\n` +
-        `   Respuesta: [Tu respuesta aquÃ­]\n\n` +
-        `5. Â¿Por quÃ© es importante dominar ${topic}?\n` +
-        `   Respuesta: [Tu respuesta aquÃ­]`;
+    const questions = ` Preguntas de Practica: ${topic}\n\n` +
+        `1. Cuales son los conceptos principales de ${topic}?\n` +
+        `   Respuesta: [Tu respuesta aqui]\n\n` +
+        `2. Como se aplica ${topic} en la practica?\n` +
+        `   Respuesta: [Tu respuesta aqui]\n\n` +
+        `3. Cuales son los errores comunes al estudiar ${topic}?\n` +
+        `   Respuesta: [Tu respuesta aqui]\n\n` +
+        `4. Explica la relacion entre ${topic} y otros temas relacionados.\n` +
+        `   Respuesta: [Tu respuesta aqui]\n\n` +
+        `5. Por que es importante dominar ${topic}?\n` +
+        `   Respuesta: [Tu respuesta aqui]`;
 
-    showAIResult('â“ Preguntas Generadas', questions);
+    showAIResult(' Preguntas Generadas', questions);
 }
 
 function generateFlashcards() {
@@ -799,36 +799,36 @@ function generateFlashcards() {
         return;
     }
 
-    const flashcards = `ðŸŽ´ Flashcards para ${topic}\n\n` +
-        `â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”\n` +
-        `â”‚ TARJETA 1                       â”‚\n` +
-        `â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤\n` +
-        `â”‚ PREGUNTA:                       â”‚\n` +
-        `â”‚ Â¿QuÃ© es ${topic}?               â”‚\n` +
-        `â”‚                                 â”‚\n` +
-        `â”‚ RESPUESTA (Voltea):             â”‚\n` +
-        `â”‚ DefiniciÃ³n detallada...         â”‚\n` +
-        `â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜\n\n` +
-        `â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”\n` +
-        `â”‚ TARJETA 2                       â”‚\n` +
-        `â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤\n` +
-        `â”‚ PREGUNTA:                       â”‚\n` +
-        `â”‚ CaracterÃ­sticas de ${topic}      â”‚\n` +
-        `â”‚                                 â”‚\n` +
-        `â”‚ RESPUESTA (Voltea):             â”‚\n` +
-        `â”‚ Listar caracterÃ­sticas clave... â”‚\n` +
-        `â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜\n\n` +
-        `â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”\n` +
-        `â”‚ TARJETA 3                       â”‚\n` +
-        `â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤\n` +
-        `â”‚ PREGUNTA:                       â”‚\n` +
-        `â”‚ Aplicaciones prÃ¡cticas          â”‚\n` +
-        `â”‚                                 â”‚\n` +
-        `â”‚ RESPUESTA (Voltea):             â”‚\n` +
-        `â”‚ Ejemplos de uso...              â”‚\n` +
-        `â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜`;
+    const flashcards = ` Flashcards para ${topic}\n\n` +
+        `\n` +
+        ` TARJETA 1                       \n` +
+        `\n` +
+        ` PREGUNTA:                       \n` +
+        ` Que es ${topic}?               \n` +
+        `                                 \n` +
+        ` RESPUESTA (Voltea):             \n` +
+        ` Definicion detallada...         \n` +
+        `\n\n` +
+        `\n` +
+        ` TARJETA 2                       \n` +
+        `\n` +
+        ` PREGUNTA:                       \n` +
+        ` Caracteristicas de ${topic}      \n` +
+        `                                 \n` +
+        ` RESPUESTA (Voltea):             \n` +
+        ` Listar caracteristicas clave... \n` +
+        `\n\n` +
+        `\n` +
+        ` TARJETA 3                       \n` +
+        `\n` +
+        ` PREGUNTA:                       \n` +
+        ` Aplicaciones practicas          \n` +
+        `                                 \n` +
+        ` RESPUESTA (Voltea):             \n` +
+        ` Ejemplos de uso...              \n` +
+        ``;
 
-    showAIResult('ðŸŽ´ Flashcards Generadas', flashcards);
+    showAIResult(' Flashcards Generadas', flashcards);
 }
 
 function showAIResult(title, content) {
@@ -878,7 +878,7 @@ function addCalendarEventUI() {
         title: 'Nuevo evento',
         submitLabel: 'Agregar evento',
         fields: [
-            { name: 'title', label: 'Evento academico', placeholder: 'Ej: Exposicion de proyecto' },
+            { name: 'title', label: 'Evento academico', placeholder: 'Ej: Examen de Matematica' },
             { name: 'day', label: 'Dia del mes', type: 'number', value: '18' },
             { name: 'type', label: 'Tipo', value: 'exposicion' },
             { name: 'time', label: 'Hora o detalle', value: 'Por definir' }
@@ -965,22 +965,22 @@ function generateCalendar() {
             <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
     `;
 
-    // DÃ­as de la semana
-    const days = ['Dom', 'Lun', 'Mar', 'MiÃ©', 'Jue', 'Vie', 'SÃ¡b'];
+    // Dias de la semana
+    const days = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
     days.forEach(day => {
         html += `<div style="text-align: center; font-size: 11px; font-weight: 600; color: var(--text-secondary); padding: 8px 0;">${day}</div>`;
     });
 
-    // DÃ­as del mes
+    // Dias del mes
     const firstDay = new Date(2026, 5, 1).getDay();
     const daysInMonth = 30;
 
-    // Espacios vacÃ­os antes del primer dÃ­a
+    // Espacios vacios antes del primer dia
     for (let i = 0; i < firstDay; i++) {
         html += `<div style="padding: 8px; text-align: center; font-size: 12px; color: var(--text-tertiary);">-</div>`;
     }
 
-    // DÃ­as del mes
+    // Dias del mes
     for (let day = 1; day <= daysInMonth; day++) {
         const isToday = day === 5;
         const hasEvent = [8, 10, 12, 15, 20].includes(day);
@@ -1197,17 +1197,17 @@ function renderDashboard(workspace) {
 
     section.innerHTML = `
         <div class="section-header">
-            <h1>Hola ${escapeHTML(firstName)} ðŸ‘‹</h1>
+            <h1>Hola ${escapeHTML(firstName)}</h1>
             <p class="subtitle">${isEmpty ? 'Bienvenido a AC Study. Empieza creando tu primera materia.' : 'Este es el resumen actualizado de tu espacio academico.'}</p>
         </div>
 
         <div class="dashboard-grid">
-            ${dashboardCard('ðŸ“š', 'Materias Activas', workspace.subjects.length, workspace.subjects.length ? 'Materias creadas por ti' : 'Sin materias todavia', workspace.subjects.length ? 100 : 0)}
-            ${dashboardCard('âœ“', 'Tareas Pendientes', pending, `${completed} completadas`, workspace.tasks.length ? Math.round((completed / workspace.tasks.length) * 100) : 0)}
-            ${dashboardCard('ðŸ“…', 'Proximo Evento', nextEvent ? nextEvent.title : 'Sin eventos', nextEvent ? `${nextEvent.day} - ${nextEvent.type}` : 'Agenda tu primer examen o entrega', nextEvent ? 70 : 0)}
-            ${dashboardCard('ðŸ“Š', 'Promedio Actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} notas registradas` : 'Aun no hay notas', average ? average * 10 : 0)}
-            ${dashboardCard('âš¡', 'XP Acumulado', workspace.xp || 0, `Nivel ${level}`, Math.min(100, ((workspace.xp || 0) % 250) / 2.5))}
-            ${dashboardCard('ðŸ”¥', 'Racha de Estudio', workspace.streak || 0, 'dias activos', workspace.streak ? 100 : 0)}
+            ${dashboardCard('subjects', 'Materias Activas', workspace.subjects.length, workspace.subjects.length ? 'Materias creadas por ti' : 'Sin materias todavia', workspace.subjects.length ? 100 : 0)}
+            ${dashboardCard('tasks', 'Tareas Pendientes', pending, `${completed} completadas`, workspace.tasks.length ? Math.round((completed / workspace.tasks.length) * 100) : 0)}
+            ${dashboardCard('calendar', 'Proximo Evento', nextEvent ? nextEvent.title : 'Sin eventos', nextEvent ? `${nextEvent.day} - ${nextEvent.type}` : 'Agenda tu primer examen o entrega', nextEvent ? 70 : 0)}
+            ${dashboardCard('grades', 'Promedio Actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} notas registradas` : 'Aun no hay notas', average ? average * 10 : 0)}
+            ${dashboardCard('xp', 'XP Acumulado', workspace.xp || 0, `Nivel ${level}`, Math.min(100, ((workspace.xp || 0) % 250) / 2.5))}
+            ${dashboardCard('streak', 'Racha de Estudio', workspace.streak || 0, 'dias activos', workspace.streak ? 100 : 0)}
             ${dashboardCard('AI', 'Recomendacion IA', workspace.resources.length ? 'Repasa un PDF' : 'Sube un apunte', workspace.resources.length ? 'Tutor puede crear cuestionarios' : 'Sube tus apuntes y estudia con ayuda de Tutor', workspace.resources.length ? 85 : 25)}
         </div>
 
@@ -1259,7 +1259,7 @@ function dashboardCard(icon, label, value, subtext, progress) {
 function emptyStateHTML(message, buttonText, action) {
     return `
         <div class="empty-state">
-            <div class="empty-icon">ï¼‹</div>
+            <div class="empty-icon"></div>
             <h3>${escapeHTML(message)}</h3>
             <button class="btn-primary btn-small" onclick="${action}">${escapeHTML(buttonText)}</button>
         </div>
@@ -1302,7 +1302,7 @@ function renderSubjects(workspace) {
         const progress = taskCount ? Math.round((completed / taskCount) * 100) : 0;
         return `
             <div class="subject-card subject-custom">
-                <div class="subject-header"><h3>${escapeHTML(subject.name)}</h3><span class="subject-icon">ðŸ“˜</span></div>
+                <div class="subject-header"><h3>${escapeHTML(subject.name)}</h3><span class="subject-icon"></span></div>
                 <div class="subject-stats">
                     <div class="stat"><span class="stat-name">Progreso</span><span class="stat-num">${progress}%</span></div>
                     <div class="stat"><span class="stat-name">Tareas</span><span class="stat-num">${taskCount}</span></div>
@@ -1330,7 +1330,7 @@ function addTaskUI() {
         title: 'Agregar tarea',
         submitLabel: 'Guardar tarea',
         fields: [
-            { name: 'title', label: 'Tarea', placeholder: 'Ej: Resolver ejercicios' },
+            { name: 'title', label: 'Tarea', placeholder: 'Ej: Taller de funciones' },
             { name: 'subject', label: 'Materia', type: 'select', options: subjectOptions },
             { name: 'due', label: 'Fecha o detalle', value: 'Proximamente' }
         ],
@@ -1399,7 +1399,7 @@ function addCalendarEventUI() {
         title: 'Agendar evento',
         submitLabel: 'Guardar evento',
         fields: [
-            { name: 'title', label: 'Evento academico', placeholder: 'Ej: Examen de fisica' },
+            { name: 'title', label: 'Evento academico', placeholder: 'Ej: Examen de Matematica' },
             { name: 'day', label: 'Fecha o dia', value: 'Por definir' },
             { name: 'type', label: 'Tipo', type: 'select', options: eventTypeOptions },
             { name: 'time', label: 'Hora o detalle', value: 'Por definir' }
@@ -1652,7 +1652,7 @@ function addResourceUI() {
         title: 'Subir apunte simulado',
         submitLabel: 'Guardar apunte',
         fields: [
-            { name: 'title', label: 'Titulo', placeholder: 'Ej: Apuntes de formulas' },
+            { name: 'title', label: 'Titulo', placeholder: 'Ej: Apunte de biologia' },
             { name: 'subject', label: 'Materia', type: 'select', options: subjectOptions },
             { name: 'content', label: 'Contenido del apunte', type: 'textarea', placeholder: 'Escribe aqui el contenido del apunte...' }
         ],
@@ -1686,9 +1686,9 @@ function renderBackpack(workspace) {
 
     container.innerHTML = workspace.resources.length ? workspace.resources.map(resource => `
         <div class="resource-card">
-            <div class="resource-icon">ðŸ“„</div>
+            <div class="resource-icon resource-pdf-icon"></div>
             <h4>${escapeHTML(resource.title)}</h4>
-            <p class="resource-type">${escapeHTML(resource.subject)} â€¢ Apunte simulado</p>
+            <p class="resource-type">${escapeHTML(resource.subject)}  Apunte simulado</p>
             <p class="resource-date">${escapeHTML(resource.content).slice(0, 120)}${resource.content.length > 120 ? '...' : ''}</p>
             <div class="resource-actions">
                 <button class="btn-secondary btn-small" data-resource-view="${escapeHTML(resource.id)}">Ver</button>
@@ -1911,7 +1911,7 @@ function openSubjectForm(subjectId = null) {
         submitLabel: subject ? 'Actualizar materia' : 'Guardar materia',
         fields: [
             { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matematica' },
-            { name: 'icon', label: 'Icono o etiqueta', value: subject?.icon || 'ðŸ“˜', placeholder: 'Ej: ðŸ“, FIS, PROG' },
+            { name: 'icon', label: 'Icono o etiqueta', value: subject?.icon || '', placeholder: 'Ej: FIS, PROG' },
             { name: 'color', label: 'Color identificador', type: 'select', options: subjectColorOptions, value: subject?.color || 'Morado' }
         ],
         onSubmit: values => {
@@ -1921,7 +1921,7 @@ function openSubjectForm(subjectId = null) {
                 if (item) {
                     const oldName = item.name;
                     item.name = values.name.trim();
-                    item.icon = values.icon.trim() || 'ðŸ“˜';
+                    item.icon = values.icon.trim() || '';
                     item.color = values.color || 'Morado';
                     fresh.tasks.forEach(task => {
                         if (task.subject === oldName) task.subject = item.name;
@@ -1938,7 +1938,7 @@ function openSubjectForm(subjectId = null) {
                 fresh.subjects.push({
                     id: createId(),
                     name: values.name.trim(),
-                    icon: values.icon.trim() || 'ðŸ“˜',
+                    icon: values.icon.trim() || '',
                     color: values.color || 'Morado',
                     createdAt: new Date().toISOString()
                 });
@@ -1980,7 +1980,7 @@ function renderSubjects(workspace) {
         return `
             <div class="subject-card subject-custom ac-colored-card" style="--subject-color:${color}">
                 <div class="subject-header">
-                    <h3><span class="subject-icon">${escapeHTML(subject.icon || 'ðŸ“˜')}</span> ${escapeHTML(subject.name)}</h3>
+                    <h3><span class="subject-icon"></span> ${escapeHTML(subject.name)}</h3>
                     <span class="subject-chip">${escapeHTML(subject.color || 'Morado')}</span>
                 </div>
                 <div class="subject-stats">
@@ -2013,7 +2013,7 @@ function openTaskForm(taskId = null) {
         title: task ? 'Editar tarea' : 'Crear tarea',
         submitLabel: task ? 'Actualizar tarea' : 'Guardar tarea',
         fields: [
-            { name: 'title', label: 'Titulo', value: task?.title || '', placeholder: 'Ej: Resolver ejercicios' },
+            { name: 'title', label: 'Titulo', value: task?.title || '', placeholder: 'Ej: Taller de funciones' },
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: task?.subject || '' },
             { name: 'description', label: 'Descripcion', type: 'textarea', value: task?.description || '', placeholder: 'Detalles de la tarea' },
             { name: 'due', label: 'Fecha limite', type: 'date', value: normalizeDate(task?.due) },
@@ -2153,7 +2153,7 @@ function openEventForm(eventId = null) {
         title: event ? 'Editar evento' : 'Crear evento',
         submitLabel: event ? 'Actualizar evento' : 'Guardar evento',
         fields: [
-            { name: 'title', label: 'Titulo del evento', value: event?.title || '', placeholder: 'Ej: Examen de fisica' },
+            { name: 'title', label: 'Titulo del evento', value: event?.title || '', placeholder: 'Ej: Examen final' },
             { name: 'type', label: 'Tipo', type: 'select', options: eventTypeOptions, value: event?.type || 'recordatorio' },
             { name: 'date', label: 'Fecha', type: 'date', value: normalizeDate(event?.date) },
             { name: 'time', label: 'Hora', type: 'time', value: event?.time || '08:00' },
@@ -2235,7 +2235,7 @@ function renderCalendarSection(workspace) {
                             <div class="event-date"><span class="day">${escapeHTML((event.date || event.day || '--').slice(-2))}</span><span class="month">${escapeHTML((event.date || '').slice(5, 7) || 'AC')}</span></div>
                             <div class="event-content">
                                 <h4>${escapeHTML(event.title)}</h4>
-                                <p>${escapeHTML(event.date || 'Sin fecha')} â€¢ ${escapeHTML(event.time || 'Sin hora')}</p>
+                                <p>${escapeHTML(event.date || 'Sin fecha')}  ${escapeHTML(event.time || 'Sin hora')}</p>
                                 <span class="event-badge">${escapeHTML(event.type)}</span>
                                 ${isEventSoon(event) ? '<p class="event-alert">Evento cercano</p>' : ''}
                                 ${reminder ? `<p class="email-simulation">${escapeHTML(reminder)}</p>` : ''}
@@ -2710,7 +2710,7 @@ function openResourceForm(resourceId = null) {
         title: resource ? 'Editar PDF simulado' : 'Subir PDF simulado',
         submitLabel: resource ? 'Actualizar recurso' : 'Guardar recurso',
         fields: [
-            { name: 'title', label: 'Titulo del recurso', value: resource?.title || '', placeholder: 'Ej: Guia de cinematica' },
+            { name: 'title', label: 'Titulo del recurso', value: resource?.title || '', placeholder: 'Ej: Guia de estudio' },
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: resource?.subject || '' },
             { name: 'file', label: 'Archivo PDF simulado', type: 'file', accept: '.pdf', required: !resource },
             { name: 'description', label: 'Descripcion del apunte', type: 'textarea', value: resource?.description || resource?.content || '', placeholder: 'Describe de que trata el PDF' }
@@ -2765,9 +2765,9 @@ function renderBackpack(workspace) {
 
     container.innerHTML = workspace.resources.length ? workspace.resources.map(resource => `
         <div class="resource-card">
-            <div class="resource-icon">ðŸ“„</div>
+            <div class="resource-icon resource-pdf-icon"></div>
             <h4>${escapeHTML(resource.title)}</h4>
-            <p class="resource-type">${escapeHTML(resource.subject)} â€¢ ${escapeHTML(resource.fileName || 'PDF simulado')}</p>
+            <p class="resource-type">${escapeHTML(resource.subject)}  ${escapeHTML(resource.fileName || 'PDF simulado')}</p>
             <p class="resource-date">${escapeHTML(resource.description || resource.content || 'Sin descripcion').slice(0, 130)}${(resource.description || resource.content || '').length > 130 ? '...' : ''}</p>
             <div class="resource-actions">
                 <button class="btn-secondary btn-small" data-resource-view="${escapeHTML(resource.id)}">Ver</button>
@@ -2948,15 +2948,15 @@ function generateTrueFalse() {
 // UTILIDADES
 // ============================================
 
-// Prevenir envÃ­o de formularios con Enter en ciertos contextos
+// Prevenir envio de formularios con Enter en ciertos contextos
 document.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && e.target.closest('.form-group textarea')) {
-        // Permitir saltos de lÃ­nea en textareas
+        // Permitir saltos de linea en textareas
         return;
     }
 });
 
-// Inicializar la aplicaciÃ³n cuando se carga la pÃ¡gina
+// Inicializar la aplicacion cuando se carga la pagina
 // Dashboard limpio sin emojis para evitar caracteres rotos por codificacion.
 function renderDashboard(workspace) {
     const section = document.getElementById('dashboard');
@@ -3282,7 +3282,7 @@ function openResourceForm(resourceId = null) {
         title: resource ? 'Editar PDF simulado' : 'Subir PDF simulado',
         submitLabel: resource ? 'Actualizar recurso' : 'Guardar recurso',
         fields: [
-            { name: 'title', label: 'Titulo del recurso', value: resource?.title || '', placeholder: 'Ej: Guia de cinematica' },
+            { name: 'title', label: 'Titulo del recurso', value: resource?.title || '', placeholder: 'Ej: Guia de estudio' },
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: resource?.subject || '' },
             { name: 'file', label: 'Archivo PDF', type: 'file', accept: '.pdf,application/pdf', required: !resource },
             { name: 'description', label: 'Descripcion del apunte', type: 'textarea', value: resource?.description || resource?.content || '', placeholder: 'Describe de que trata el PDF' }
@@ -3379,10 +3379,10 @@ function practiceWithResource(resourceId) {
     if (resource.fileDataUrl) {
         const tab = window.open(resource.fileDataUrl, '_blank', 'noopener');
         if (!tab) {
-            notify('El navegador bloqueo la pestaña nueva. Permite ventanas emergentes para abrir el PDF.', 'error');
+            notify('El navegador bloqueo la pestaa nueva. Permite ventanas emergentes para abrir el PDF.', 'error');
             return;
         }
-        notify('PDF abierto en una nueva pestaña.', 'success');
+        notify('PDF abierto en una nueva pestaa.', 'success');
         return;
     }
 
@@ -3433,7 +3433,7 @@ function practiceWithResource(resourceId) {
         tab.document.body.innerHTML = '<p style="font-family: Arial, sans-serif; padding: 24px;">Abriendo PDF...</p>';
         tab.location.href = pdfUrl;
         markResourceAIUsed(resourceId, 'Abriste un PDF desde Mochila Digital.');
-        notify('PDF abierto en una nueva pestaña.', 'success');
+        notify('PDF abierto en una nueva pestaa.', 'success');
         return;
     }
 
