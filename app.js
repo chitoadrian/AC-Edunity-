@@ -2864,6 +2864,8 @@ function getResourceFromAIInput() {
     return loadWorkspace().resources.find(resource => resource.title === title) || null;
 }
 
+let currentTutorPdf = null;
+
 function appendTutorMessage(type, content, title = '') {
     const messages = document.getElementById('tutor-messages');
     if (!messages) return false;
@@ -2880,20 +2882,40 @@ function appendTutorMessage(type, content, title = '') {
     return true;
 }
 
+function appendTutorFileMessage(file) {
+    const messages = document.getElementById('tutor-messages');
+    if (!messages || !file) return false;
+
+    const card = document.createElement('div');
+    card.className = 'tutor-file-card tutor-user';
+    card.innerHTML = `
+        <span class="tutor-file-icon" aria-hidden="true">PDF</span>
+        <div>
+            <strong>${escapeHTML(file.name)}</strong>
+            <small>PDF agregado al chat - ${(file.size / 1024).toFixed(1)} KB</small>
+        </div>
+    `;
+
+    messages.appendChild(card);
+    messages.scrollTop = messages.scrollHeight;
+    return true;
+}
+
 function loadTutorPDF(event) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const topic = document.getElementById('ai-topic');
-    const current = topic?.value.trim();
-    const fileInfo = `PDF simulado cargado: ${file.name}\nTamano aproximado: ${(file.size / 1024).toFixed(1)} KB\n\nPega aqui el texto principal del PDF o escribe que quieres que Tutor analice.`;
+    currentTutorPdf = {
+        name: file.name,
+        size: file.size,
+        loadedAt: new Date().toISOString()
+    };
 
-    if (topic) {
-        topic.value = current ? `${current}\n\n${fileInfo}` : fileInfo;
-        topic.focus();
-    }
+    appendTutorFileMessage(file);
+    if (topic) topic.focus();
 
-    notify(`PDF "${file.name}" cargado en Tutor.`, 'success');
+    notify(`PDF "${file.name}" agregado al chat.`, 'success');
 }
 
 function generateTutorAnswer() {
@@ -2913,6 +2935,42 @@ function generateTutorAnswer() {
     }
 }
 
+function extractStudyTopic(prompt) {
+    return String(prompt || '')
+        .toLowerCase()
+        .replace(/pdf simulado cargado:[\s\S]*/g, '')
+        .replace(/ayudame a|ayudame|por favor|porfa|explicame|explica|dime|hazme|hacer|un resumen de|resumen de/g, '')
+        .replace(/que es|que son|cual es|sobre|este pdf|del pdf|de este pdf|mi pdf/g, '')
+        .replace(/[?.,;:!]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function getTutorExplanation(topic, originalPrompt) {
+    const normalized = topic || 'el tema que estas estudiando';
+    const prompt = String(originalPrompt || '').toLowerCase();
+    const pdfName = currentTutorPdf?.name || '';
+    const pdfTopic = pdfName ? pdfName.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ') : '';
+
+    if (currentTutorPdf && /resumen|resume|resumir|pdf|apunte/.test(prompt)) {
+        return `Claro. Te preparo un resumen de estudio tomando como referencia el PDF "${pdfName}".\n\nResumen:\nEl documento parece tratar sobre ${pdfTopic || normalized}. La idea principal es comprender los conceptos base, identificar definiciones importantes y relacionarlas con ejercicios o ejemplos de clase.\n\nPuntos clave:\n1. Lee primero los titulos y subtitulos para ubicar el tema central.\n2. Anota las definiciones que se repiten o que parecen importantes.\n3. Separa formulas, ejemplos y ejercicios en partes diferentes.\n4. Convierte cada seccion en una pregunta para practicar.\n\nPara estudiar este PDF:\n- Haz una lista de conceptos principales.\n- Resume cada pagina en 2 o 3 lineas.\n- Practica explicando el tema con tus palabras.\n\nPregunta de repaso:\nCual es la idea principal del PDF y que ejemplo podrias resolver para comprobar que la entendiste?`;
+    }
+
+    if (/termica|termodinamica|calor|temperatura/.test(normalized)) {
+        return `La termica es una parte de la fisica que estudia el calor, la temperatura y como la energia se transfiere entre los cuerpos.\n\nExplicacion sencilla:\nCuando un cuerpo esta caliente, sus particulas se mueven con mas energia. Cuando esta frio, se mueven con menos energia. La termica ayuda a entender como cambia esa energia y por que el calor pasa de un cuerpo caliente a uno mas frio.\n\nConceptos importantes:\n1. Temperatura: indica que tan caliente o frio esta un cuerpo.\n2. Calor: es energia que se transfiere por diferencia de temperatura.\n3. Equilibrio termico: ocurre cuando dos cuerpos llegan a la misma temperatura.\n4. Dilatacion: algunos materiales aumentan su tamano cuando se calientan.\n\nEjemplo:\nSi pones una cuchara fria dentro de una taza de cafe caliente, la cuchara se calienta porque recibe energia termica del cafe.\n\nEn resumen:\nLa termica explica como se comporta el calor y como afecta a los objetos.`;
+    }
+
+    if (/limite|limites/.test(normalized)) {
+        return `Un limite en matematica describe a que valor se acerca una funcion cuando la variable se aproxima a un numero.\n\nExplicacion sencilla:\nNo siempre importa el valor exacto de la funcion en un punto. A veces importa hacia donde se acerca. Eso es un limite.\n\nEjemplo:\nSi x se acerca a 2 y la funcion se acerca a 5, decimos que el limite es 5.\n\nPara entender limites:\n1. Mira a que numero se acerca x.\n2. Observa a que valor se acerca la funcion.\n3. Revisa el comportamiento por la izquierda y por la derecha.\n4. Si ambos lados llegan al mismo valor, el limite existe.\n\nEn resumen:\nLos limites sirven para estudiar continuidad, derivadas y cambios en funciones.`;
+    }
+
+    if (/fisica/.test(normalized)) {
+        return `La fisica es la ciencia que estudia la materia, la energia, el movimiento, las fuerzas y los fenomenos naturales.\n\nExplicacion sencilla:\nLa fisica intenta responder preguntas como: por que cae un objeto, como se mueve un carro, como viaja la luz o como se transfiere el calor.\n\nRamas importantes:\n1. Mecanica: estudia movimiento y fuerzas.\n2. Termica: estudia calor y temperatura.\n3. Electricidad: estudia cargas y corriente electrica.\n4. Optica: estudia la luz.\n\nEjemplo:\nCuando lanzas una pelota, la fisica explica su velocidad, su trayectoria y por que vuelve a caer.\n\nEn resumen:\nLa fisica ayuda a entender como funciona el mundo que nos rodea.`;
+    }
+
+    return `Te explico sobre ${normalized}.\n\nExplicacion sencilla:\nEste tema se puede entender mejor si lo divides en definicion, ideas principales y ejemplos. Primero identifica que significa, despues mira como se aplica y finalmente practica con una pregunta.\n\nIdeas clave:\n1. Definicion: escribe con tus palabras que significa ${normalized}.\n2. Funcion: identifica para que sirve o donde se usa.\n3. Ejemplo: relaciona el tema con una situacion real o de clase.\n4. Practica: responde una pregunta sin mirar tus apuntes.\n\nEjemplo de estudio:\nSi tienes que aprender ${normalized}, crea una tarjeta con una pregunta al frente y una respuesta corta atras.\n\nConclusion:\nLo importante es que puedas explicar ${normalized} con tus palabras y resolver un ejemplo basico.`;
+}
+
 function buildAIResponse(type, topic) {
     const resource = getResourceFromAIInput();
     if (resource) {
@@ -2926,7 +2984,7 @@ function buildAIResponse(type, topic) {
 
     const reference = topic.length > 380 ? `${topic.slice(0, 380)}...` : topic;
     if (type === 'tutor') {
-        return `Entiendo tu pregunta sobre: ${reference}\n\nExplicacion sencilla:\nLa idea es estudiar el tema por partes. Primero identifica que significa, luego revisa ejemplos y despues practica con preguntas cortas.\n\nPara repasarlo mejor:\n1. Escribe la definicion con tus propias palabras.\n2. Anota 3 ideas importantes.\n3. Busca un ejemplo parecido al de clase.\n4. Responde una pregunta sin mirar tus apuntes.\n\nPregunta de practica:\nComo explicarias este tema a un companero en menos de un minuto?`;
+        return getTutorExplanation(extractStudyTopic(reference), reference);
     }
     if (type === 'quiz') {
         return `Cuestionario simulado sobre ${reference}:\n\n1. Cual es la definicion principal?\n2. Que ejemplo puedes resolver?\n3. Cual es el error mas comun?\n4. Como lo explicarias en clase?\n5. Que debes repasar antes del examen?`;
@@ -2982,6 +3040,13 @@ document.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && e.target.closest('.form-group textarea')) {
         // Permitir saltos de linea en textareas
         return;
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.target?.id === 'ai-topic' && event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        generateTutorAnswer();
     }
 });
 

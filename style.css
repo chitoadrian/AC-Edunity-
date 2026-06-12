@@ -8962,6 +8962,7 @@ body.light-theme .calendar-day.has-event {
     padding: 16px 18px;
     border: 1px solid var(--border-color);
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+    overflow-wrap: anywhere;
 }
 
 .tutor-message strong {
@@ -8989,6 +8990,49 @@ body.light-theme .calendar-day.has-event {
 
 .tutor-user p {
     color: var(--text-primary);
+}
+
+.tutor-file-card {
+    justify-self: end;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid rgba(73, 204, 249, 0.35);
+    border-radius: 18px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(123, 104, 238, 0.26), rgba(73, 204, 249, 0.16));
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.16);
+}
+
+.tutor-file-icon {
+    flex: 0 0 54px;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    color: #111827;
+    background:
+        linear-gradient(135deg, #ffffff 0 55%, #d7ecff 56%),
+        linear-gradient(135deg, #7b68ee, #49ccf9);
+    font-size: 0.78rem;
+    font-weight: 950;
+}
+
+.tutor-file-card strong,
+.tutor-file-card small {
+    display: block;
+}
+
+.tutor-file-card strong {
+    color: var(--text-primary);
+    line-height: 1.25;
+}
+
+.tutor-file-card small {
+    margin-top: 4px;
+    color: var(--text-secondary);
 }
 
 .tutor-composer {
