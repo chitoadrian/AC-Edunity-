@@ -3136,7 +3136,7 @@ function getTutorExplanation(topic, originalPrompt) {
     }
 
     setTutorTopic(normalized);
-    return `Te respondo sobre ${normalized}.\n\nNo tengo una explicacion especifica guardada para ese tema todavia, pero puedo ayudarte mejor si me haces una pregunta concreta.\n\nPuedes pedirme:\n1. Que es ${normalized}?\n2. Conceptos principales de ${normalized}.\n3. Ejemplos de ${normalized}.\n4. Ejercicios de ${normalized}.\n5. Resumen de ${normalized}.\n\nEscribe una de esas opciones y te respondo directamente.`;
+    return fallbackInteligente(normalized, detectTutorIntent(originalPrompt));
 }
 
 function buildAIResponse(type, topic) {
@@ -3232,7 +3232,7 @@ function generateTrueFalse() {
 
 // ============================================
 // TUTOR EDUCATIVO SIMULADO CON CONTEXTO
-// Preparado para reemplazar buildTutorSimulatedReply por una API real.
+// Punto central para conectar el asistente con un servicio externo mas adelante.
 // ============================================
 
 const tutorState = {
@@ -3814,9 +3814,63 @@ function buildSubtopicReply(profile, subtopic, intent) {
     return `${subtopic} en ${profile.title}:\n\nDefinicion:\n${data.definition}\n\nExplicacion sencilla:\n${data.explanation}\n\nEjemplo:\n${data.example}\n\nPregunta de practica:\n${data.question}`;
 }
 
-function buildUsefulUnknownResponse(topic) {
-    const cleanTopic = topic || 'ese tema';
-    return `No tengo ${cleanTopic} completo en la base simulada todavia.\n\nPara responderte mejor sin inventar, escribelo con la materia o una pregunta mas concreta. Por ejemplo:\n- Explicame ${cleanTopic} en matematica.\n- Dame ejemplos de ${cleanTopic}.\n- Hazme preguntas sobre ${cleanTopic}.\n\nMientras conectamos una IA real, Tutor responde con mayor precision los temas guardados en su base educativa.`;
+function fallbackInteligente(topic, intent = 'explain') {
+    const cleanTopic = cleanFallbackTopic(topic);
+    rememberTutorTopic(cleanTopic);
+
+    if (intent === 'practice' || intent === 'exercises') {
+        return `Practica sobre ${cleanTopic}:\n\n1. Explica con tus palabras que significa ${cleanTopic}.\n2. Menciona una situacion donde se use ${cleanTopic}.\n3. Identifica una ventaja o utilidad de ${cleanTopic}.\n4. Crea un ejemplo corto relacionado con ${cleanTopic}.\n5. Escribe una duda que todavia tengas sobre ${cleanTopic}.\n\nResponde la pregunta 1 y te ayudo a revisar tu respuesta.`;
+    }
+
+    if (intent === 'flashcards') {
+        return `Flashcards sobre ${cleanTopic}:\n\nTarjeta 1\nPregunta: Que es ${cleanTopic}?\nRespuesta: Es un concepto que representa una idea, proceso o medida importante dentro de su materia y permite analizar una situacion concreta.\n\nTarjeta 2\nPregunta: Para que sirve ${cleanTopic}?\nRespuesta: Sirve para interpretar datos, tomar decisiones, resolver actividades o explicar un fenomeno segun el contexto.\n\nTarjeta 3\nPregunta: Como se estudia ${cleanTopic}?\nRespuesta: Primero se entiende la definicion, luego se revisa un ejemplo y finalmente se practica con ejercicios o preguntas.`;
+    }
+
+    if (intent === 'review') {
+        return `Resumen de ${cleanTopic}:\n\n${cleanTopic} es un tema que se entiende mejor observando que representa, como se aplica y que decisiones permite tomar. La idea principal es reconocer sus elementos, relacionarlos con un ejemplo y practicar con preguntas cortas.\n\nPuntos clave:\n1. Identifica su definicion.\n2. Reconoce sus partes o variables.\n3. Mira como se aplica en una situacion real.\n4. Practica explicandolo con tus propias palabras.`;
+    }
+
+    if (intent === 'example') {
+        return `Ejemplo de ${cleanTopic}:\n\nImagina que estas analizando ${cleanTopic} en una actividad de clase. Primero identificas el dato principal, luego revisas que significa y finalmente lo usas para tomar una decision o resolver una pregunta.\n\nEjemplo aplicado:\nSi el tema se relaciona con emprendimiento, puede ayudarte a comparar costos, beneficios, riesgos o resultados. Si se relaciona con ciencias, puede ayudarte a explicar una causa y una consecuencia. Si se relaciona con matematica, puede ayudarte a calcular o interpretar un valor.`;
+    }
+
+    return `${cleanTopic}:\n\nDefinicion:\n${buildProbableDefinition(cleanTopic)}\n\nExplicacion sencilla:\nPiensa en ${cleanTopic} como una idea que ayuda a entender, medir o explicar una situacion. Para estudiarlo bien, conviene separar que significa, donde aparece y como se usa en un caso real.\n\nEjemplo:\nSi hablamos de ${cleanTopic} en una actividad academica, puedes tomar una situacion concreta, identificar los datos importantes y explicar que resultado o decision se obtiene a partir de ese concepto.\n\nPara que sirve:\nSirve para comprender mejor el tema, resolver tareas, preparar exposiciones, responder preguntas de examen y conectar la teoria con situaciones practicas.\n\nPreguntas de practica:\n1. Que significa ${cleanTopic} con tus propias palabras?\n2. En que situacion real se puede usar ${cleanTopic}?\n3. Que dato o idea es mas importante para entender ${cleanTopic}?\n4. Como explicarias ${cleanTopic} a un companero?\n5. Que ejemplo sencillo podrias crear sobre ${cleanTopic}?`;
+}
+
+function isFallbackFollowUpMessage(message) {
+    const text = normalizeTutorText(message);
+    return /^(dame|hazme|quiero|necesito|ahora|puedes|muestrame|explica|explicame)?\s*(ejemplo|ejemplos|pregunta|preguntas|ejercicio|ejercicios|resumen|resumelo|flashcards|tarjetas|conceptos|practica|practicar)\b/.test(text)
+        || /(del tema|este tema|lo anterior|eso|esto)/.test(text);
+}
+
+function cleanFallbackTopic(topic) {
+    const clean = normalizeTutorText(topic)
+        .replace(/ayudame|por favor|porfa|explicame|explica|dime|hazme|hacer|dame|quiero|necesito|puedes/g, ' ')
+        .replace(/que es|que son|definicion|resumen|resumir|ejemplos|ejemplo|ejercicios|ejercicio|preguntas|pregunta|flashcards|cuestionario|conceptos|concepto|tema|del tema|debo aprender|pasos|paso a paso/g, ' ')
+        .replace(/\b(el|la|los|las|un|una|unos|unas|de|del|sobre|acerca)\b/g, ' ')
+        .replace(/[?.,;:!]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    return clean || 'este tema';
+}
+
+function buildProbableDefinition(topic) {
+    if (/tasa|interes|rendimiento|financiamiento|prestamo/.test(topic)) {
+        return `La ${topic} es un porcentaje o medida que permite entender el costo, ganancia o rendimiento real de una operacion durante un periodo determinado.`;
+    }
+    if (/emprendimiento|negocio|empresa|ventas|mercado/.test(topic)) {
+        return `${topic} se relaciona con la forma de organizar, evaluar o mejorar una idea de negocio para tomar mejores decisiones.`;
+    }
+    if (/fisica|calor|energia|movimiento|fuerza/.test(topic)) {
+        return `${topic} es un concepto de fisica que ayuda a explicar como ocurre un fenomeno natural y que variables participan en el proceso.`;
+    }
+    if (/matematica|funcion|ecuacion|numero|porcentaje/.test(topic)) {
+        return `${topic} es un concepto matematico que permite representar, calcular o comparar cantidades para resolver problemas.`;
+    }
+    if (/html|css|javascript|programacion|base de datos|redes|software/.test(topic)) {
+        return `${topic} es un concepto de informatica que sirve para crear, organizar o hacer funcionar sistemas digitales.`;
+    }
+    return `${topic} es un concepto que se estudia para comprender una idea principal, aplicarla en ejemplos y usarla para resolver preguntas o actividades.`;
 }
 
 function similarityScore(a, b) {
@@ -3851,7 +3905,7 @@ function buildTutorSimulatedReply(message) {
 
     const activeTopic = topic || tutorState.topic || lastTopic || currentTutorPdf?.topic || '';
     if (!activeTopic && !currentTutorPdf) {
-        return 'Escribe el tema que quieres estudiar. Por ejemplo: "Explicame fisica termica", "Dame ejercicios de interes compuesto" o "Hazme preguntas sobre funciones geometricas".';
+        return fallbackInteligente(message, intent);
     }
 
     if (activeTopic) rememberTutorTopic(activeTopic);
@@ -3861,7 +3915,8 @@ function buildTutorSimulatedReply(message) {
     const activeSubtopic = directSubtopic || (shouldUseLastSubtopic(intent, message) ? lastSubtopic : '');
 
     if (profile.unknown) {
-        return buildUsefulUnknownResponse(activeTopic);
+        const fallbackSource = isFallbackFollowUpMessage(message) ? activeTopic : message;
+        return fallbackInteligente(fallbackSource || activeTopic, intent);
     }
 
     if (activeSubtopic && profile.subtopics?.[activeSubtopic]) {
@@ -4065,26 +4120,53 @@ function renderDashboard(workspace) {
     const taskProgress = workspace.tasks.length ? Math.round((completed / workspace.tasks.length) * 100) : 0;
     const gradeProgress = average ? average * 10 : 0;
     const xpProgress = Math.min(100, ((workspace.xp || 0) % 250) / 2.5);
+    const xpCurrent = (workspace.xp || 0) % 1000;
     const recentItems = (workspace.recent || []).slice(0, 3);
+    const today = new Date();
+    const todayISO = today.toISOString().slice(0, 10);
+    const readableDate = today.toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' });
+    const tasksToday = workspace.tasks.filter(task => task.status !== 'completed' && normalizeDate(task.due) === todayISO).slice(0, 3);
+    const upcomingTasks = workspace.tasks.filter(task => task.status !== 'completed').slice(0, 3);
+    const upcomingEvents = workspace.events.slice(0, 3);
+    const dayItems = [
+        ...tasksToday.map(task => ({ title: task.title, meta: `${task.subject || 'General'} - vence hoy`, type: 'Tarea' })),
+        ...upcomingEvents.map(event => ({ title: event.title, meta: `${event.day || event.date || 'Sin fecha'} - ${event.type || 'Evento'}`, type: 'Evento' })),
+        ...(!tasksToday.length && !upcomingEvents.length ? upcomingTasks.map(task => ({ title: task.title, meta: `${task.subject || 'General'} - ${task.due || 'Sin fecha'}`, type: 'Pendiente' })) : [])
+    ].slice(0, 4);
     const steps = [
         { label: 'Crea una materia', done: workspace.subjects.length > 0, action: 'addSubjectUI()', hint: 'Define tus clases y organiza tu espacio.' },
         { label: 'Agrega una tarea', done: workspace.tasks.length > 0, action: 'addTaskUI()', hint: 'Anota pendientes, deberes y entregas.' },
-        { label: 'Agenda un examen', done: workspace.events.length > 0, action: 'addCalendarEventUI()', hint: 'Planifica pruebas, exposiciones y entregas.' },
+        { label: 'Agenda un evento', done: workspace.events.length > 0, action: 'addCalendarEventUI()', hint: 'Planifica pruebas, exposiciones y entregas.' },
         { label: 'Sube un apunte', done: workspace.resources.length > 0, action: 'addResourceUI()', hint: 'Guarda tus PDFs y recursos importantes.' },
         { label: 'Pregunta a Tutor', done: workspace.resources.some(resource => resource.usedAI), action: "navigateTo('ai-assistant')", hint: 'Practica con resumenes, preguntas y flashcards.' }
     ];
 
     section.innerHTML = `
-        <div class="dashboard-hero">
-            <div>
+        <div class="dashboard-hero dashboard-student-hero">
+            <div class="dashboard-hero-copy">
                 <span class="dashboard-eyebrow">Panel academico</span>
-                <h1>Hola ${escapeHTML(firstName)}</h1>
-                <p>${isEmpty ? 'Bienvenido a AC Study. Empieza creando tu primera materia y construye tu espacio de estudio desde cero.' : 'Este es el resumen actualizado de tu espacio academico. Revisa pendientes, progreso y actividad reciente en un solo lugar.'}</p>
+                <h1>Hola, ${escapeHTML(firstName)} <span aria-hidden="true">&#128075;</span></h1>
+                <p>${isEmpty ? 'Empieza configurando tu espacio academico.' : 'Listo para seguir aprendiendo hoy.'}</p>
+                <div class="dashboard-hero-meta">
+                    <span>${escapeHTML(readableDate)}</span>
+                    <span>Un avance pequeno tambien cuenta.</span>
+                </div>
             </div>
-            <div class="dashboard-hero-actions">
-                <button class="btn-primary btn-small" type="button" onclick="navigateTo('tasks')">Ir a tareas</button>
-                <button class="btn-secondary btn-small" type="button" onclick="navigateTo('subjects')">Ir a materias</button>
+            <div class="dashboard-hero-widget">
+                <span class="hero-widget-icon stat-icon stat-icon-assistant" aria-hidden="true"></span>
+                <div>
+                    <strong>Tutor IA</strong>
+                    <p>Pregunta, resume apuntes o prepara un examen.</p>
+                </div>
+                <button class="btn-primary btn-small" type="button" onclick="navigateTo('ai-assistant')">Abrir Tutor</button>
             </div>
+        </div>
+
+        <div class="quick-actions-bar">
+            <button type="button" onclick="addSubjectUI()">+ Nueva materia</button>
+            <button type="button" onclick="addTaskUI()">+ Nueva tarea</button>
+            <button type="button" onclick="addCalendarEventUI()">+ Nuevo evento</button>
+            <button type="button" onclick="addResourceUI()">+ Subir apunte</button>
         </div>
 
         <div class="dashboard-grid">
@@ -4092,22 +4174,84 @@ function renderDashboard(workspace) {
             ${dashboardCard('tasks', 'Tareas pendientes', pending, workspace.tasks.length ? `${completed} completadas de ${workspace.tasks.length}` : 'Agrega tu primer pendiente', taskProgress)}
             ${dashboardCard('calendar', 'Proximo evento', nextEvent ? nextEvent.title : 'Sin eventos', nextEvent ? `${nextEvent.day || nextEvent.date || 'Sin fecha'} - ${nextEvent.type || 'Evento'}` : 'Agenda tu primer examen', nextEvent ? 70 : 0)}
             ${dashboardCard('grades', 'Promedio actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} calificaciones registradas` : 'Registra tus calificaciones', gradeProgress)}
-            ${dashboardCard('xp', 'XP acumulado', workspace.xp || 0, `Nivel ${level}`, xpProgress)}
             ${dashboardCard('streak', 'Racha de estudio', workspace.streak || 0, `${workspace.streak === 1 ? 'dia activo' : 'dias activos'}`, workspace.streak ? 100 : 0)}
-            ${dashboardCard('assistant', 'Recomendacion IA', workspace.resources.length ? 'Practica con tus apuntes' : 'Sube un apunte', workspace.resources.length ? 'Tutor puede ayudarte a repasar' : 'Conecta tu mochila con Tutor', workspace.resources.length ? 85 : 25)}
+            ${dashboardCard('level', 'Nivel del estudiante', level, `${workspace.xp || 0} XP acumulado`, xpProgress)}
         </div>
 
-        <div class="dashboard-row dashboard-row-main">
+        <div class="dashboard-layout">
+            <div class="card dashboard-panel-card dashboard-day-card">
+                <div class="panel-title">
+                    <span class="panel-icon panel-icon-day"></span>
+                    <div>
+                        <h3>Mi dia</h3>
+                        <p>Tareas, eventos y recordatorios importantes.</p>
+                    </div>
+                </div>
+                ${dayItems.length ? `
+                    <ul class="dashboard-day-list">
+                        ${dayItems.map(item => `
+                            <li>
+                                <span>${escapeHTML(item.type)}</span>
+                                <div>
+                                    <strong>${escapeHTML(item.title)}</strong>
+                                    <small>${escapeHTML(item.meta)}</small>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                ` : `
+                    <div class="dashboard-empty-note">
+                        <strong>No tienes pendientes hoy.</strong>
+                        <span>Buen momento para adelantar una materia o preguntarle algo a Tutor.</span>
+                    </div>
+                `}
+            </div>
+
+            <div class="card dashboard-panel-card dashboard-progress-card">
+                <div class="panel-title">
+                    <span class="panel-icon panel-icon-chart"></span>
+                    <div>
+                        <h3>Tu progreso</h3>
+                        <p>Nivel ${level} - ${xpCurrent}/1000 XP</p>
+                    </div>
+                </div>
+                <div class="dashboard-xp-ring" style="--xp:${xpProgress}%">
+                    <span>${Math.round(xpProgress)}%</span>
+                    <small>avance</small>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${xpProgress}%"></div></div>
+                <div class="dashboard-achievements">
+                    <span>${workspace.subjects.length ? 'Materia creada' : 'Primera materia pendiente'}</span>
+                    <span>${completed ? 'Tarea completada' : 'Completa tu primera tarea'}</span>
+                    <span>${workspace.resources.length ? 'Apunte subido' : 'Sube un apunte'}</span>
+                </div>
+            </div>
+
+            <div class="card dashboard-panel-card dashboard-tutor-card">
+                <div class="panel-title">
+                    <span class="panel-icon panel-icon-tutor"></span>
+                    <div>
+                        <h3>Tutor IA</h3>
+                        <p>Pregunta, resume apuntes o prepara un examen.</p>
+                    </div>
+                </div>
+                <div class="dashboard-tutor-actions">
+                    <button type="button" onclick="navigateTo('ai-assistant')">Preguntar</button>
+                    <button type="button" onclick="generatePracticeCards()">Practicar</button>
+                    <button type="button" onclick="addResourceUI()">Subir PDF</button>
+                </div>
+            </div>
+
             <div class="card starter-card dashboard-panel-card">
                 <div class="panel-title">
                     <span class="panel-icon panel-icon-steps"></span>
                     <div>
-                        <h3>Centro del estudiante</h3>
-                        <p>Completa estos pasos para preparar tu espacio academico.</p>
+                        <h3>${isEmpty ? 'Empieza configurando tu espacio academico' : 'Centro del estudiante'}</h3>
+                        <p>${isEmpty ? 'Sigue estos pasos para construir tu plataforma desde cero.' : 'Completa estos pasos para mantener tu espacio al dia.'}</p>
                     </div>
                 </div>
                 <ol class="starter-list dashboard-steps">
-                    ${steps.map((step, index) => `
+                    ${steps.slice(0, 4).map((step, index) => `
                         <li class="${step.done ? 'done' : ''}">
                             <span class="step-number">${step.done ? 'OK' : index + 1}</span>
                             <div>
@@ -4132,7 +4276,12 @@ function renderDashboard(workspace) {
                     <ul class="activity-list dashboard-activity">${recentItems.map(item => `
                         <li><span class="activity-time">${escapeHTML(item.time)}</span><span class="activity-text">${escapeHTML(item.text)}</span></li>
                     `).join('')}</ul>
-                ` : emptyStateHTML('Tu actividad aparecera cuando empieces a usar la plataforma.', 'Crear primera materia', 'addSubjectUI()')}
+                ` : `
+                    <div class="dashboard-empty-note">
+                        <strong>Tu actividad aparecera aqui cuando empieces.</strong>
+                        <span>Crea una materia, registra tareas o sube un apunte.</span>
+                    </div>
+                `}
             </div>
 
             <div class="card weekly-progress-card dashboard-panel-card">

@@ -8015,6 +8015,448 @@ body.light-theme #dashboard .progress-bar {
     }
 }
 
+/* Dashboard principal - experiencia SaaS educativa */
+#dashboard .dashboard-student-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+    gap: 20px;
+    align-items: stretch;
+    margin-bottom: 16px;
+    padding: clamp(22px, 3vw, 30px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(123, 104, 238, 0.34), transparent 34%),
+        radial-gradient(circle at 90% 10%, rgba(253, 113, 175, 0.22), transparent 32%),
+        linear-gradient(135deg, rgba(34, 39, 58, 0.94), rgba(25, 29, 44, 0.78));
+    box-shadow: 0 26px 70px rgba(0, 0, 0, 0.22);
+}
+
+#dashboard .dashboard-student-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -8% -38% 36%;
+    height: 220px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(73, 204, 249, 0.28), rgba(123, 104, 238, 0.18));
+    filter: blur(28px);
+    pointer-events: none;
+}
+
+#dashboard .dashboard-hero-copy,
+#dashboard .dashboard-hero-widget {
+    position: relative;
+    z-index: 1;
+}
+
+#dashboard .dashboard-hero-copy h1 {
+    margin: 8px 0 8px;
+    color: #ffffff;
+    font-size: clamp(2.25rem, 4vw, 3.4rem);
+    line-height: 1.02;
+}
+
+#dashboard .dashboard-hero-copy p {
+    max-width: 680px;
+    margin: 0;
+    color: rgba(226, 232, 240, 0.78);
+    font-size: 17px;
+}
+
+#dashboard .dashboard-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+#dashboard .dashboard-hero-meta span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12px;
+    font-weight: 850;
+}
+
+#dashboard .dashboard-hero-widget {
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    gap: 12px;
+    align-content: center;
+    min-height: 170px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.075);
+    backdrop-filter: blur(16px);
+}
+
+#dashboard .dashboard-hero-widget strong {
+    display: block;
+    color: #ffffff;
+    font-size: 19px;
+}
+
+#dashboard .dashboard-hero-widget p {
+    margin: 5px 0 14px;
+    color: rgba(226, 232, 240, 0.70);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+#dashboard .dashboard-hero-widget button {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+#dashboard .hero-widget-icon {
+    position: relative;
+}
+
+#dashboard .quick-actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 18px;
+}
+
+#dashboard .quick-actions-bar button,
+#dashboard .dashboard-tutor-actions button {
+    min-height: 40px;
+    padding: 0 15px;
+    border: 1px solid rgba(73, 204, 249, 0.22);
+    border-radius: 999px;
+    background:
+        linear-gradient(135deg, rgba(123, 104, 238, 0.16), rgba(73, 204, 249, 0.10));
+    color: #dbeafe;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+#dashboard .quick-actions-bar button:hover,
+#dashboard .dashboard-tutor-actions button:hover {
+    transform: translateY(-2px);
+    border-color: rgba(253, 113, 175, 0.42);
+    background:
+        linear-gradient(135deg, rgba(123, 104, 238, 0.26), rgba(73, 204, 249, 0.18));
+}
+
+#dashboard .dashboard-grid {
+    grid-template-columns: repeat(6, minmax(150px, 1fr)) !important;
+    gap: 12px !important;
+}
+
+#dashboard .dashboard-stat-card {
+    min-height: 150px;
+    padding: 18px !important;
+}
+
+#dashboard .dashboard-stat-card .stat-icon {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    border-radius: 14px;
+}
+
+#dashboard .stat-icon-level::before {
+    left: 10px;
+    top: 10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ffc800, #fd71af);
+    box-shadow: 8px 8px 0 rgba(255, 255, 255, 0.75);
+}
+
+#dashboard .dashboard-layout {
+    display: grid;
+    grid-template-columns: minmax(320px, 1.05fr) minmax(280px, 0.72fr) minmax(300px, 0.9fr);
+    gap: 16px;
+    align-items: stretch;
+}
+
+#dashboard .dashboard-day-card,
+#dashboard .weekly-progress-card {
+    grid-column: span 2;
+}
+
+#dashboard .dashboard-tutor-card {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(253, 113, 175, 0.20), transparent 38%),
+        linear-gradient(145deg, rgba(123, 104, 238, 0.18), rgba(73, 204, 249, 0.07)),
+        rgba(30, 31, 37, 0.66) !important;
+}
+
+#dashboard .dashboard-day-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#dashboard .dashboard-day-list li {
+    display: grid;
+    grid-template-columns: 86px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.045);
+}
+
+#dashboard .dashboard-day-list li > span {
+    display: inline-grid;
+    place-items: center;
+    min-height: 32px;
+    border-radius: 999px;
+    background: rgba(73, 204, 249, 0.12);
+    color: #49ccf9;
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+}
+
+#dashboard .dashboard-day-list strong {
+    display: block;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+#dashboard .dashboard-day-list small {
+    display: block;
+    margin-top: 3px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+}
+
+#dashboard .dashboard-empty-note {
+    display: grid;
+    gap: 8px;
+    min-height: 128px;
+    align-content: center;
+    padding: 18px;
+    border: 1px dashed rgba(73, 204, 249, 0.28);
+    border-radius: 18px;
+    background: rgba(73, 204, 249, 0.055);
+}
+
+#dashboard .dashboard-empty-note strong {
+    color: #ffffff;
+    font-size: 18px;
+}
+
+#dashboard .dashboard-empty-note span {
+    color: var(--text-tertiary);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+#dashboard .dashboard-xp-ring {
+    display: grid;
+    place-items: center;
+    width: 128px;
+    height: 128px;
+    margin: 4px auto 18px;
+    border-radius: 999px;
+    background:
+        radial-gradient(circle, rgba(30, 31, 37, 0.92) 0 56%, transparent 57%),
+        conic-gradient(#49ccf9 var(--xp, 42%), rgba(255, 255, 255, 0.10) 0);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 20px 40px rgba(73, 204, 249, 0.12);
+}
+
+#dashboard .dashboard-xp-ring span {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 950;
+}
+
+#dashboard .dashboard-xp-ring small {
+    margin-top: -18px;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+#dashboard .dashboard-achievements {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+#dashboard .dashboard-achievements span {
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(0, 200, 117, 0.11);
+    color: #86efac;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+#dashboard .dashboard-tutor-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+#dashboard .panel-icon-day::before {
+    inset: 10px;
+    border-radius: 7px;
+    background:
+        linear-gradient(#49ccf9 0 28%, transparent 29%),
+        #ffffff;
+}
+
+#dashboard .panel-icon-tutor::before {
+    inset: 11px 9px;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+#dashboard .panel-icon-tutor::after {
+    content: "";
+    position: absolute;
+    left: 15px;
+    top: 20px;
+    width: 18px;
+    height: 5px;
+    border-radius: 999px;
+    background: #49ccf9;
+    box-shadow: 0 -8px 0 -2px #ffc800;
+}
+
+body.light-theme #dashboard .dashboard-student-hero,
+body.light-theme #dashboard .dashboard-tutor-card {
+    background:
+        radial-gradient(circle at 8% 0%, rgba(123, 104, 238, 0.13), transparent 36%),
+        radial-gradient(circle at 92% 0%, rgba(73, 204, 249, 0.13), transparent 34%),
+        #ffffff !important;
+}
+
+body.light-theme #dashboard .dashboard-hero-copy h1,
+body.light-theme #dashboard .dashboard-hero-widget strong,
+body.light-theme #dashboard .dashboard-day-list strong,
+body.light-theme #dashboard .dashboard-empty-note strong,
+body.light-theme #dashboard .dashboard-xp-ring span {
+    color: #172033;
+}
+
+body.light-theme #dashboard .dashboard-hero-copy p,
+body.light-theme #dashboard .dashboard-hero-widget p,
+body.light-theme #dashboard .dashboard-hero-meta span,
+body.light-theme #dashboard .dashboard-day-list small,
+body.light-theme #dashboard .dashboard-empty-note span {
+    color: #64748b;
+}
+
+body.light-theme #dashboard .quick-actions-bar button,
+body.light-theme #dashboard .dashboard-tutor-actions button {
+    color: #2563eb;
+    background: rgba(73, 204, 249, 0.10);
+}
+
+body.light-theme #dashboard .dashboard-day-list li,
+body.light-theme #dashboard .dashboard-empty-note {
+    background: #f8fafc;
+    border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-theme #dashboard .dashboard-xp-ring {
+    background:
+        radial-gradient(circle, #ffffff 0 56%, transparent 57%),
+        conic-gradient(#49ccf9 var(--xp, 42%), #e2e8f0 0);
+}
+
+.sidebar {
+    box-shadow: 12px 0 40px rgba(0, 0, 0, 0.14);
+}
+
+.sidebar nav {
+    padding-top: 10px;
+}
+
+.nav-item {
+    min-height: 54px;
+    gap: 14px;
+    padding: 10px 16px;
+    color: rgba(226, 232, 240, 0.70);
+    transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.nav-item .nav-icon {
+    flex: 0 0 38px;
+}
+
+.nav-item span:last-child {
+    line-height: 1.15;
+}
+
+.nav-item.active {
+    color: #ffffff;
+}
+
+body.light-theme .nav-item {
+    color: #64748b;
+}
+
+body.light-theme .nav-item.active {
+    color: #172033;
+    background: linear-gradient(135deg, rgba(123, 104, 238, 0.14), rgba(73, 204, 249, 0.10));
+}
+
+@media (max-width: 1220px) {
+    #dashboard .dashboard-grid {
+        grid-template-columns: repeat(3, minmax(170px, 1fr)) !important;
+    }
+
+    #dashboard .dashboard-layout {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #dashboard .dashboard-day-card,
+    #dashboard .weekly-progress-card {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 860px) {
+    #dashboard .dashboard-student-hero,
+    #dashboard .dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    #dashboard .dashboard-grid {
+        grid-template-columns: repeat(2, minmax(150px, 1fr)) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    #dashboard .dashboard-grid,
+    #dashboard .dashboard-tutor-actions {
+        grid-template-columns: 1fr !important;
+    }
+
+    #dashboard .quick-actions-bar button {
+        flex: 1 1 100%;
+    }
+
+    #dashboard .dashboard-day-list li {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Libreta por periodos en Calificaciones */
 .grade-formula-note {
     padding: 8px 12px;
