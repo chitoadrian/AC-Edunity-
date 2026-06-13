@@ -3241,6 +3241,9 @@ const tutorState = {
     history: getTutorHistory(),
     pendingQuestion: getTutorPendingQuestion()
 };
+let lastTopic = tutorState.topic;
+let lastIntent = '';
+let chatHistory = tutorState.history;
 
 function getTutorStorageValue(key) {
     try {
@@ -3298,6 +3301,7 @@ function rememberTutorTopic(topic) {
     const cleanTopic = String(topic || '').trim();
     if (!cleanTopic) return;
     tutorState.topic = cleanTopic;
+    lastTopic = cleanTopic;
     currentTutorTopic = cleanTopic;
     setTutorStorageValue('acStudyTutorTopic', cleanTopic);
 }
@@ -3350,6 +3354,7 @@ function addTutorHistory(role, content) {
         at: new Date().toISOString()
     });
     tutorState.history = tutorState.history.slice(-16);
+    chatHistory = tutorState.history;
     saveTutorHistory();
 }
 
@@ -3372,6 +3377,7 @@ function detectTutorIntent(message) {
         return 'answer-check';
     }
     if (/flashcard|tarjeta|tarjetas/.test(text)) return 'flashcards';
+    if (/formula|formulas|ecuacion|regla/.test(text)) return 'formula';
     if (/cuestionario|examen|preparar examen|evaluacion/.test(text)) return 'exam';
     if (/pregunta|preguntas|practicar|practica/.test(text)) return 'practice';
     if (/ejercicio|ejercicios|resolver|problema|problemas/.test(text)) return 'exercises';
@@ -3390,18 +3396,8 @@ function detectTutorIntent(message) {
 
 function extractTutorTopic(message, intent) {
     const text = normalizeTutorText(message);
-    const knownTopics = [
-        { match: /interes compuesto|interes|compuesto/, topic: 'interes compuesto' },
-        { match: /limite|limites/, topic: 'limites' },
-        { match: /fotosintesis/, topic: 'fotosintesis' },
-        { match: /variable|variables/, topic: 'variables' },
-        { match: /internet/, topic: 'internet' },
-        { match: /fisica/, topic: 'fisica' },
-        { match: /termica|termodinamica|calor|temperatura/, topic: 'termica' }
-    ];
-
-    const found = knownTopics.find(item => item.match.test(text));
-    if (found) return found.topic;
+    const foundTopic = findKnowledgeTopic(text);
+    if (foundTopic) return foundTopic;
 
     const followUp = /(eso|esto|lo anterior|del tema|este tema|utilizarlo|usarlo|aplicarlo|dame conceptos tema|conceptos tema)/.test(text);
     if (followUp && tutorState.topic) return tutorState.topic;
@@ -3418,65 +3414,255 @@ function extractTutorTopic(message, intent) {
     return tutorState.topic || '';
 }
 
+const knowledgeBase = {
+    'funciones geometricas': {
+        aliases: ['funciones geometricas', 'funcion geometrica', 'geometricas', 'geometria con funciones'],
+        title: 'funciones geometricas',
+        definition: 'Las funciones geometricas son relaciones matematicas que ayudan a representar figuras, medidas y comportamientos graficos. Permiten estudiar rectas, curvas, areas, perimetros, volumenes, puntos, transformaciones y patrones dentro del plano o del espacio.',
+        explanation: 'En geometria, una funcion puede describir como cambia una medida cuando cambia otra. Por ejemplo, una recta puede representarse con una funcion lineal, una parabola con una funcion cuadratica y el area de una figura puede depender de una variable como el lado o el radio.',
+        characteristics: ['Relacionan variables con figuras o medidas', 'Se pueden representar en graficas', 'Ayudan a estudiar rectas, curvas y superficies', 'Permiten calcular areas, perimetros o volumenes', 'Conectan algebra y geometria'],
+        concepts: ['Plano cartesiano', 'Puntos', 'Rectas', 'Curvas', 'Area', 'Perimetro', 'Funcion lineal', 'Funcion cuadratica', 'Transformaciones'],
+        formula: 'Ejemplos: recta y = mx + b, parabola y = ax^2 + bx + c, area de un cuadrado A = l^2, perimetro P = 4l.',
+        example: 'Una funcion lineal como y = 2x + 1 representa una recta. Una funcion cuadratica como y = x^2 representa una parabola. Si el lado de un cuadrado es x, su area se puede representar como A(x) = x^2.',
+        uses: 'Sirven para interpretar graficas, resolver problemas de medidas, modelar figuras, calcular areas y entender como cambian las formas cuando cambian sus dimensiones.',
+        exercises: ['Representa y = 2x + 1 en una grafica y describe que figura forma.', 'Si el lado de un cuadrado mide x, escribe la funcion de su area.', 'Explica por que y = x^2 forma una parabola.', 'Da un ejemplo de una funcion que represente un perimetro.', 'Identifica si y = 3x + 2 es lineal o cuadratica.'],
+        answers: ['Forma una recta.', 'A(x) = x^2.', 'Porque al elevar x al cuadrado, los valores forman una curva simetrica.', 'P(x) = 4x para un cuadrado.', 'Es lineal.'],
+        flashcards: [
+            ['Que son funciones geometricas?', 'Relaciones matematicas que representan figuras, medidas o graficas.'],
+            ['Que funcion representa una recta?', 'Una funcion lineal: y = mx + b.'],
+            ['Que funcion representa una parabola?', 'Una funcion cuadratica: y = ax^2 + bx + c.'],
+            ['Como se representa el area de un cuadrado?', 'A(x) = x^2.']
+        ]
+    },
+    'funciones cuadraticas': {
+        aliases: ['funciones cuadraticas', 'funcion cuadratica', 'parabolas', 'parabola'],
+        title: 'funciones cuadraticas',
+        definition: 'Una funcion cuadratica es una funcion polinomica de segundo grado cuya grafica es una parabola.',
+        explanation: 'Se usa para representar situaciones donde hay crecimiento curvo, trayectoria, areas o maximos y minimos.',
+        characteristics: ['Tiene una variable elevada al cuadrado', 'Su grafica es una parabola', 'Puede abrir hacia arriba o hacia abajo', 'Tiene vertice', 'Puede cortar al eje x en cero, uno o dos puntos'],
+        concepts: ['Parabola', 'Vertice', 'Eje de simetria', 'Raices', 'Concavidad'],
+        formula: 'f(x) = ax^2 + bx + c, con a diferente de 0.',
+        example: 'f(x) = x^2 - 4 tiene una parabola que corta al eje x en x = -2 y x = 2.',
+        uses: 'Se usa en fisica para trayectorias, en economia para ganancias y en geometria para areas.',
+        exercises: ['Identifica a, b y c en f(x)=2x^2+3x-1.', 'Que forma tiene la grafica de una cuadratica?', 'Si a es positivo, hacia donde abre la parabola?'],
+        answers: ['a=2, b=3, c=-1.', 'Una parabola.', 'Hacia arriba.'],
+        flashcards: [['Formula general', 'f(x)=ax^2+bx+c'], ['Grafica', 'Parabola'], ['Vertice', 'Punto minimo o maximo de la parabola']]
+    },
+    'funciones lineales': {
+        aliases: ['funciones lineales', 'funcion lineal', 'rectas', 'recta'],
+        title: 'funciones lineales',
+        definition: 'Una funcion lineal representa una relacion de cambio constante y su grafica es una recta.',
+        explanation: 'Cada vez que x aumenta una cantidad, y cambia siempre en la misma proporcion.',
+        characteristics: ['Grafica recta', 'Cambio constante', 'Tiene pendiente', 'Puede cortar el eje y'],
+        concepts: ['Pendiente', 'Intercepto', 'Plano cartesiano', 'Variacion constante'],
+        formula: 'y = mx + b, donde m es la pendiente y b es el corte con el eje y.',
+        example: 'y = 2x + 1 significa que por cada aumento de 1 en x, y aumenta 2.',
+        uses: 'Se usa para costos fijos y variables, velocidad constante y comparaciones proporcionales.',
+        exercises: ['En y=3x+2, cual es la pendiente?', 'Grafica y=x+1.', 'Que representa b en y=mx+b?'],
+        answers: ['La pendiente es 3.', 'Una recta que corta en 1.', 'El corte con el eje y.'],
+        flashcards: [['Funcion lineal', 'Relacion con grafica recta'], ['Pendiente', 'Indica inclinacion'], ['Formula', 'y=mx+b']]
+    },
+    'interes compuesto': {
+        aliases: ['interes compuesto', 'interes', 'compuesto'],
+        title: 'interes compuesto',
+        definition: 'El interes compuesto es el calculo donde los intereses se suman al capital inicial y luego tambien generan nuevos intereses.',
+        explanation: 'Se llama interes sobre interes porque cada periodo se calcula sobre una cantidad mayor.',
+        characteristics: ['Crecimiento acumulativo', 'Depende del capital inicial', 'Depende de la tasa', 'Depende del tiempo', 'Crece mas rapido que el interes simple'],
+        concepts: ['Capital inicial', 'Tasa de interes', 'Tiempo', 'Monto final', 'Interes sobre interes'],
+        formula: 'M = C(1 + i)^t o A = P(1 + r)^t.',
+        example: 'Si inviertes 100 dolares al 10% por 2 anos: M = 100(1.10)^2 = 121 dolares.',
+        uses: 'Se usa en ahorros, inversiones, prestamos, tarjetas de credito y planes de retiro.',
+        exercises: ['Calcula 100 dolares al 10% por 2 anos.', 'Calcula 250 dolares al 8% por 3 anos.', 'Calcula 500 dolares al 5% por 4 anos.', 'Explica la diferencia con interes simple.', 'Convierte 12% a decimal.'],
+        answers: ['121.00 dolares.', '314.93 dolares aproximadamente.', '607.75 dolares aproximadamente.', 'El simple calcula sobre capital inicial; el compuesto sobre capital mas intereses.', '0.12.'],
+        flashcards: [['Formula', 'M = C(1+i)^t'], ['Capital', 'Dinero inicial'], ['Tasa', 'Porcentaje aplicado por periodo'], ['Clave', 'Interes sobre interes']]
+    },
+    'logica matematica': {
+        aliases: ['logica matematica', 'logica', 'proposiciones'],
+        title: 'logica matematica',
+        definition: 'La logica matematica estudia razonamientos, proposiciones y reglas para determinar si un argumento es valido.',
+        explanation: 'Ayuda a analizar enunciados verdaderos o falsos usando conectores como y, o, no, entonces y si y solo si.',
+        characteristics: ['Usa proposiciones', 'Trabaja con valores de verdad', 'Usa conectores logicos', 'Permite construir tablas de verdad'],
+        concepts: ['Proposicion', 'Negacion', 'Conjuncion', 'Disyuncion', 'Implicacion', 'Tabla de verdad'],
+        formula: 'Ejemplo: p -> q significa si p entonces q.',
+        example: 'p: estudio. q: apruebo. p -> q significa: si estudio, entonces apruebo.',
+        uses: 'Se usa en matematica, programacion, circuitos y pensamiento critico.',
+        exercises: ['Niega la proposicion: hoy llueve.', 'Que significa p y q?', 'Crea una tabla de verdad para p o q.'],
+        answers: ['Hoy no llueve.', 'Que p y q son verdaderas al mismo tiempo.', 'Es falsa solo cuando p y q son falsas.'],
+        flashcards: [['Proposicion', 'Enunciado verdadero o falso'], ['Negacion', 'Cambia el valor de verdad'], ['Implicacion', 'Si p entonces q']]
+    },
+    porcentajes: {
+        aliases: ['porcentajes', 'porcentaje', 'tanto por ciento'],
+        title: 'porcentajes',
+        definition: 'Un porcentaje representa una parte de cada 100.',
+        explanation: 'Sirve para comparar cantidades, descuentos, aumentos, notas y proporciones.',
+        characteristics: ['Se expresa con %', 'Relaciona una parte con 100', 'Puede convertirse a decimal', 'Se usa en descuentos e incrementos'],
+        concepts: ['Parte', 'Total', 'Porcentaje', 'Decimal', 'Proporcion'],
+        formula: 'Porcentaje = (parte / total) x 100.',
+        example: '20% de 50 es 10, porque 0.20 x 50 = 10.',
+        uses: 'Descuentos, impuestos, estadisticas, notas y finanzas.',
+        exercises: ['Calcula 15% de 200.', 'Que porcentaje es 25 de 100?', 'Convierte 8% a decimal.'],
+        answers: ['30.', '25%.', '0.08.'],
+        flashcards: [['Porcentaje', 'Parte de 100'], ['20%', '0.20'], ['Formula', '(parte/total)x100']]
+    },
+    calorimetria: {
+        aliases: ['calorimetria'],
+        title: 'calorimetria',
+        definition: 'La calorimetria estudia la cantidad de calor que gana o pierde un cuerpo.',
+        explanation: 'Relaciona calor, masa, calor especifico y cambio de temperatura.',
+        characteristics: ['Mide transferencia de calor', 'Usa masa y temperatura', 'Depende del material', 'Se aplica en cambios termicos'],
+        concepts: ['Calor', 'Masa', 'Calor especifico', 'Temperatura', 'Equilibrio termico'],
+        formula: 'Q = m c DeltaT.',
+        example: 'Si calientas agua, el calor necesario depende de la masa del agua y cuanto sube su temperatura.',
+        uses: 'Laboratorio, cocina, fisica termica e ingenieria.',
+        exercises: ['Identifica m, c y DeltaT en Q=mcDeltaT.', 'Que pasa si aumenta la masa?', 'Que mide Q?'],
+        answers: ['Masa, calor especifico y cambio de temperatura.', 'Se necesita mas calor.', 'Cantidad de calor.'],
+        flashcards: [['Q', 'Calor'], ['c', 'Calor especifico'], ['DeltaT', 'Cambio de temperatura']]
+    },
+    'movimiento rectilineo': {
+        aliases: ['movimiento rectilineo', 'mru'],
+        title: 'movimiento rectilineo',
+        definition: 'El movimiento rectilineo ocurre cuando un objeto se desplaza en linea recta.',
+        explanation: 'Puede tener velocidad constante o aceleracion, dependiendo del tipo de movimiento.',
+        characteristics: ['Trayectoria recta', 'Puede tener velocidad constante', 'Puede tener aceleracion', 'Relaciona distancia y tiempo'],
+        concepts: ['Posicion', 'Distancia', 'Tiempo', 'Velocidad', 'Aceleracion'],
+        formula: 'MRU: v = d/t. MRUA: vf = vi + at.',
+        example: 'Un carro que avanza 100 m en linea recta durante 10 s tiene velocidad media de 10 m/s.',
+        uses: 'Analizar autos, trenes, caidas idealizadas y desplazamientos simples.',
+        exercises: ['Calcula v si d=100m y t=10s.', 'Que significa trayectoria recta?', 'Diferencia MRU y MRUA.'],
+        answers: ['10 m/s.', 'Que se mueve en linea recta.', 'MRU velocidad constante; MRUA aceleracion.'],
+        flashcards: [['MRU', 'Movimiento rectilineo uniforme'], ['Velocidad', 'Distancia / tiempo'], ['Aceleracion', 'Cambio de velocidad']]
+    },
+    energia: {
+        aliases: ['energia'],
+        title: 'energia',
+        definition: 'La energia es la capacidad de realizar trabajo o producir cambios.',
+        explanation: 'Puede aparecer como energia cinetica, potencial, termica, electrica, quimica y mas.',
+        characteristics: ['Se transforma', 'No se crea ni se destruye', 'Puede almacenarse', 'Puede transferirse'],
+        concepts: ['Trabajo', 'Energia cinetica', 'Energia potencial', 'Transformacion', 'Conservacion'],
+        formula: 'Energia cinetica: Ec = 1/2 mv^2. Energia potencial: Ep = mgh.',
+        example: 'Una pelota en altura tiene energia potencial; al caer, se transforma en energia cinetica.',
+        uses: 'Fisica, electricidad, maquinas, movimiento y vida diaria.',
+        exercises: ['Da un ejemplo de energia cinetica.', 'Que energia tiene un objeto elevado?', 'Que dice la conservacion de energia?'],
+        answers: ['Un carro en movimiento.', 'Energia potencial.', 'La energia se transforma, no desaparece.'],
+        flashcards: [['Energia', 'Capacidad de producir cambios'], ['Cinetica', 'Energia por movimiento'], ['Potencial', 'Energia por posicion']]
+    },
+    fuerza: {
+        aliases: ['fuerza', 'newton', 'ley de newton'],
+        title: 'fuerza',
+        definition: 'La fuerza es una interaccion capaz de cambiar el movimiento o la forma de un cuerpo.',
+        explanation: 'Puede empujar, jalar, acelerar, frenar o deformar un objeto.',
+        characteristics: ['Tiene magnitud', 'Tiene direccion', 'Se mide en newtons', 'Puede cambiar la velocidad'],
+        concepts: ['Masa', 'Aceleracion', 'Newton', 'Peso', 'Friccion'],
+        formula: 'F = m a.',
+        example: 'Si empujas una caja, aplicas una fuerza que puede moverla si supera la friccion.',
+        uses: 'Movimiento, maquinas, deportes, transporte y estructuras.',
+        exercises: ['Calcula F si m=5kg y a=2m/s2.', 'Que unidad mide la fuerza?', 'Da un ejemplo de fuerza.'],
+        answers: ['10 N.', 'Newton.', 'Empujar una puerta.'],
+        flashcards: [['Fuerza', 'Interaccion que cambia movimiento'], ['Formula', 'F=ma'], ['Unidad', 'Newton']]
+    },
+    'base de datos': {
+        aliases: ['base de datos', 'bases de datos', 'database'],
+        title: 'base de datos',
+        definition: 'Una base de datos es un sistema organizado para almacenar, consultar y administrar informacion.',
+        explanation: 'Permite guardar usuarios, tareas, calificaciones, recursos y otros datos de forma estructurada.',
+        characteristics: ['Organiza datos', 'Usa tablas o colecciones', 'Permite consultas', 'Puede relacionar informacion'],
+        concepts: ['Tabla', 'Registro', 'Campo', 'Clave primaria', 'Consulta', 'Relacion'],
+        formula: 'Ejemplo SQL: SELECT * FROM usuarios;',
+        example: 'AC Study podria tener tablas de usuarios, materias, tareas, notas y recursos.',
+        uses: 'Aplicaciones web, bancos, tiendas, escuelas y plataformas educativas.',
+        exercises: ['Nombra tres tablas para AC Study.', 'Que es un registro?', 'Para que sirve una clave primaria?'],
+        answers: ['Usuarios, materias y tareas.', 'Una fila de datos.', 'Para identificar un registro.'],
+        flashcards: [['Tabla', 'Conjunto de datos'], ['Registro', 'Fila'], ['Campo', 'Columna']]
+    },
+    html: {
+        aliases: ['html'],
+        title: 'HTML',
+        definition: 'HTML es el lenguaje de marcado que estructura el contenido de una pagina web.',
+        explanation: 'Define titulos, parrafos, botones, formularios, imagenes, enlaces y secciones.',
+        characteristics: ['Usa etiquetas', 'Estructura contenido', 'No es lenguaje de programacion', 'Trabaja junto a CSS y JavaScript'],
+        concepts: ['Etiqueta', 'Atributo', 'Elemento', 'Formulario', 'Enlace'],
+        formula: '<h1>Titulo</h1>',
+        example: '<button>Enviar</button> crea un boton.',
+        uses: 'Crear la estructura de sitios y aplicaciones web.',
+        exercises: ['Que etiqueta crea un titulo principal?', 'Para que sirve <a>?', 'Crea un parrafo HTML.'],
+        answers: ['<h1>.', 'Para enlaces.', '<p>Texto</p>.'],
+        flashcards: [['HTML', 'Estructura web'], ['Etiqueta', 'Marca contenido'], ['Atributo', 'Agrega informacion']]
+    },
+    css: {
+        aliases: ['css'],
+        title: 'CSS',
+        definition: 'CSS es el lenguaje que da estilo visual a una pagina web.',
+        explanation: 'Controla colores, fuentes, tamanos, bordes, sombras, layouts y responsive.',
+        characteristics: ['Estiliza HTML', 'Usa selectores', 'Permite responsive', 'Controla animaciones'],
+        concepts: ['Selector', 'Propiedad', 'Valor', 'Clase', 'Flexbox', 'Grid'],
+        formula: '.card { color: blue; }',
+        example: 'button { background: purple; } cambia el fondo de los botones.',
+        uses: 'Diseno visual, interfaces, adaptacion movil y animaciones.',
+        exercises: ['Que propiedad cambia color de texto?', 'Para que sirve display flex?', 'Crea una clase .box.'],
+        answers: ['color.', 'Para alinear elementos.', '.box { padding: 10px; }.'],
+        flashcards: [['CSS', 'Estilos web'], ['Selector', 'Elige elementos'], ['Grid', 'Layout en filas y columnas']]
+    },
+    javascript: {
+        aliases: ['javascript', 'js'],
+        title: 'JavaScript',
+        definition: 'JavaScript es un lenguaje de programacion que permite agregar interactividad a paginas web.',
+        explanation: 'Sirve para responder clics, guardar datos locales, cambiar contenido, validar formularios y crear logica.',
+        characteristics: ['Es dinamico', 'Manipula el DOM', 'Responde eventos', 'Puede guardar datos en localStorage'],
+        concepts: ['Variable', 'Funcion', 'Evento', 'DOM', 'Array', 'Objeto'],
+        formula: 'function saludar() { console.log("Hola"); }',
+        example: 'Un boton puede ejecutar JavaScript cuando el usuario hace clic.',
+        uses: 'Apps web, juegos, formularios, dashboards y asistentes simulados.',
+        exercises: ['Que es una variable?', 'Para que sirve addEventListener?', 'Crea una funcion simple.'],
+        answers: ['Un espacio para guardar datos.', 'Para escuchar eventos.', 'function hola() { return "hola"; }.'],
+        flashcards: [['JS', 'Interactividad web'], ['DOM', 'Documento HTML manipulable'], ['Evento', 'Accion del usuario']]
+    },
+    redes: {
+        aliases: ['redes', 'redes informaticas', 'internet'],
+        title: 'redes informaticas',
+        definition: 'Una red informatica conecta dispositivos para compartir informacion y recursos.',
+        explanation: 'Permite comunicacion entre computadoras, servidores, celulares e internet.',
+        characteristics: ['Conecta dispositivos', 'Usa protocolos', 'Puede ser local o global', 'Comparte datos'],
+        concepts: ['IP', 'Router', 'Servidor', 'Cliente', 'Protocolo', 'LAN', 'WAN'],
+        formula: 'Ejemplo de IP: 192.168.1.1.',
+        example: 'Cuando entras a una pagina, tu equipo se comunica con un servidor mediante internet.',
+        uses: 'Internet, escuelas, empresas, videojuegos, correos y plataformas web.',
+        exercises: ['Que es una IP?', 'Diferencia LAN y WAN.', 'Para que sirve un router?'],
+        answers: ['Direccion de un dispositivo.', 'LAN local, WAN amplia.', 'Conecta y dirige trafico.'],
+        flashcards: [['Red', 'Dispositivos conectados'], ['Router', 'Dirige datos'], ['IP', 'Direccion de red']]
+    }
+};
+
+function findKnowledgeTopic(text) {
+    const normalizedText = normalizeTutorText(text);
+    return Object.keys(knowledgeBase).find(key => {
+        const topic = knowledgeBase[key];
+        return topic.aliases.some(alias => normalizedText.includes(normalizeTutorText(alias)));
+    }) || '';
+}
+
 function getTopicProfile(topic) {
     const key = normalizeTutorText(topic);
-    const profiles = {
-        'interes compuesto': {
-            title: 'interes compuesto',
-            definition: 'El interes compuesto es el calculo donde los intereses se suman al capital inicial y despues tambien generan nuevos intereses. Por eso crece mas rapido que el interes simple.',
-            concepts: ['Capital inicial', 'Tasa de interes', 'Tiempo o periodos', 'Monto final', 'Interes sobre interes', 'Diferencia con interes simple'],
-            formula: 'A = P(1 + r)^t',
-            example: 'Si ahorras 100 dolares al 10% anual por 2 anos: A = 100(1.10)^2 = 121 dolares.',
-            uses: 'Se usa en ahorros, inversiones, prestamos, tarjetas de credito y planes de retiro.',
-            exercises: ['Calcula 100 dolares al 10% por 2 anos.', 'Calcula 250 dolares al 8% por 3 anos.', 'Calcula 500 dolares al 5% por 4 anos.'],
-            answers: ['121.00 dolares', '314.93 dolares aproximadamente', '607.75 dolares aproximadamente']
-        },
-        limites: {
-            title: 'limites',
-            definition: 'Un limite indica a que valor se acerca una funcion cuando la variable se aproxima a un numero.',
-            concepts: ['Funcion', 'Variable', 'Valor al que se acerca', 'Limite lateral izquierdo', 'Limite lateral derecho', 'Continuidad'],
-            formula: 'Se expresa como lim f(x) cuando x se acerca a un valor.',
-            example: 'Si x se acerca a 2 y f(x) se acerca a 5 por ambos lados, el limite es 5.',
-            uses: 'Se usa para estudiar continuidad, derivadas, graficas y cambios en funciones.',
-            exercises: ['Si f(x)=x+3, halla el limite cuando x se acerca a 2.', 'Si ambos lados se acercan a 4, existe el limite?', 'Si izquierda da 2 y derecha da 6, existe el limite?'],
-            answers: ['5', 'Si, el limite es 4', 'No existe porque los lados no coinciden']
-        },
-        fotosintesis: {
-            title: 'fotosintesis',
-            definition: 'La fotosintesis es el proceso por el cual las plantas producen su alimento usando luz solar, agua y dioxido de carbono.',
-            concepts: ['Luz solar', 'Clorofila', 'Agua', 'Dioxido de carbono', 'Glucosa', 'Oxigeno'],
-            formula: 'Dioxido de carbono + agua + luz -> glucosa + oxigeno.',
-            example: 'Una planta recibe luz, absorbe agua por las raices y toma dioxido de carbono del aire para producir glucosa.',
-            uses: 'Permite que las plantas vivan y produce oxigeno para otros seres vivos.',
-            exercises: ['Nombra tres elementos necesarios para la fotosintesis.', 'Que produce la fotosintesis?', 'Por que es importante la clorofila?'],
-            answers: ['Luz, agua y dioxido de carbono', 'Glucosa y oxigeno', 'Porque capta la luz solar']
-        },
-        variables: {
-            title: 'variables',
-            definition: 'Una variable es un simbolo que representa un valor que puede cambiar o que todavia no conocemos.',
-            concepts: ['Simbolo', 'Valor desconocido', 'Cambio', 'Expresion algebraica', 'Ecuacion'],
-            formula: 'Ejemplo: x + 3 = 7, donde x es la variable.',
-            example: 'Si x representa tu edad, x puede cambiar cada ano.',
-            uses: 'Se usan en algebra, programacion, estadistica y problemas de la vida diaria.',
-            exercises: ['En x + 5 = 9, cual es la variable?', 'Resuelve x + 5 = 9.', 'Crea un ejemplo con una variable.'],
-            answers: ['x', 'x = 4', 'Ejemplo: y representa el precio de un producto']
-        }
-    };
+    const knownKey = findKnowledgeTopic(key) || key;
 
-    return profiles[key] || {
+    return knowledgeBase[knownKey] || {
         title: topic,
-        definition: `${topic} es el tema que estas estudiando. Para entenderlo bien conviene identificar que significa, sus partes importantes y como se aplica en ejemplos.`,
-        concepts: ['Definicion principal', 'Caracteristicas', 'Ejemplo', 'Uso practico', 'Dudas frecuentes'],
-        formula: 'Si el tema tiene formula o regla, aqui se ubica para practicarla.',
-        example: `Un ejemplo de ${topic} depende de la materia: puede ser un ejercicio, una situacion real o una explicacion de clase.`,
-        uses: `${topic} sirve para comprender mejor el contenido academico y aplicarlo en tareas, pruebas o exposiciones.`,
-        exercises: [`Explica ${topic} con tus palabras.`, `Escribe tres ideas clave de ${topic}.`, `Crea un ejemplo de ${topic}.`],
-        answers: ['Respuesta personal con definicion clara.', 'Tres ideas relacionadas con el tema.', 'Un ejemplo conectado con la clase.']
+        unknown: true,
+        definition: `Todavia no tengo una explicacion completa guardada sobre ${topic}, pero puedo ayudarte con una guia general usando ese tema como contexto.`,
+        explanation: `Para estudiar ${topic}, identifica primero que significa, despues separa sus ideas principales y finalmente busca un ejemplo concreto de tu clase o tarea.`,
+        characteristics: [`Idea central de ${topic}`, 'Palabras clave del tema', 'Ejemplo visto en clase', 'Aplicacion o uso practico'],
+        concepts: [`Definicion de ${topic}`, 'Ideas principales', 'Ejemplo', 'Uso practico'],
+        formula: 'Si tu profesor dio una formula o regla, escribela aqui y puedo ayudarte a interpretarla.',
+        example: `Ejemplo general: explica ${topic} con tus palabras y relaciona el concepto con una situacion de clase.`,
+        uses: `${topic} puede servir para resolver actividades, estudiar para pruebas o preparar una exposicion, segun la materia.`,
+        exercises: [`Define ${topic} con tus palabras.`, `Escribe tres ideas principales de ${topic}.`, `Crea un ejemplo relacionado con ${topic}.`, `Haz una pregunta que todavia tengas sobre ${topic}.`, `Resume ${topic} en cinco lineas.`],
+        answers: ['Debe incluir una definicion clara.', 'Deben ser ideas conectadas al tema.', 'Debe ser un ejemplo concreto.', 'Debe mostrar una duda real.', 'Debe tener inicio, idea central y cierre.'],
+        flashcards: [[`Que es ${topic}?`, 'Respuesta: escribe una definicion clara del tema.'], ['Que debo recordar?', 'Las ideas principales y un ejemplo.']]
     };
 }
 
 function buildTutorSimulatedReply(message) {
     const intent = detectTutorIntent(message);
+    lastIntent = intent;
     const topic = extractTutorTopic(message, intent);
 
     if (intent === 'answer-check') {
@@ -3492,28 +3678,38 @@ function buildTutorSimulatedReply(message) {
     const pdfIntro = currentTutorPdf ? `Segun tu PDF "${currentTutorPdf.name}", ` : '';
 
     if (intent === 'concepts') {
-        return `${pdfIntro}estos son los conceptos principales de ${profile.title}:\n\n${profile.concepts.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nConcepto central:\n${profile.definition}`;
+        return `${pdfIntro}estos son los conceptos principales de ${profile.title}:\n\n${profile.concepts.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nExplicacion central:\n${profile.definition}`;
     }
     if (intent === 'review') {
-        return `${pdfIntro}resumen de ${profile.title}:\n\n${profile.definition}\n\nIdeas clave:\n${profile.concepts.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nEjemplo:\n${profile.example}`;
+        return `${pdfIntro}resumen de ${profile.title}:\n\n${profile.definition}\n\n${profile.explanation}\n\nIdeas clave:\n${profile.concepts.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nEjemplo:\n${profile.example}`;
     }
     if (intent === 'example') {
         return `${pdfIntro}ejemplo de ${profile.title}:\n\n${profile.example}\n\nUso en la vida cotidiana:\n${profile.uses}`;
+    }
+    if (intent === 'formula') {
+        return `${pdfIntro}formula o regla de ${profile.title}:\n\n${profile.formula}\n\nComo interpretarla:\n${profile.explanation}\n\nEjemplo:\n${profile.example}`;
     }
     if (intent === 'steps') {
         return `Pasos para trabajar ${profile.title}:\n\n1. Lee la definicion: ${profile.definition}\n2. Identifica los conceptos clave: ${profile.concepts.slice(0, 4).join(', ')}.\n3. Revisa la regla o formula: ${profile.formula}\n4. Mira un ejemplo: ${profile.example}\n5. Practica con un ejercicio parecido.`;
     }
     if (intent === 'exercises') {
-        return `Ejercicios de ${profile.title}:\n\n${profile.exercises.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nRespuestas para comprobar:\n${profile.answers.map((item, index) => `${index + 1}. ${item}`).join('\n')}`;
+        const wantsAnswers = /respuesta|respuestas|comprobar|solucion|soluciones/.test(normalizeTutorText(message));
+        return `Ejercicios de ${profile.title}:\n\n${profile.exercises.map((item, index) => `${index + 1}. ${item}`).join('\n')}${wantsAnswers ? `\n\nRespuestas para comprobar:\n${profile.answers.map((item, index) => `${index + 1}. ${item}`).join('\n')}` : '\n\nIntenta resolverlos primero. Si quieres, luego escribe "dame las respuestas" y las revisamos.'}`;
     }
     if (intent === 'flashcards') {
-        return `Flashcards de ${profile.title}:\n\nTarjeta 1\nPregunta: Que es ${profile.title}?\nRespuesta: ${profile.definition}\n\nTarjeta 2\nPregunta: Cuales son conceptos clave?\nRespuesta: ${profile.concepts.slice(0, 4).join(', ')}.\n\nTarjeta 3\nPregunta: Donde se usa?\nRespuesta: ${profile.uses}`;
+        const cards = profile.flashcards || [
+            [`Que es ${profile.title}?`, profile.definition],
+            ['Cuales son conceptos clave?', profile.concepts.slice(0, 4).join(', ')],
+            ['Donde se usa?', profile.uses]
+        ];
+        return `Flashcards de ${profile.title}:\n\n${cards.map((card, index) => `Tarjeta ${index + 1}\nPregunta: ${card[0]}\nRespuesta: ${card[1]}`).join('\n\n')}`;
     }
     if (intent === 'exam') {
         return `Cuestionario para examen sobre ${profile.title}:\n\n1. Define ${profile.title}.\n2. Menciona tres conceptos clave.\n3. Explica un ejemplo.\n4. Para que sirve este tema?\n5. Resuelve o analiza: ${profile.exercises[0]}\n\nCuando respondas, puedo revisar tus respuestas una por una.`;
     }
     if (intent === 'practice') {
-        const question = profile.exercises[0] || `Explica ${profile.title} con tus palabras.`;
+        const questions = profile.exercises.slice(0, 5);
+        const question = questions[0] || `Explica ${profile.title} con tus palabras.`;
         tutorState.pendingQuestion = {
             topic: profile.title,
             question,
@@ -3521,10 +3717,10 @@ function buildTutorSimulatedReply(message) {
             keywords: profile.concepts.concat(profile.title.split(' ')).map(normalizeTutorText)
         };
         saveTutorPendingQuestion();
-        return `Vamos a practicar ${profile.title}.\n\nPregunta:\n${question}\n\nResponde con tus palabras y te dire si esta bien.`;
+        return `Vamos a practicar ${profile.title}.\n\nPreguntas:\n${questions.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nResponde la pregunta 1 con tus palabras y te dire si esta bien. No te muestro respuestas todavia para que puedas practicar.`;
     }
 
-    return `${pdfIntro}te explico ${profile.title}:\n\nDefinicion:\n${profile.definition}\n\nConceptos clave:\n${profile.concepts.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nRegla o formula:\n${profile.formula}\n\nEjemplo:\n${profile.example}\n\nPuedes pedirme: ejemplos, ejercicios, resumen, flashcards o preguntas para practicar.`;
+    return `${pdfIntro}te explico ${profile.title}:\n\nDefinicion:\n${profile.definition}\n\nExplicacion:\n${profile.explanation}\n\nCaracteristicas:\n${profile.characteristics.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nFormula o regla:\n${profile.formula}\n\nEjemplo:\n${profile.example}\n\nPara que sirve:\n${profile.uses}\n\nPuedes pedirme: ejemplos, ejercicios, resumen, flashcards o preguntas para practicar.`;
 }
 
 function checkTutorPracticeAnswer(answer) {
