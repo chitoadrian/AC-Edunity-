@@ -155,6 +155,25 @@ function renderQuickField(field) {
         return `<select name="${escapeHTML(field.name)}" ${field.required === false ? '' : 'required'}>${options}</select>`;
     }
 
+    if (field.type === 'choice-grid') {
+        const options = (field.options || []).map((option, index) => {
+            const value = typeof option === 'string' ? option : option.value;
+            const label = typeof option === 'string' ? option : option.label;
+            const tone = typeof option === 'string' ? '' : option.tone || '';
+            const iconClass = typeof option === 'string' ? '' : option.iconClass || '';
+            const checked = String(field.value || '') === String(value) || (!field.value && index === 0) ? 'checked' : '';
+            return `
+                <label class="choice-pill ${escapeHTML(iconClass)}" style="${tone ? `--choice-color:${escapeHTML(tone)}` : ''}">
+                    <input type="radio" name="${escapeHTML(field.name)}" value="${escapeHTML(value)}" ${checked} ${field.required === false ? '' : 'required'}>
+                    <span class="choice-dot" aria-hidden="true"></span>
+                    <strong>${escapeHTML(label)}</strong>
+                </label>
+            `;
+        }).join('');
+
+        return `<div class="choice-grid">${options}</div>`;
+    }
+
     if (field.type === 'checkbox') {
         return `
             <span class="quick-check">
@@ -1809,26 +1828,36 @@ const subjectColorMap = {
     Rosado: '#ec4899',
     Cian: '#06b6d4',
     Verde: '#22c55e',
-    Amarillo: '#f59e0b'
+    Amarillo: '#f59e0b',
+    Rojo: '#ef4444',
+    Naranja: '#f97316'
 };
 
 const subjectColorOptions = [
-    { value: 'Morado', label: 'Morado creativo' },
-    { value: 'Azul', label: 'Azul concentracion' },
-    { value: 'Rosado', label: 'Rosado energia' },
-    { value: 'Cian', label: 'Cian tecnologia' },
-    { value: 'Verde', label: 'Verde avance' },
-    { value: 'Amarillo', label: 'Amarillo importante' }
+    { value: 'Azul', label: 'Azul', tone: '#2563eb' },
+    { value: 'Morado', label: 'Morado', tone: '#7c3aed' },
+    { value: 'Verde', label: 'Verde', tone: '#22c55e' },
+    { value: 'Rojo', label: 'Rojo', tone: '#ef4444' },
+    { value: 'Naranja', label: 'Naranja', tone: '#f97316' },
+    { value: 'Amarillo', label: 'Amarillo', tone: '#f59e0b' },
+    { value: 'Rosado', label: 'Rosa', tone: '#ec4899' }
 ];
 
 const subjectBookOptions = [
-    { value: 'book-blue', label: 'Libro azul' },
-    { value: 'book-orange', label: 'Libro naranja' },
-    { value: 'book-yellow', label: 'Libro amarillo' },
-    { value: 'book-green', label: 'Libro verde' },
-    { value: 'book-purple', label: 'Libro morado' },
-    { value: 'book-pink', label: 'Libro rosado' }
+    { value: 'math', label: 'Matematicas', iconClass: 'choice-icon-math' },
+    { value: 'chemistry', label: 'Quimica', iconClass: 'choice-icon-chemistry' },
+    { value: 'history', label: 'Historia', iconClass: 'choice-icon-history' },
+    { value: 'programming', label: 'Programacion', iconClass: 'choice-icon-programming' },
+    { value: 'robotics', label: 'Robotica', iconClass: 'choice-icon-robotics' },
+    { value: 'literature', label: 'Literatura', iconClass: 'choice-icon-literature' },
+    { value: 'sports', label: 'Educacion fisica', iconClass: 'choice-icon-sports' },
+    { value: 'art', label: 'Arte', iconClass: 'choice-icon-art' },
+    { value: 'biology', label: 'Biologia', iconClass: 'choice-icon-biology' },
+    { value: 'book-blue', label: 'Libro azul', iconClass: 'choice-icon-book' }
 ];
+
+let subjectFilterText = '';
+let subjectSortMode = 'name';
 
 const taskPriorityOptions = [
     { value: 'alta', label: 'Importante' },
@@ -4342,8 +4371,11 @@ function openSubjectForm(subjectId = null) {
         submitLabel: subject ? 'Actualizar materia' : 'Guardar materia',
         fields: [
             { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matematica' },
-            { name: 'icon', label: 'Libro de la materia', type: 'select', options: subjectBookOptions, value: normalizeSubjectIcon(subject?.icon) },
-            { name: 'color', label: 'Color identificador', type: 'select', options: subjectColorOptions, value: subject?.color || 'Morado' }
+            { name: 'icon', label: 'Icono de la materia', type: 'choice-grid', options: subjectBookOptions, value: normalizeSubjectIcon(subject?.icon) },
+            { name: 'customIcon', label: 'Icono personalizado opcional', value: subject?.customIcon || '', required: false, placeholder: 'Ej: MAT, BIO, AI' },
+            { name: 'color', label: 'Color identificador', type: 'choice-grid', options: subjectColorOptions, value: subject?.color || 'Azul' },
+            { name: 'description', label: 'Descripcion corta', type: 'textarea', rows: 3, value: subject?.description || '', required: false, placeholder: 'Ej: Algebra, geometria y resolucion de problemas.' },
+            { name: 'goal', label: 'Objetivo de la materia', type: 'textarea', rows: 3, value: subject?.goal || '', required: false, placeholder: 'Ej: Subir mi promedio y entregar tareas a tiempo.' }
         ],
         onSubmit: values => {
             const fresh = loadWorkspace();
@@ -4353,7 +4385,10 @@ function openSubjectForm(subjectId = null) {
                     const oldName = item.name;
                     item.name = values.name.trim();
                     item.icon = normalizeSubjectIcon(values.icon);
-                    item.color = values.color || 'Morado';
+                    item.customIcon = values.customIcon.trim();
+                    item.color = values.color || 'Azul';
+                    item.description = values.description.trim();
+                    item.goal = values.goal.trim();
                     fresh.tasks.forEach(task => {
                         if (task.subject === oldName) task.subject = item.name;
                     });
@@ -4370,7 +4405,10 @@ function openSubjectForm(subjectId = null) {
                     id: createId(),
                     name: values.name.trim(),
                     icon: normalizeSubjectIcon(values.icon),
-                    color: values.color || 'Morado',
+                    customIcon: values.customIcon.trim(),
+                    color: values.color || 'Azul',
+                    description: values.description.trim(),
+                    goal: values.goal.trim(),
                     createdAt: new Date().toISOString()
                 });
                 addXP(fresh, 30);
@@ -4383,40 +4421,201 @@ function openSubjectForm(subjectId = null) {
     });
 }
 
+function getSubjectMetrics(workspace, subject) {
+    const tasks = workspace.tasks.filter(task => task.subject === subject.name);
+    const pendingTasks = tasks.filter(task => task.status !== 'completed');
+    const completedTasks = tasks.filter(task => task.status === 'completed');
+    const grades = workspace.grades.filter(grade => grade.subject === subject.name);
+    const resources = workspace.resources.filter(resource => resource.subject === subject.name);
+    const subjectKey = normalizeTutorText(subject.name);
+    const events = workspace.events.filter(event => normalizeTutorText(`${event.title || ''} ${event.subject || ''}`).includes(subjectKey));
+    const progress = tasks.length ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
+    const average = getSubjectAverage(workspace, subject.name);
+    const nextEvent = events[0] || workspace.events.find(event => normalizeTutorText(event.title || '').includes(subjectKey)) || null;
+    const recent = (workspace.recent || []).find(item => normalizeTutorText(item.text).includes(subjectKey));
+
+    return {
+        tasks,
+        pendingTasks,
+        completedTasks,
+        grades,
+        resources,
+        events,
+        progress,
+        average,
+        nextEvent,
+        recentText: recent ? recent.text : (subject.createdAt ? 'Materia creada por el estudiante.' : 'Sin actividad registrada.')
+    };
+}
+
+function getSubjectIconMarkup(subject) {
+    const custom = String(subject.customIcon || '').trim().slice(0, 4);
+    if (custom) {
+        return `<span class="subject-icon subject-custom-label" aria-hidden="true">${escapeHTML(custom.toUpperCase())}</span>`;
+    }
+    return `<span class="subject-icon subject-symbol subject-icon-${escapeHTML(normalizeSubjectIcon(subject.icon))}" aria-hidden="true"></span>`;
+}
+
+function ensureSubjectsToolbar(grid) {
+    const section = document.getElementById('subjects');
+    if (!section || section.querySelector('.subjects-toolbar')) return;
+    grid.insertAdjacentHTML('beforebegin', `
+        <div class="subjects-toolbar">
+            <label class="subjects-search">
+                <span>Buscar</span>
+                <input type="search" id="subject-search" placeholder="Buscar materia..." value="${escapeHTML(subjectFilterText)}">
+            </label>
+            <label class="subjects-sort">
+                <span>Ordenar por</span>
+                <select id="subject-sort">
+                    <option value="name" ${subjectSortMode === 'name' ? 'selected' : ''}>Nombre</option>
+                    <option value="progress" ${subjectSortMode === 'progress' ? 'selected' : ''}>Progreso</option>
+                    <option value="average" ${subjectSortMode === 'average' ? 'selected' : ''}>Mejor promedio</option>
+                    <option value="tasks" ${subjectSortMode === 'tasks' ? 'selected' : ''}>Mas tareas</option>
+                </select>
+            </label>
+        </div>
+    `);
+}
+
+function bindSubjectsToolbar() {
+    const search = document.getElementById('subject-search');
+    const sort = document.getElementById('subject-sort');
+    if (search && !search.dataset.bound) {
+        search.dataset.bound = 'true';
+        search.addEventListener('input', event => {
+            subjectFilterText = event.target.value;
+            renderSubjects(loadWorkspace());
+        });
+    }
+    if (sort && !sort.dataset.bound) {
+        sort.dataset.bound = 'true';
+        sort.addEventListener('change', event => {
+            subjectSortMode = event.target.value;
+            renderSubjects(loadWorkspace());
+        });
+    }
+}
+
+function sortSubjectsForView(subjects, workspace) {
+    return [...subjects].sort((a, b) => {
+        const metricsA = getSubjectMetrics(workspace, a);
+        const metricsB = getSubjectMetrics(workspace, b);
+        if (subjectSortMode === 'progress') return metricsB.progress - metricsA.progress;
+        if (subjectSortMode === 'average') return metricsB.average - metricsA.average;
+        if (subjectSortMode === 'tasks') return metricsB.tasks.length - metricsA.tasks.length;
+        return a.name.localeCompare(b.name);
+    });
+}
+
 function renderSubjects(workspace) {
     const grid = document.querySelector('.subjects-grid');
     if (!grid) return;
+    ensureSubjectsToolbar(grid);
+    const filteredSubjects = sortSubjectsForView(workspace.subjects.filter(subject => normalizeTutorText(subject.name).includes(normalizeTutorText(subjectFilterText))), workspace);
 
-    grid.innerHTML = workspace.subjects.length ? workspace.subjects.map(subject => {
-        const taskCount = workspace.tasks.filter(task => task.subject === subject.name).length;
-        const completed = workspace.tasks.filter(task => task.subject === subject.name && task.status === 'completed').length;
-        const progress = taskCount ? Math.round((completed / taskCount) * 100) : 0;
-        const average = getSubjectAverage(workspace, subject.name);
+    grid.innerHTML = workspace.subjects.length ? (filteredSubjects.length ? filteredSubjects.map(subject => {
+        const metrics = getSubjectMetrics(workspace, subject);
         const color = subjectColorMap[subject.color] || subjectColorMap.Morado;
-        const bookIcon = normalizeSubjectIcon(subject.icon);
         return `
-            <div class="subject-card subject-custom ac-colored-card" style="--subject-color:${color}">
+            <div class="subject-card subject-custom ac-colored-card subject-space-card" style="--subject-color:${color}">
+                <div class="subject-orbit" aria-hidden="true"></div>
                 <div class="subject-header">
-                    <h3><span class="subject-icon subject-book ${escapeHTML(bookIcon)}" aria-hidden="true"></span> ${escapeHTML(subject.name)}</h3>
+                    <div class="subject-title">
+                        ${getSubjectIconMarkup(subject)}
+                        <div>
+                            <h3>${escapeHTML(subject.name)}</h3>
+                            <p>${escapeHTML(subject.description || 'Espacio academico personalizado')}</p>
+                        </div>
+                    </div>
                     <span class="subject-chip">${escapeHTML(subject.color || 'Morado')}</span>
                 </div>
-                <div class="subject-stats">
-                    <div class="stat"><span class="stat-name">Progreso</span><span class="stat-num">${progress}%</span></div>
-                    <div class="stat"><span class="stat-name">Tareas</span><span class="stat-num">${taskCount}</span></div>
-                    <div class="stat"><span class="stat-name">Promedio</span><span class="stat-num">${average ? average.toFixed(2) : '--'}</span></div>
+                <div class="subject-progress-block">
+                    <div><span>Progreso</span><strong>${metrics.progress}%</strong></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${metrics.progress}%; background:linear-gradient(90deg, ${color}, #49ccf9)"></div></div>
                 </div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${progress}%; background:linear-gradient(90deg, ${color}, #06b6d4)"></div></div>
-                <p class="last-activity">${taskCount ? `${completed} de ${taskCount} tareas completadas` : 'Sin tareas relacionadas todavia'}</p>
+                <div class="subject-metric-grid">
+                    <div><span>Pendientes</span><strong>${metrics.pendingTasks.length}</strong></div>
+                    <div><span>Completadas</span><strong>${metrics.completedTasks.length}</strong></div>
+                    <div><span>Promedio</span><strong>${metrics.average ? metrics.average.toFixed(2) : '--'}</strong></div>
+                    <div><span>Apuntes</span><strong>${metrics.resources.length}</strong></div>
+                </div>
+                <div class="subject-card-footer">
+                    <p><strong>Proxima entrega:</strong> ${metrics.nextEvent ? escapeHTML(`${metrics.nextEvent.title} - ${metrics.nextEvent.date || metrics.nextEvent.day || 'Sin fecha'}`) : 'Sin entregas programadas'}</p>
+                    <p><strong>Ultima actividad:</strong> ${escapeHTML(metrics.recentText)}</p>
+                </div>
                 <div class="card-actions">
+                    <button class="btn-primary btn-small" data-subject-open="${escapeHTML(subject.id)}">Abrir materia</button>
                     <button class="btn-secondary btn-small" data-subject-edit="${escapeHTML(subject.id)}">Editar</button>
                     <button class="btn-danger btn-small" data-subject-delete="${escapeHTML(subject.id)}">Eliminar</button>
                 </div>
             </div>
         `;
-    }).join('') : emptyStateHTML('No tienes materias registradas todavia.', 'Crear primera materia', 'addSubjectUI()');
+    }).join('') : emptyStateHTML('No se encontraron materias con esa busqueda.', 'Limpiar busqueda', "clearSubjectSearch()")) : emptyStateHTML('No tienes materias todavia. Organiza tu aprendizaje creando tu primera materia.', '+ Crear materia', 'addSubjectUI()');
 
+    bindSubjectsToolbar();
+    grid.querySelectorAll('[data-subject-open]').forEach(button => button.addEventListener('click', () => openSubjectDetails(button.dataset.subjectOpen)));
     grid.querySelectorAll('[data-subject-edit]').forEach(button => button.addEventListener('click', () => openSubjectForm(button.dataset.subjectEdit)));
     grid.querySelectorAll('[data-subject-delete]').forEach(button => button.addEventListener('click', () => deleteSubject(button.dataset.subjectDelete)));
+}
+
+function clearSubjectSearch() {
+    subjectFilterText = '';
+    const search = document.getElementById('subject-search');
+    if (search) search.value = '';
+    renderSubjects(loadWorkspace());
+}
+
+function openSubjectDetails(subjectId) {
+    const workspace = loadWorkspace();
+    const subject = workspace.subjects.find(item => item.id === subjectId);
+    if (!subject) return;
+    const metrics = getSubjectMetrics(workspace, subject);
+    const color = subjectColorMap[subject.color] || subjectColorMap.Morado;
+    const modal = document.createElement('div');
+    modal.className = 'quick-modal subject-detail-modal';
+    modal.innerHTML = `
+        <div class="quick-modal-card subject-detail-card" style="--subject-color:${color}" role="dialog" aria-modal="true" aria-label="Detalle de ${escapeHTML(subject.name)}">
+            <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
+            <div class="subject-detail-hero">
+                ${getSubjectIconMarkup(subject)}
+                <div>
+                    <span class="subject-chip">${escapeHTML(subject.color || 'Morado')}</span>
+                    <h3>${escapeHTML(subject.name)}</h3>
+                    <p>${escapeHTML(subject.goal || subject.description || 'Espacio de estudio de la materia.')}</p>
+                </div>
+            </div>
+            <div class="subject-detail-stats">
+                <div><span>Progreso</span><strong>${metrics.progress}%</strong></div>
+                <div><span>Pendientes</span><strong>${metrics.pendingTasks.length}</strong></div>
+                <div><span>Completadas</span><strong>${metrics.completedTasks.length}</strong></div>
+                <div><span>Promedio</span><strong>${metrics.average ? metrics.average.toFixed(2) : '--'}</strong></div>
+            </div>
+            <div class="subject-detail-columns">
+                <section>
+                    <h4>Tareas</h4>
+                    ${metrics.tasks.length ? metrics.tasks.slice(0, 5).map(task => `<p><strong>${escapeHTML(task.title)}</strong><span>${escapeHTML(getTaskStatusLabel(task.status))} - ${escapeHTML(task.due || 'Sin fecha')}</span></p>`).join('') : '<p class="muted-panel">Sin tareas relacionadas.</p>'}
+                </section>
+                <section>
+                    <h4>Calificaciones</h4>
+                    ${metrics.grades.length ? metrics.grades.slice(0, 5).map(grade => `<p><strong>${escapeHTML(grade.activity || 'Actividad')}</strong><span>${escapeHTML(String(grade.value || '--'))}</span></p>`).join('') : '<p class="muted-panel">Sin calificaciones registradas.</p>'}
+                </section>
+                <section>
+                    <h4>Mochila</h4>
+                    ${metrics.resources.length ? metrics.resources.slice(0, 5).map(resource => `<p><strong>${escapeHTML(resource.title)}</strong><span>${escapeHTML(resource.fileName || 'PDF simulado')}</span></p>`).join('') : '<p class="muted-panel">Sin apuntes de esta materia.</p>'}
+                </section>
+                <section>
+                    <h4>Actividad</h4>
+                    <p><strong>Ultimo movimiento</strong><span>${escapeHTML(metrics.recentText)}</span></p>
+                    <p><strong>Proximo evento</strong><span>${metrics.nextEvent ? escapeHTML(metrics.nextEvent.title) : 'Sin eventos programados'}</span></p>
+                </section>
+            </div>
+        </div>
+    `;
+    modal.addEventListener('click', event => {
+        if (event.target === modal || event.target.classList.contains('quick-modal-close')) modal.remove();
+    });
+    document.body.appendChild(modal);
 }
 
 function renderBackpack(workspace) {
