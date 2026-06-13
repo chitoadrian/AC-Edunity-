@@ -5020,40 +5020,104 @@ function renderProgress(workspace) {
     const container = document.querySelector('.progress-container');
     if (!container) return;
 
-    const level = getLevel(workspace.xp);
-    const xpProgress = Math.min(100, ((workspace.xp || 0) % 250) / 2.5);
+    const xp = workspace.xp || 0;
+    const level = getLevel(xp);
+    const xpPerLevel = 250;
+    const xpCurrent = xp % xpPerLevel;
+    const xpToNext = xpPerLevel - xpCurrent;
+    const xpProgress = Math.min(100, (xpCurrent / xpPerLevel) * 100);
+    const completedTasks = workspace.tasks.filter(task => task.status === 'completed').length;
+    const attendancePositive = workspace.attendance.filter(item => isAttendancePositive(item.status)).length;
     const achievements = [
-        { name: 'Primera materia', icon: 'subject', unlocked: workspace.subjects.length > 0 },
-        { name: 'Primera tarea', icon: 'task', unlocked: workspace.tasks.length > 0 },
-        { name: 'Tarea completada', icon: 'done', unlocked: workspace.tasks.some(task => task.status === 'completed') },
-        { name: 'Primer apunte', icon: 'note', unlocked: workspace.resources.length > 0 },
-        { name: 'Uso de IA', icon: 'ai', unlocked: workspace.resources.some(resource => resource.usedAI) }
+        { name: 'Primera materia', detail: 'Crea tu primera clase', icon: 'subject', unlocked: workspace.subjects.length > 0 },
+        { name: 'Primera tarea', detail: 'Agrega un pendiente', icon: 'task', unlocked: workspace.tasks.length > 0 },
+        { name: 'Tarea completada', detail: 'Marca una tarea como lista', icon: 'done', unlocked: completedTasks > 0 },
+        { name: 'Primer apunte', detail: 'Sube un PDF o recurso', icon: 'note', unlocked: workspace.resources.length > 0 },
+        { name: 'Uso de Tutor', detail: 'Pregunta con un apunte', icon: 'ai', unlocked: workspace.resources.some(resource => resource.usedAI) },
+        { name: '7 dias de racha', detail: 'Mantente constante', icon: 'streak', unlocked: (workspace.streak || 0) >= 7 },
+        { name: 'Nivel 5 alcanzado', detail: 'Acumula suficiente XP', icon: 'level', unlocked: level >= 5 },
+        { name: 'Estudiante constante', detail: 'Registra asistencia', icon: 'attendance', unlocked: attendancePositive >= 5 }
     ];
+    const unlocked = achievements.filter(item => item.unlocked).length;
+    const pathLevels = [1, 2, 3, 4, 5];
 
     container.innerHTML = `
-        <div class="level-display">
-            <div class="level-card">
-                <div class="level-number">${level}</div>
-                <p>NIVEL ACTUAL</p>
-                <div class="xp-bar"><div class="xp-fill" style="width:${xpProgress}%"></div></div>
-                <p class="xp-text">${workspace.xp || 0} XP acumulado</p>
+        <div class="progress-hero premium-border">
+            <div class="progress-hero-copy">
+                <span class="progress-eyebrow">Camino academico</span>
+                <h2>Nivel ${level}</h2>
+                <p>${xp ? 'Estas cerca del siguiente nivel.' : 'Completa actividades para desbloquear logros.'}</p>
+                <div class="progress-xp-meta">
+                    <span>${xp} XP acumulado</span>
+                    <span>${xpToNext} XP para nivel ${level + 1}</span>
+                </div>
+                <div class="xp-bar progress-xp-bar" aria-label="Progreso de XP">
+                    <div class="xp-fill" style="width:${xpProgress}%"></div>
+                </div>
+                <small>${xpCurrent}/${xpPerLevel} XP en este nivel</small>
             </div>
-            <div class="stats-row">
-                <div class="progress-stat"><span class="stat-label">Racha Actual</span><span class="stat-value">${workspace.streak || 0} dias</span></div>
-                <div class="progress-stat"><span class="stat-label">Logros</span><span class="stat-value">${achievements.filter(item => item.unlocked).length}/${achievements.length}</span></div>
-                <div class="progress-stat"><span class="stat-label">Estado</span><span class="stat-value">${workspace.xp ? 'En progreso' : 'Inicial'}</span></div>
+            <div class="progress-level-orb" style="--xp:${xpProgress}%">
+                <strong>${level}</strong>
+                <span>Nivel actual</span>
             </div>
         </div>
-        ${workspace.xp ? '' : `<div class="card">${emptyStateHTML('Tu progreso aparecera cuando empieces a usar la plataforma.', 'Crear primera materia', 'addSubjectUI()')}</div>`}
-        <div class="achievements-section">
-            <h3>Logros</h3>
-            <div class="achievements-grid">
-                ${achievements.map(item => `
-                    <div class="achievement ${item.unlocked ? 'unlocked' : 'locked'}">
-                        <div class="achievement-icon achievement-${escapeHTML(item.icon)}" aria-hidden="true"></div>
-                        <p>${escapeHTML(item.name)}</p>
+
+        <div class="progress-stat-grid">
+            ${progressStatCard('streak', 'Racha actual', `${workspace.streak || 0}`, 'dias activos')}
+            ${progressStatCard('trophy', 'Logros desbloqueados', `${unlocked}/${achievements.length}`, 'insignias premium')}
+            ${progressStatCard('status', 'Estado', xp ? 'En progreso' : 'Inicial', xp ? 'sigue avanzando' : 'empieza desde cero')}
+            ${progressStatCard('activity', 'Actividad academica', workspace.subjects.length + workspace.tasks.length + workspace.resources.length, 'acciones registradas')}
+            ${progressStatCard('tasks', 'Tareas completadas', completedTasks, 'retos terminados')}
+        </div>
+
+        <section class="progress-path premium-border">
+            <div class="progress-section-title">
+                <h3>Camino del estudiante</h3>
+                <p>Avanza por niveles mientras usas AC Study.</p>
+            </div>
+            <div class="student-path">
+                ${pathLevels.map(pathLevel => `
+                    <div class="path-step ${level >= pathLevel ? 'active' : ''} ${level === pathLevel ? 'current' : ''}">
+                        <span>${pathLevel}</span>
+                        <small>Nivel ${pathLevel}</small>
                     </div>
                 `).join('')}
+            </div>
+        </section>
+
+        ${xp ? '' : `
+            <div class="progress-empty-callout premium-border">
+                <strong>Completa actividades para desbloquear logros.</strong>
+                <span>Crea materias, termina tareas, sube apuntes, usa Tutor y registra asistencia.</span>
+            </div>
+        `}
+
+        <section class="achievements-section progress-achievements premium-border">
+            <div class="progress-section-title">
+                <h3>Logros desbloqueados</h3>
+                <p>Insignias que reflejan tu avance real dentro de la plataforma.</p>
+            </div>
+            <div class="achievements-grid premium-achievements-grid">
+                ${achievements.map(item => `
+                    <div class="achievement premium-achievement ${item.unlocked ? 'unlocked' : 'locked'}">
+                        <div class="achievement-icon achievement-${escapeHTML(item.icon)}" aria-hidden="true"></div>
+                        <p>${escapeHTML(item.name)}</p>
+                        <small>${item.unlocked ? escapeHTML(item.detail) : 'Bloqueado'}</small>
+                    </div>
+                `).join('')}
+            </div>
+        </section>
+    `;
+}
+
+function progressStatCard(type, label, value, detail) {
+    return `
+        <div class="progress-stat premium-progress-stat stat-${escapeHTML(type)} premium-border">
+            <span class="progress-stat-icon" aria-hidden="true"></span>
+            <div>
+                <span class="stat-label">${escapeHTML(label)}</span>
+                <span class="stat-value">${escapeHTML(value)}</span>
+                <small>${escapeHTML(detail)}</small>
             </div>
         </div>
     `;
