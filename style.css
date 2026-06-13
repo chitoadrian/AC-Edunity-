@@ -9529,6 +9529,37 @@ body.light-theme .theme-toggle::before {
     font-weight: 750;
 }
 
+.tutor-thinking {
+    max-width: 360px;
+    opacity: 0.9;
+}
+
+.tutor-thinking p::after {
+    content: "";
+    display: inline-block;
+    width: 28px;
+    height: 10px;
+    margin-left: 8px;
+    border-radius: 999px;
+    background:
+        radial-gradient(circle, #49ccf9 0 28%, transparent 30%) 0 50% / 10px 10px,
+        radial-gradient(circle, #7b68ee 0 28%, transparent 30%) 9px 50% / 10px 10px,
+        radial-gradient(circle, #fd71af 0 28%, transparent 30%) 18px 50% / 10px 10px;
+    background-repeat: no-repeat;
+    animation: tutorThinking 1s infinite ease-in-out;
+}
+
+@keyframes tutorThinking {
+    0%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translateY(-2px);
+        opacity: 1;
+    }
+}
+
 @media (max-width: 720px) {
     #ai-assistant .tutor-chat-card {
         border-width: 5px;

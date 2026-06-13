@@ -944,9 +944,13 @@
 
                     <div class="tutor-chat-card">
                         <div class="tutor-tabs">
-                            <button class="active" type="button">Preguntar</button>
+                            <button class="active" type="button" onclick="setTutorMode('explain', this)">Explicar</button>
                             <button type="button" onclick="document.getElementById('tutor-pdf-file').click()">Subir PDF</button>
-                            <button type="button" onclick="generatePracticeCards()">Practicar</button>
+                            <button type="button" onclick="setTutorMode('practice', this)">Practicar</button>
+                            <button type="button" onclick="setTutorMode('review', this)">Repasar</button>
+                            <button type="button" onclick="setTutorMode('flashcards', this)">Flashcards</button>
+                            <button type="button" onclick="setTutorMode('exam', this)">Examen</button>
+                            <button type="button" onclick="clearTutorChat()">Limpiar chat</button>
                         </div>
 
                         <div class="tutor-messages" id="tutor-messages">
@@ -961,7 +965,7 @@
                             <div class="tutor-composer-bar">
                                 <input type="file" id="tutor-pdf-file" accept=".pdf" hidden onchange="loadTutorPDF(event)">
                                 <button class="tutor-icon-btn" type="button" onclick="document.getElementById('tutor-pdf-file').click()" title="Subir PDF">+</button>
-                                <span class="tutor-model">Tutor Estudio</span>
+                                <span class="tutor-model" id="tutor-mode-label">Modo explicar</span>
                                 <button class="tutor-send" type="button" onclick="generateTutorAnswer()" title="Enviar">Enviar</button>
                             </div>
                         </div>
@@ -1203,6 +1207,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=20260612-tutor-no-template"></script>
+    <script src="app.js?v=20260612-tutor-engine"></script>
 </body>
 </html>
