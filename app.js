@@ -3242,8 +3242,10 @@ const tutorState = {
     pendingQuestion: getTutorPendingQuestion()
 };
 let lastTopic = tutorState.topic;
+let lastSubtopic = getTutorStorageValue('acStudyTutorSubtopic') || '';
 let lastIntent = '';
 let chatHistory = tutorState.history;
+let lastTutorResponse = getTutorStorageValue('acStudyLastTutorResponse') || '';
 
 function getTutorStorageValue(key) {
     try {
@@ -3304,6 +3306,13 @@ function rememberTutorTopic(topic) {
     lastTopic = cleanTopic;
     currentTutorTopic = cleanTopic;
     setTutorStorageValue('acStudyTutorTopic', cleanTopic);
+}
+
+function rememberTutorSubtopic(subtopic) {
+    const cleanSubtopic = String(subtopic || '').trim();
+    if (!cleanSubtopic) return;
+    lastSubtopic = cleanSubtopic;
+    setTutorStorageValue('acStudyTutorSubtopic', cleanSubtopic);
 }
 
 function setTutorMode(mode, button) {
@@ -3385,6 +3394,7 @@ function detectTutorIntent(message) {
     if (/ejemplo|ejemplos|vida cotidiana|utilizar|usar|aplicar|sirve|uso/.test(text)) return 'example';
     if (/paso|pasos|procedimiento|como se resuelve/.test(text)) return 'steps';
     if (/concepto|conceptos|ideas clave|puntos clave|debo aprender/.test(text)) return 'concepts';
+    if (/que es|que son|definicion|define/.test(text)) return 'definition';
     if (/que es|definicion|define|explicame|explica|no entiendo|ayuda/.test(text)) return 'explain';
 
     if (tutorState.mode === 'practice') return 'practice';
@@ -3399,7 +3409,12 @@ function extractTutorTopic(message, intent) {
     const foundTopic = findKnowledgeTopic(text);
     if (foundTopic) return foundTopic;
 
-    const followUp = /(eso|esto|lo anterior|del tema|este tema|utilizarlo|usarlo|aplicarlo|dame conceptos tema|conceptos tema)/.test(text);
+    if (tutorState.topic) {
+        const currentProfile = getTopicProfile(tutorState.topic);
+        if (findTutorSubtopic(text, currentProfile)) return tutorState.topic;
+    }
+
+    const followUp = /(eso|esto|lo anterior|del tema|este tema|utilizarlo|usarlo|aplicarlo|dame conceptos tema|conceptos tema|dame ejemplos|hazme preguntas|ahora ejercicios|resumelo|resumen|conceptos|ejemplos|ejercicios|flashcards|en que casos|cuando se usa|para que sirve)/.test(text);
     if (followUp && tutorState.topic) return tutorState.topic;
 
     const clean = text
@@ -3416,7 +3431,7 @@ function extractTutorTopic(message, intent) {
 
 const knowledgeBase = {
     'fisica termica': {
-        aliases: ['fisica termica', 'termica', 'termodinamica', 'calor y temperatura'],
+        aliases: ['fisica termica', 'termica', 'termodinamica', 'calor y temperatura', 'cambio de estado', 'equilibrio termico', 'conduccion', 'conveccion', 'radiacion'],
         title: 'fisica termica',
         definition: 'La fisica termica es la rama de la fisica que estudia el calor, la temperatura y los cambios de energia termica entre los cuerpos.',
         explanation: 'La temperatura indica que tan caliente o frio esta un cuerpo. El calor es energia que se transfiere de un cuerpo a otro por diferencia de temperatura. El equilibrio termico ocurre cuando dos cuerpos alcanzan la misma temperatura. En algunos procesos puede haber cambio de temperatura y en otros puede haber cambio de estado.',
@@ -3427,7 +3442,63 @@ const knowledgeBase = {
         uses: 'Sirve para explicar calentamiento, enfriamiento, cambios de estado, equilibrio termico, cocina, clima, motores, refrigeracion y procesos industriales.',
         exercises: ['Cual es la diferencia entre calor y temperatura?', 'Que significa equilibrio termico?', 'Para que sirve la formula Q = m * c * DeltaT?', 'Que ocurre cuando una sustancia cambia de estado?', 'Que representa el calor latente?'],
         answers: ['La temperatura mide que tan caliente o frio esta un cuerpo; el calor es energia transferida.', 'Que dos cuerpos alcanzan la misma temperatura.', 'Para calcular calor cuando cambia la temperatura.', 'La sustancia cambia de fase, por ejemplo de liquido a vapor.', 'La energia necesaria para cambiar de estado sin cambiar temperatura.'],
-        flashcards: [['Que estudia la fisica termica?', 'Calor, temperatura y energia termica entre cuerpos.'], ['Que es calor?', 'Energia que se transfiere por diferencia de temperatura.'], ['Formula con cambio de temperatura', 'Q = m * c * DeltaT'], ['Formula con cambio de estado', 'Q = m * L']]
+        flashcards: [['Que estudia la fisica termica?', 'Calor, temperatura y energia termica entre cuerpos.'], ['Que es calor?', 'Energia que se transfiere por diferencia de temperatura.'], ['Formula con cambio de temperatura', 'Q = m * c * DeltaT'], ['Formula con cambio de estado', 'Q = m * L']],
+        subtopics: {
+            calor: {
+                definition: 'El calor es energia que se transfiere de un cuerpo a otro por diferencia de temperatura.',
+                explanation: 'El calor siempre fluye espontaneamente del cuerpo con mayor temperatura al de menor temperatura hasta acercarse al equilibrio termico.',
+                example: 'Si tocas una taza caliente, el calor pasa de la taza a tu mano.',
+                question: 'Cual es la diferencia entre calor y temperatura?'
+            },
+            temperatura: {
+                definition: 'La temperatura indica que tan caliente o frio esta un cuerpo.',
+                explanation: 'Esta relacionada con la energia de movimiento de las particulas de una sustancia.',
+                example: 'Un vaso con agua a 80 grados Celsius tiene mayor temperatura que uno a 20 grados Celsius.',
+                question: 'Que mide la temperatura en un cuerpo?'
+            },
+            'equilibrio termico': {
+                definition: 'El equilibrio termico ocurre cuando dos cuerpos en contacto alcanzan la misma temperatura.',
+                explanation: 'Cuando se llega al equilibrio termico, deja de haber transferencia neta de calor entre los cuerpos.',
+                example: 'Una cuchara fria dentro de sopa caliente se calienta hasta acercarse a la temperatura de la sopa.',
+                question: 'Que ocurre cuando dos cuerpos alcanzan equilibrio termico?'
+            },
+            'cambio de estado': {
+                definition: 'El cambio de estado es la transformacion de una sustancia de solido a liquido, liquido a gas, gas a liquido u otro estado por ganancia o perdida de calor.',
+                explanation: 'Durante el cambio de estado, la energia recibida o liberada se usa para cambiar la estructura de la sustancia, no necesariamente para aumentar o disminuir la temperatura.',
+                example: 'Cuando el hielo recibe calor, se derrite y pasa de solido a liquido. Cuando el agua hierve, pasa de liquido a vapor.',
+                question: 'Que ocurre con la temperatura durante un cambio de estado?'
+            },
+            'calor especifico': {
+                definition: 'El calor especifico es la cantidad de calor necesaria para aumentar en un grado la temperatura de una unidad de masa de una sustancia.',
+                explanation: 'Un material con calor especifico alto necesita mas energia para calentarse.',
+                example: 'El agua tiene calor especifico alto, por eso tarda mas en calentarse que algunos metales.',
+                question: 'Que representa c en Q = m * c * DeltaT?'
+            },
+            'calor latente': {
+                definition: 'El calor latente es la energia necesaria para que una sustancia cambie de estado sin cambiar su temperatura.',
+                explanation: 'Se usa en procesos como fusion, vaporizacion, condensacion y solidificacion.',
+                example: 'El agua puede seguir recibiendo calor mientras hierve, pero su temperatura se mantiene casi constante durante el cambio a vapor.',
+                question: 'Que representa L en Q = m * L?'
+            },
+            conduccion: {
+                definition: 'La conduccion es la transferencia de calor por contacto directo entre particulas.',
+                explanation: 'Ocurre con facilidad en solidos, especialmente en metales.',
+                example: 'Una cuchara metalica se calienta cuando queda dentro de una olla caliente.',
+                question: 'Por que los metales conducen bien el calor?'
+            },
+            conveccion: {
+                definition: 'La conveccion es la transferencia de calor por movimiento de un fluido, como liquidos o gases.',
+                explanation: 'Las zonas calientes suben y las frias bajan, generando corrientes.',
+                example: 'El agua caliente sube dentro de una olla mientras el agua mas fria baja.',
+                question: 'En que estados de la materia ocurre principalmente la conveccion?'
+            },
+            radiacion: {
+                definition: 'La radiacion es la transferencia de energia termica mediante ondas, sin necesitar contacto directo.',
+                explanation: 'Puede ocurrir incluso en el vacio.',
+                example: 'El Sol calienta la Tierra por radiacion.',
+                question: 'Por que la radiacion no necesita contacto directo?'
+            }
+        }
     },
     'calor especifico': {
         aliases: ['calor especifico'],
@@ -3693,7 +3764,80 @@ function getTopicProfile(topic) {
 }
 
 function getTutorResponse(userMessage) {
-    return buildTutorSimulatedReply(userMessage);
+    const response = buildTutorSimulatedReply(userMessage);
+    return finalizeTutorResponse(response);
+}
+
+function detectIntent(message) {
+    return detectTutorIntent(message);
+}
+
+function findTutorSubtopic(message, profile) {
+    if (!profile?.subtopics) return '';
+    const text = normalizeTutorText(message);
+    return Object.keys(profile.subtopics).find(subtopic => text.includes(normalizeTutorText(subtopic))) || '';
+}
+
+function shouldUseLastSubtopic(intent, message) {
+    if (!lastSubtopic) return false;
+    const text = normalizeTutorText(message);
+    if (findKnowledgeTopic(text)) return false;
+    if (/concepto|conceptos|ideas clave|puntos clave/.test(text)) return false;
+    return ['example', 'practice', 'exercises', 'flashcards', 'review', 'definition', 'explain', 'steps'].includes(intent);
+}
+
+function buildSubtopicReply(profile, subtopic, intent) {
+    const data = profile.subtopics?.[subtopic];
+    if (!data) return '';
+    rememberTutorSubtopic(subtopic);
+
+    if (intent === 'example') {
+        return `Ejemplo de ${subtopic} en ${profile.title}:\n\n${data.example}\n\nExplicacion:\n${data.explanation}`;
+    }
+    if (intent === 'practice' || intent === 'exercises') {
+        tutorState.pendingQuestion = {
+            topic: subtopic,
+            question: data.question,
+            expected: data.definition,
+            keywords: [subtopic].concat(data.definition.split(' ').slice(0, 5)).map(normalizeTutorText)
+        };
+        saveTutorPendingQuestion();
+        return `Vamos a practicar ${subtopic}.\n\nPregunta:\n${data.question}\n\nResponde con tus palabras y te dire si esta bien.`;
+    }
+    if (intent === 'flashcards') {
+        return `Flashcards de ${subtopic}:\n\nTarjeta 1\nPregunta: Que es ${subtopic}?\nRespuesta: ${data.definition}\n\nTarjeta 2\nPregunta: Dame un ejemplo.\nRespuesta: ${data.example}\n\nTarjeta 3\nPregunta: Que debo recordar?\nRespuesta: ${data.explanation}`;
+    }
+    if (intent === 'review' || intent === 'summary') {
+        return `Resumen de ${subtopic}:\n\n${data.definition}\n\n${data.explanation}\n\nEjemplo:\n${data.example}`;
+    }
+
+    return `${subtopic} en ${profile.title}:\n\nDefinicion:\n${data.definition}\n\nExplicacion sencilla:\n${data.explanation}\n\nEjemplo:\n${data.example}\n\nPregunta de practica:\n${data.question}`;
+}
+
+function buildUsefulUnknownResponse(topic) {
+    const cleanTopic = topic || 'ese tema';
+    return `No tengo ${cleanTopic} completo en la base simulada todavia.\n\nPara responderte mejor sin inventar, escribelo con la materia o una pregunta mas concreta. Por ejemplo:\n- Explicame ${cleanTopic} en matematica.\n- Dame ejemplos de ${cleanTopic}.\n- Hazme preguntas sobre ${cleanTopic}.\n\nMientras conectamos una IA real, Tutor responde con mayor precision los temas guardados en su base educativa.`;
+}
+
+function similarityScore(a, b) {
+    const wordsA = new Set(normalizeTutorText(a).split(/\s+/).filter(word => word.length > 3));
+    const wordsB = new Set(normalizeTutorText(b).split(/\s+/).filter(word => word.length > 3));
+    if (!wordsA.size || !wordsB.size) return 0;
+    let shared = 0;
+    wordsA.forEach(word => {
+        if (wordsB.has(word)) shared += 1;
+    });
+    return shared / Math.max(wordsA.size, wordsB.size);
+}
+
+function finalizeTutorResponse(response) {
+    let finalResponse = response;
+    if (lastTutorResponse && similarityScore(lastTutorResponse, finalResponse) > 0.82) {
+        finalResponse = `${finalResponse}\n\nPara verlo de otra forma:\nPiensa en un ejemplo concreto y responde: que cambia, que se conserva y que formula o idea explica ese cambio?`;
+    }
+    lastTutorResponse = finalResponse;
+    setTutorStorageValue('acStudyLastTutorResponse', finalResponse);
+    return finalResponse;
 }
 
 function buildTutorSimulatedReply(message) {
@@ -3705,20 +3849,30 @@ function buildTutorSimulatedReply(message) {
         return checkTutorPracticeAnswer(message);
     }
 
-    if (!topic && !currentTutorPdf) {
-        return 'Dime el tema exacto para ayudarte bien. Ejemplo: "Explicame interes compuesto", "Dame ejercicios de limites" o "Hazme preguntas sobre fotosintesis".';
+    const activeTopic = topic || tutorState.topic || lastTopic || currentTutorPdf?.topic || '';
+    if (!activeTopic && !currentTutorPdf) {
+        return 'Escribe el tema que quieres estudiar. Por ejemplo: "Explicame fisica termica", "Dame ejercicios de interes compuesto" o "Hazme preguntas sobre funciones geometricas".';
     }
 
-    if (topic) rememberTutorTopic(topic);
-    const profile = getTopicProfile(topic || currentTutorPdf?.topic || 'tu apunte');
+    if (activeTopic) rememberTutorTopic(activeTopic);
+    const profile = getTopicProfile(activeTopic || currentTutorPdf?.topic || 'tu apunte');
     const pdfIntro = currentTutorPdf ? `Segun tu PDF "${currentTutorPdf.name}", ` : '';
+    const directSubtopic = findTutorSubtopic(message, profile);
+    const activeSubtopic = directSubtopic || (shouldUseLastSubtopic(intent, message) ? lastSubtopic : '');
 
     if (profile.unknown) {
-        return `Todavia estoy en modo prototipo y no tengo ese tema completo. Escribe el tema con mas detalle o agregalo a la base de conocimiento simulada.`;
+        return buildUsefulUnknownResponse(activeTopic);
+    }
+
+    if (activeSubtopic && profile.subtopics?.[activeSubtopic]) {
+        return buildSubtopicReply(profile, activeSubtopic, intent);
     }
 
     if (intent === 'concepts') {
         return `${pdfIntro}estos son los conceptos principales de ${profile.title}:\n\n${profile.concepts.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nExplicacion central:\n${profile.definition}`;
+    }
+    if (intent === 'definition') {
+        return `${pdfIntro}${profile.title}:\n\nDefinicion:\n${profile.definition}\n\nExplicacion clara:\n${profile.explanation}\n\nEjemplo:\n${profile.example}`;
     }
     if (intent === 'review') {
         return `${pdfIntro}resumen de ${profile.title}:\n\n${profile.definition}\n\n${profile.explanation}\n\nIdeas clave:\n${profile.concepts.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nEjemplo:\n${profile.example}`;
