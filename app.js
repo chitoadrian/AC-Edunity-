@@ -2051,6 +2051,10 @@ const subjectBookOptions = [
 
 let subjectFilterText = '';
 let subjectSortMode = 'name';
+let backpackFilterText = '';
+let backpackSubjectFilter = 'all';
+let backpackTypeFilter = 'all';
+let backpackSortMode = 'recent';
 
 const taskPriorityOptions = [
     { value: 'alta', label: 'Importante' },
@@ -5141,13 +5145,15 @@ function openResourceForm(resourceId = null) {
     const workspace = loadWorkspace();
     const resource = workspace.resources.find(item => item.id === resourceId);
     openQuickForm({
-        title: resource ? 'Editar PDF simulado' : 'Subir PDF simulado',
+        title: resource ? 'Editar recurso' : 'Subir PDF',
         submitLabel: resource ? 'Actualizar recurso' : 'Guardar recurso',
         fields: [
             { name: 'title', label: 'Titulo del recurso', value: resource?.title || '', placeholder: 'Ej: Guia de estudio' },
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: resource?.subject || '' },
             { name: 'file', label: 'Archivo PDF', type: 'file', accept: '.pdf,application/pdf', required: !resource },
-            { name: 'description', label: 'Descripcion del apunte', type: 'textarea', value: resource?.description || resource?.content || '', placeholder: 'Describe de que trata el PDF' }
+            { name: 'description', label: 'Descripcion corta', type: 'textarea', value: resource?.description || resource?.content || '', placeholder: 'Describe de que trata el PDF' },
+            { name: 'tag', label: 'Etiqueta', type: 'select', options: ['Apunte', 'Guia', 'Informe', 'Proyecto', 'Tarea'], value: resource?.tag || 'Apunte' },
+            { name: 'useWithTutor', label: 'Tutor', type: 'checkbox', checked: resource?.useWithTutor !== false, help: 'Usar con Tutor' }
         ],
         onSubmit: async values => {
             const fresh = loadWorkspace();
@@ -5156,6 +5162,7 @@ function openResourceForm(resourceId = null) {
             let fileDataUrl = resource?.fileDataUrl || '';
 
             try {
+                // Futuro: reemplazar este DataURL local por subida a Google Drive o Supabase Storage.
                 if (uploadedFile) fileDataUrl = await readFileAsDataUrl(uploadedFile);
             } catch (error) {
                 notify('No se pudo leer el PDF. Intenta subirlo otra vez.', 'error');
@@ -5170,7 +5177,10 @@ function openResourceForm(resourceId = null) {
                 fileMime: uploadedFile?.type || resource?.fileMime || 'application/pdf',
                 description: values.description.trim(),
                 content: values.description.trim(),
-                type: 'PDF'
+                type: 'PDF',
+                tag: values.tag || 'Apunte',
+                useWithTutor: values.useWithTutor === 'yes',
+                uploadedAt: resource?.uploadedAt || new Date().toISOString()
             };
 
             try {
@@ -5195,60 +5205,223 @@ function openResourceForm(resourceId = null) {
     });
 }
 
+function getResourceSubject(workspace, resource) {
+    return workspace.subjects.find(subject => subject.name === resource.subject) || null;
+}
+
+function getResourceColor(workspace, resource) {
+    const subject = getResourceSubject(workspace, resource);
+    return subjectColorMap[subject?.color] || subjectColorMap[resource.color] || '#49ccf9';
+}
+
+function formatResourceDate(dateValue) {
+    if (!dateValue) return 'Sin fecha';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return 'Sin fecha';
+    return date.toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function getRelativeResourceDate(dateValue) {
+    if (!dateValue) return 'Recien agregado';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return 'Recien agregado';
+    const diffDays = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000));
+    if (diffDays === 0) return 'Hoy';
+    if (diffDays === 1) return 'Hace 1 dia';
+    return `Hace ${diffDays} dias`;
+}
+
+function getResourceStatus(resource) {
+    if (resource.usedAI) return { label: 'Usado con Tutor', className: 'used' };
+    const uploaded = new Date(resource.uploadedAt || 0).getTime();
+    if (uploaded && Date.now() - uploaded < 3 * 86400000) return { label: 'Nuevo', className: 'new' };
+    return { label: 'Pendiente de repasar', className: 'pending' };
+}
+
+function ensureBackpackToolbar(section, workspace) {
+    if (!section || section.querySelector('.backpack-toolbar')) return;
+    const header = section.querySelector('.section-header');
+    if (!header) return;
+
+    const subjectOptions = ['<option value="all">Todas las materias</option>']
+        .concat(workspace.subjects.map(subject => `<option value="${escapeHTML(subject.name)}">${escapeHTML(subject.name)}</option>`))
+        .join('');
+
+    header.insertAdjacentHTML('afterend', `
+        <div class="backpack-toolbar">
+            <label class="backpack-search">
+                <span>Buscar recurso</span>
+                <input type="search" id="backpack-search" placeholder="Buscar PDF, apunte o proyecto..." value="${escapeHTML(backpackFilterText)}">
+            </label>
+            <label>
+                <span>Materia</span>
+                <select id="backpack-subject-filter">${subjectOptions}</select>
+            </label>
+            <label>
+                <span>Tipo</span>
+                <select id="backpack-type-filter">
+                    <option value="all">PDF / Apunte / Guia / Proyecto</option>
+                    <option value="PDF">PDF</option>
+                    <option value="Apunte">Apunte</option>
+                    <option value="Guia">Guia</option>
+                    <option value="Informe">Informe</option>
+                    <option value="Proyecto">Proyecto</option>
+                    <option value="Tarea">Tarea</option>
+                </select>
+            </label>
+            <label>
+                <span>Ordenar</span>
+                <select id="backpack-sort">
+                    <option value="recent">Mas reciente</option>
+                    <option value="oldest">Mas antiguo</option>
+                    <option value="subject">Materia</option>
+                    <option value="title">Titulo</option>
+                </select>
+            </label>
+            <button class="btn-primary btn-small" type="button" onclick="addResourceUI()">+ Subir PDF</button>
+        </div>
+    `);
+}
+
+function bindBackpackToolbar() {
+    const search = document.getElementById('backpack-search');
+    const subject = document.getElementById('backpack-subject-filter');
+    const type = document.getElementById('backpack-type-filter');
+    const sort = document.getElementById('backpack-sort');
+
+    if (subject) subject.value = backpackSubjectFilter;
+    if (type) type.value = backpackTypeFilter;
+    if (sort) sort.value = backpackSortMode;
+
+    if (search && !search.dataset.bound) {
+        search.dataset.bound = 'true';
+        search.addEventListener('input', event => {
+            backpackFilterText = event.target.value;
+            renderBackpack(loadWorkspace());
+        });
+    }
+    if (subject && !subject.dataset.bound) {
+        subject.dataset.bound = 'true';
+        subject.addEventListener('change', event => {
+            backpackSubjectFilter = event.target.value;
+            renderBackpack(loadWorkspace());
+        });
+    }
+    if (type && !type.dataset.bound) {
+        type.dataset.bound = 'true';
+        type.addEventListener('change', event => {
+            backpackTypeFilter = event.target.value;
+            renderBackpack(loadWorkspace());
+        });
+    }
+    if (sort && !sort.dataset.bound) {
+        sort.dataset.bound = 'true';
+        sort.addEventListener('change', event => {
+            backpackSortMode = event.target.value;
+            renderBackpack(loadWorkspace());
+        });
+    }
+}
+
+function getBackpackResourcesForView(workspace) {
+    const query = normalizeTutorText(backpackFilterText);
+    return [...workspace.resources]
+        .filter(resource => {
+            const haystack = normalizeTutorText(`${resource.title || ''} ${resource.subject || ''} ${resource.fileName || ''} ${resource.description || ''} ${resource.tag || ''}`);
+            const type = resource.tag || resource.type || 'PDF';
+            const matchesSearch = !query || haystack.includes(query);
+            const matchesSubject = backpackSubjectFilter === 'all' || resource.subject === backpackSubjectFilter;
+            const matchesType = backpackTypeFilter === 'all' || resource.type === backpackTypeFilter || type === backpackTypeFilter;
+            return matchesSearch && matchesSubject && matchesType;
+        })
+        .sort((a, b) => {
+            if (backpackSortMode === 'oldest') return new Date(a.uploadedAt || 0) - new Date(b.uploadedAt || 0);
+            if (backpackSortMode === 'subject') return String(a.subject || '').localeCompare(String(b.subject || ''));
+            if (backpackSortMode === 'title') return String(a.title || '').localeCompare(String(b.title || ''));
+            return new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0);
+        });
+}
+
 function renderBackpack(workspace) {
     const section = document.getElementById('backpack');
     const container = document.querySelector('.backpack-container');
     if (!section || !container) return;
 
     const header = section.querySelector('.section-header');
-    if (header && !header.querySelector('[data-action="add-resource"]')) {
-        header.insertAdjacentHTML('beforeend', '<button class="btn-primary btn-small" data-action="add-resource" onclick="addResourceUI()">+ Subir PDF</button>');
+    if (header) {
+        header.innerHTML = `
+            <div>
+                <h1>Mochila Digital</h1>
+                <p class="subtitle">Biblioteca digital conectada con tus materias y Tutor.</p>
+            </div>
+        `;
     }
+    section.querySelector('.backpack-toolbar')?.remove();
+    ensureBackpackToolbar(section, workspace);
+    bindBackpackToolbar();
 
-    container.innerHTML = workspace.resources.length ? workspace.resources.map(resource => {
+    const resources = getBackpackResourcesForView(workspace);
+    container.innerHTML = workspace.resources.length ? (resources.length ? resources.map(resource => {
         const description = resource.description || resource.content || 'Sin descripcion';
-        const shortDescription = description.length > 130 ? `${description.slice(0, 130)}...` : description;
+        const shortDescription = description.length > 120 ? `${description.slice(0, 120)}...` : description;
+        const color = getResourceColor(workspace, resource);
+        const status = getResourceStatus(resource);
+        const uploadedAt = resource.uploadedAt || resource.createdAt || new Date().toISOString();
         return `
-            <div class="resource-card">
+            <article class="resource-card library-resource-card" style="--resource-color:${escapeHTML(color)}">
                 <div class="resource-top">
                     <div class="resource-icon resource-pdf-icon" aria-hidden="true"></div>
                     <div class="resource-info">
                         <h4>${escapeHTML(resource.title)}</h4>
-                        <p class="resource-type">${escapeHTML(resource.subject)} - ${escapeHTML(resource.fileName || 'PDF')}</p>
+                        <p class="resource-type">${escapeHTML(resource.subject || 'General')} - ${escapeHTML(resource.fileName || 'PDF')}</p>
                     </div>
                 </div>
-                <p class="resource-date">${escapeHTML(shortDescription)}</p>
+                <div class="resource-meta-row">
+                    <span class="resource-subject-chip">${escapeHTML(resource.subject || 'General')}</span>
+                    <span class="resource-status ${escapeHTML(status.className)}">${escapeHTML(status.label)}</span>
+                </div>
+                <p class="resource-description">${escapeHTML(shortDescription)}</p>
+                <div class="resource-data">
+                    <span>${escapeHTML(resource.tag || resource.type || 'PDF')}</span>
+                    <span>Subido el: ${escapeHTML(formatResourceDate(uploadedAt))}</span>
+                    <span>${escapeHTML(getRelativeResourceDate(uploadedAt))}</span>
+                </div>
                 <div class="resource-actions">
-                    <button class="btn-secondary btn-small" data-resource-ai="${escapeHTML(resource.id)}">Preguntar a la IA</button>
+                    <button class="btn-secondary btn-small" data-resource-view="${escapeHTML(resource.id)}">Ver</button>
+                    <button class="btn-secondary btn-small" data-resource-ai="${escapeHTML(resource.id)}">Preguntar a Tutor</button>
                     <button class="btn-secondary btn-small" data-resource-practice="${escapeHTML(resource.id)}">Practicar con PDF</button>
                     <button class="btn-secondary btn-small" data-resource-edit="${escapeHTML(resource.id)}">Editar</button>
                     <button class="btn-danger btn-small" data-resource-delete="${escapeHTML(resource.id)}">Eliminar</button>
                 </div>
-            </div>
+            </article>
         `;
-    }).join('') : emptyStateHTML('No has subido apuntes todavia.', 'Subir primer PDF', 'addResourceUI()');
+    }).join('') : emptyStateHTML('No encontramos recursos con esos filtros.', 'Limpiar busqueda', 'resetBackpackFilters()')) : emptyStateHTML('No tienes apuntes todavia 🎒', 'Subir primer PDF', 'addResourceUI()');
 
+    container.querySelectorAll('[data-resource-view]').forEach(button => button.addEventListener('click', () => viewResource(button.dataset.resourceView)));
     container.querySelectorAll('[data-resource-ai]').forEach(button => button.addEventListener('click', () => askAIAboutResource(button.dataset.resourceAi)));
     container.querySelectorAll('[data-resource-practice]').forEach(button => button.addEventListener('click', () => practiceWithResource(button.dataset.resourcePractice)));
     container.querySelectorAll('[data-resource-edit]').forEach(button => button.addEventListener('click', () => openResourceForm(button.dataset.resourceEdit)));
     container.querySelectorAll('[data-resource-delete]').forEach(button => button.addEventListener('click', () => deleteResource(button.dataset.resourceDelete)));
 }
 
-function practiceWithResource(resourceId) {
-    const resource = markResourceAIUsed(resourceId, 'Abriste un PDF desde Mochila Digital.');
+function resetBackpackFilters() {
+    backpackFilterText = '';
+    backpackSubjectFilter = 'all';
+    backpackTypeFilter = 'all';
+    backpackSortMode = 'recent';
+    renderBackpack(loadWorkspace());
+}
+
+function viewResource(resourceId) {
+    const resource = loadWorkspace().resources.find(item => item.id === resourceId);
     if (!resource) return;
 
     if (resource.fileDataUrl) {
-        const tab = window.open(resource.fileDataUrl, '_blank', 'noopener');
-        if (!tab) {
-            notify('El navegador bloqueo la pestaa nueva. Permite ventanas emergentes para abrir el PDF.', 'error');
-            return;
-        }
-        notify('PDF abierto en una nueva pestaa.', 'success');
+        openPdfResource(resource, 'Abriste un PDF desde Mochila Digital.');
         return;
     }
 
-    notify('Este recurso no tiene el archivo PDF guardado. Editalo y vuelve a subir el PDF.', 'error');
+    showAIResult(`Vista del recurso: ${resource.title}`, `Materia: ${resource.subject || 'General'}\nArchivo: ${resource.fileName || 'PDF'}\nTipo: ${resource.tag || resource.type || 'PDF'}\n\nDescripcion:\n${resource.description || resource.content || 'Sin descripcion'}\n\nCuando conectes Google Drive o Supabase Storage, esta vista podra abrir el archivo real desde la nube.`);
 }
 
 function createPdfObjectUrl(dataUrl, fallbackMime = 'application/pdf') {
@@ -5272,13 +5445,10 @@ function createPdfObjectUrl(dataUrl, fallbackMime = 'application/pdf') {
     return URL.createObjectURL(new Blob(bytes, { type: mime || fallbackMime }));
 }
 
-function practiceWithResource(resourceId) {
-    const resource = loadWorkspace().resources.find(item => item.id === resourceId);
-    if (!resource) return;
-
+function openPdfResource(resource, recentText = 'Abriste un PDF desde Mochila Digital.') {
     if (!resource.fileDataUrl) {
         notify('Este recurso no tiene el archivo PDF guardado. Editalo y vuelve a subir el PDF.', 'error');
-        return;
+        return false;
     }
 
     let pdfUrl = '';
@@ -5286,7 +5456,7 @@ function practiceWithResource(resourceId) {
         pdfUrl = createPdfObjectUrl(resource.fileDataUrl, resource.fileMime || 'application/pdf');
     } catch (error) {
         notify('No se pudo preparar el PDF. Vuelve a subir el archivo.', 'error');
-        return;
+        return false;
     }
 
     const tab = window.open('', '_blank');
@@ -5294,9 +5464,9 @@ function practiceWithResource(resourceId) {
         tab.document.title = resource.fileName || resource.title || 'PDF';
         tab.document.body.innerHTML = '<p style="font-family: Arial, sans-serif; padding: 24px;">Abriendo PDF...</p>';
         tab.location.href = pdfUrl;
-        markResourceAIUsed(resourceId, 'Abriste un PDF desde Mochila Digital.');
-        notify('PDF abierto en una nueva pestaa.', 'success');
-        return;
+        markResourceAIUsed(resource.id, recentText);
+        notify('PDF abierto en una nueva pestana.', 'success');
+        return true;
     }
 
     const link = document.createElement('a');
@@ -5304,8 +5474,32 @@ function practiceWithResource(resourceId) {
     link.target = '_blank';
     link.rel = 'noopener';
     link.click();
-    markResourceAIUsed(resourceId, 'Abriste un PDF desde Mochila Digital.');
+    markResourceAIUsed(resource.id, recentText);
     notify('PDF abierto. Si no aparece, permite ventanas emergentes para esta pagina.', 'info');
+    return true;
+}
+
+function askAIAboutResource(resourceId) {
+    const resource = loadWorkspace().resources.find(item => item.id === resourceId);
+    if (!resource) return;
+
+    const updated = markResourceAIUsed(resourceId, `Preguntaste a Tutor sobre ${resource.title}.`) || resource;
+    // Futuro: enviar el archivo y su metadata a una API real de IA para leer el PDF completo.
+    setAIContextFromResource(updated);
+    navigateTo('ai-assistant');
+    appendTutorMessage('bot', `Vamos a estudiar tu PDF de ${updated.subject || 'General'}: ${updated.title}.\n\nPuedes pedirme un resumen, una explicacion sencilla, preguntas abiertas, verdadero/falso, flashcards o un cuestionario.`, 'Tutor');
+    notify('PDF cargado en Tutor.', 'success');
+}
+
+function practiceWithResource(resourceId) {
+    const resource = loadWorkspace().resources.find(item => item.id === resourceId);
+    if (!resource) return;
+
+    const updated = markResourceAIUsed(resourceId, `Iniciaste practica con ${resource.title}.`) || resource;
+    setAIContextFromResource(updated);
+    navigateTo('ai-assistant');
+    appendTutorMessage('bot', `Vamos a practicar con tu PDF de ${updated.subject || 'General'}: ${updated.title}.\n\nElige que quieres generar:\n1. Resumen\n2. Preguntas abiertas\n3. Verdadero/falso\n4. Flashcards\n5. Cuestionario\n\nTambien puedes escribir tu propia duda sobre este PDF.`, 'Tutor');
+    notify('PDF listo para practicar con Tutor.', 'success');
 }
 
 function getDisplayStreak(workspace) {
