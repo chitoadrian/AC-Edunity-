@@ -12707,6 +12707,27 @@ body.light-theme #profile .profile-activity-list li {
     min-width: 30px !important;
     flex: 0 0 30px !important;
     border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.sidebar .nav-icon::before {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+}
+
+.sidebar .nav-icon-subjects::before {
+    width: 14px !important;
+    height: 17px !important;
+    border-radius: 4px !important;
+    background: #90f28a !important;
+    box-shadow:
+        5px 4px 0 #fd71af,
+        9px 7px 0 #49ccf9 !important;
+    transform: translateX(-4px) !important;
 }
 
 .nav-label,
