@@ -11913,3 +11913,141 @@ body.light-theme #progress .path-step {
         width: min(190px, 100%);
     }
 }
+
+/* Dashboard: paneles inferiores mas compactos y limpios */
+#dashboard .dashboard-layout {
+    grid-template-columns: minmax(280px, 0.9fr) minmax(260px, 0.82fr) minmax(280px, 0.9fr) !important;
+    gap: 14px !important;
+    align-items: start !important;
+}
+
+#dashboard .dashboard-tutor-card,
+#dashboard .starter-card,
+#dashboard .activity-card {
+    min-height: auto !important;
+    align-self: start !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+}
+
+#dashboard .dashboard-tutor-card {
+    max-height: 260px;
+}
+
+#dashboard .starter-card {
+    max-height: 520px;
+    overflow: hidden;
+}
+
+#dashboard .activity-card {
+    max-height: 430px;
+    overflow: hidden;
+}
+
+#dashboard .dashboard-tutor-card .panel-title,
+#dashboard .starter-card .panel-title,
+#dashboard .activity-card .panel-title {
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+#dashboard .dashboard-tutor-card .panel-title h3,
+#dashboard .starter-card .panel-title h3,
+#dashboard .activity-card .panel-title h3 {
+    font-size: 19px;
+    line-height: 1.12;
+}
+
+#dashboard .dashboard-tutor-card .panel-title p,
+#dashboard .starter-card .panel-title p,
+#dashboard .activity-card .panel-title p {
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+#dashboard .dashboard-tutor-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+#dashboard .dashboard-tutor-actions button {
+    min-height: 42px;
+    padding: 9px 12px;
+    font-size: 13px;
+}
+
+#dashboard .dashboard-steps {
+    gap: 8px;
+}
+
+#dashboard .dashboard-steps li {
+    grid-template-columns: 34px minmax(0, 1fr) 64px;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 15px;
+}
+
+#dashboard .dashboard-steps .step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+    font-size: 11px;
+}
+
+#dashboard .dashboard-steps strong {
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+#dashboard .dashboard-steps small {
+    margin-top: 2px;
+    font-size: 11px;
+    line-height: 1.25;
+}
+
+#dashboard .dashboard-steps button {
+    min-width: 0;
+    width: 64px;
+    height: 30px;
+    font-size: 11px;
+}
+
+#dashboard .dashboard-activity {
+    gap: 8px;
+}
+
+#dashboard .dashboard-activity li {
+    padding: 10px 12px 10px 34px;
+    border-radius: 15px;
+}
+
+#dashboard .dashboard-activity li::before {
+    left: 13px;
+    top: 16px;
+    width: 9px;
+    height: 9px;
+}
+
+#dashboard .dashboard-activity .activity-text {
+    font-size: 12.5px;
+    line-height: 1.35;
+}
+
+@media (max-width: 1180px) {
+    #dashboard .dashboard-layout {
+        grid-template-columns: repeat(2, minmax(260px, 1fr)) !important;
+    }
+}
+
+@media (max-width: 760px) {
+    #dashboard .dashboard-layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    #dashboard .dashboard-tutor-card,
+    #dashboard .starter-card,
+    #dashboard .activity-card {
+        max-height: none;
+    }
+}
