@@ -5697,10 +5697,6 @@ function renderProfile(workspace) {
                 <h2 id="profile-name">${escapeHTML(name)}</h2>
                 <p class="profile-career">${escapeHTML(profile.career || 'Personaliza tu carrera o area de estudio')}</p>
                 <p>${escapeHTML(profile.bio || 'Personaliza tu perfil para empezar.')}</p>
-                <div class="profile-meta-line">
-                    <span>Miembro desde: ${escapeHTML(formatProfileDate(profile.createdAt))}</span>
-                    <span>Nivel ${level}</span>
-                </div>
                 <div class="profile-tags">
                     ${interests.map(tag => `<span>${escapeHTML(tag)}</span>`).join('')}
                 </div>
