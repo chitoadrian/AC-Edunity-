@@ -255,9 +255,7 @@ function initLandingReveal() {
 
     const revealObserver = new IntersectionObserver(entries => {
         entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            entry.target.classList.add('active');
-            revealObserver.unobserve(entry.target);
+            entry.target.classList.toggle('active', entry.isIntersecting);
         });
     }, {
         threshold: 0.16,
@@ -265,6 +263,24 @@ function initLandingReveal() {
     });
 
     revealItems.forEach(item => revealObserver.observe(item));
+}
+
+function resetLandingReveal() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const revealItems = document.querySelectorAll(
+        '#landing-page .reveal, #landing-page .reveal-left, #landing-page .reveal-right, #landing-page .reveal-scale'
+    );
+
+    revealItems.forEach(item => item.classList.remove('active'));
+
+    window.requestAnimationFrame(() => {
+        revealItems.forEach(item => {
+            const rect = item.getBoundingClientRect();
+            const visible = rect.top < window.innerHeight * 0.84 && rect.bottom > 0;
+            item.classList.toggle('active', visible);
+        });
+    });
 }
 
 // ============================================
@@ -282,6 +298,7 @@ function showPage(pageId) {
 
     // Mostrar pagina seleccionada
     selectedPage.classList.add('active');
+    document.body.classList.toggle('landing-mode', pageId === 'landing-page');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Si es la app, mostrar la seccion por defecto
@@ -294,6 +311,7 @@ function showLanding() {
     currentUser = null;
     localStorage.removeItem('currentUser');
     showPage('landing-page');
+    resetLandingReveal();
 }
 
 function showLogin() {
