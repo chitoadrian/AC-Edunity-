@@ -13018,7 +13018,7 @@ body.is-dashboard #app-page.page.active {
 /* Dashboard: estructura real en columnas sin huecos */
 #dashboard .dashboard-clean-layout {
     display: grid !important;
-    grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.82fr) minmax(0, 0.95fr) !important;
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 1.18fr) minmax(0, 0.9fr) !important;
     gap: 16px !important;
     align-items: start !important;
     grid-template-areas: none !important;
@@ -13029,12 +13029,6 @@ body.is-dashboard #app-page.page.active {
     gap: 16px !important;
     align-content: start !important;
     min-width: 0 !important;
-}
-
-#dashboard .dashboard-clean-layout > .weekly-progress-card {
-    grid-column: 1 / -1 !important;
-    grid-area: auto !important;
-    margin-top: 2px !important;
 }
 
 #dashboard .dashboard-clean-layout .dashboard-day-card,
@@ -13089,12 +13083,23 @@ body.is-dashboard #app-page.page.active {
     min-height: 74px !important;
 }
 
-#dashboard .dashboard-clean-layout .weekly-progress-card {
+#dashboard .dashboard-column-middle .weekly-progress-card {
     padding: 22px !important;
+    width: 100% !important;
 }
 
-#dashboard .dashboard-clean-layout .weekly-chart {
-    min-height: 210px !important;
+#dashboard .dashboard-column-middle .weekly-chart {
+    min-height: 260px !important;
+    padding: 18px 22px 0 !important;
+    display: flex !important;
+    align-items: end !important;
+    justify-content: space-between !important;
+    gap: 18px !important;
+}
+
+#dashboard .dashboard-column-middle .weekly-chart .week-day {
+    flex: 1 1 0 !important;
+    max-width: 58px !important;
 }
 
 @media (max-width: 1180px) {
@@ -13102,7 +13107,7 @@ body.is-dashboard #app-page.page.active {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
 
-    #dashboard .dashboard-clean-layout > .weekly-progress-card {
+    #dashboard .dashboard-column-side {
         grid-column: 1 / -1 !important;
     }
 }
@@ -13112,9 +13117,6 @@ body.is-dashboard #app-page.page.active {
         grid-template-columns: 1fr !important;
     }
 
-    #dashboard .dashboard-clean-layout > .weekly-progress-card {
-        grid-column: auto !important;
-    }
 }
 
 #landing-page .reveal,

@@ -4682,19 +4682,26 @@ function renderDashboard(workspace) {
                     `}
                 </div>
 
-                <div class="card dashboard-panel-card dashboard-tutor-card">
+                <div class="card starter-card dashboard-panel-card">
                     <div class="panel-title">
-                        <span class="panel-icon panel-icon-tutor"></span>
+                        <span class="panel-icon panel-icon-steps"></span>
                         <div>
-                            <h3>Tutor IA</h3>
-                            <p>Pregunta, resume apuntes o prepara un examen.</p>
+                            <h3>${isEmpty ? 'Empieza configurando tu espacio academico' : 'Centro del estudiante'}</h3>
+                            <p>${isEmpty ? 'Sigue estos pasos para construir tu plataforma desde cero.' : 'Completa estos pasos para mantener tu espacio al dia.'}</p>
                         </div>
                     </div>
-                    <div class="dashboard-tutor-actions">
-                        <button type="button" onclick="navigateTo('ai-assistant')">Preguntar</button>
-                        <button type="button" onclick="generatePracticeCards()">Practicar</button>
-                        <button type="button" onclick="navigateTo('backpack')">Subir PDF</button>
-                    </div>
+                    <ol class="starter-list dashboard-steps">
+                        ${steps.slice(0, 4).map((step, index) => `
+                            <li class="${step.done ? 'done' : ''}">
+                                <span class="step-number">${step.done ? 'OK' : index + 1}</span>
+                                <div>
+                                    <strong>${escapeHTML(step.label)}</strong>
+                                    <small>${escapeHTML(step.hint)}</small>
+                                </div>
+                                <button type="button" onclick="${step.action}">${step.done ? 'Listo' : 'Abrir'}</button>
+                            </li>
+                        `).join('')}
+                    </ol>
                 </div>
             </div>
 
@@ -4719,26 +4726,18 @@ function renderDashboard(workspace) {
                     </div>
                 </div>
 
-                <div class="card starter-card dashboard-panel-card">
+                <div class="card weekly-progress-card dashboard-panel-card">
                     <div class="panel-title">
-                        <span class="panel-icon panel-icon-steps"></span>
+                        <span class="panel-icon panel-icon-chart"></span>
                         <div>
-                            <h3>${isEmpty ? 'Empieza configurando tu espacio academico' : 'Centro del estudiante'}</h3>
-                            <p>${isEmpty ? 'Sigue estos pasos para construir tu plataforma desde cero.' : 'Completa estos pasos para mantener tu espacio al dia.'}</p>
+                            <h3>Progreso semanal</h3>
+                            <p>Vista simulada de tu avance durante la semana.</p>
                         </div>
                     </div>
-                    <ol class="starter-list dashboard-steps">
-                        ${steps.slice(0, 4).map((step, index) => `
-                            <li class="${step.done ? 'done' : ''}">
-                                <span class="step-number">${step.done ? 'OK' : index + 1}</span>
-                                <div>
-                                    <strong>${escapeHTML(step.label)}</strong>
-                                    <small>${escapeHTML(step.hint)}</small>
-                                </div>
-                                <button type="button" onclick="${step.action}">${step.done ? 'Listo' : 'Abrir'}</button>
-                            </li>
-                        `).join('')}
-                    </ol>
+                    <div class="weekly-chart" aria-label="Progreso semanal simulado">
+                        ${[15, 20, 25, 30, 35, 40, Math.min(95, 20 + completed * 12)].map(value => `<span class="week-day" style="height:${value}%"></span>`).join('')}
+                    </div>
+                    <p class="chart-caption">${completed ? `Has completado ${completed} tarea(s).` : 'Tu grafico crecera cuando completes actividades.'}</p>
                 </div>
             </div>
 
@@ -4764,19 +4763,6 @@ function renderDashboard(workspace) {
                 </div>
             </div>
 
-            <div class="card weekly-progress-card dashboard-panel-card">
-                <div class="panel-title">
-                    <span class="panel-icon panel-icon-chart"></span>
-                    <div>
-                        <h3>Progreso semanal</h3>
-                        <p>Vista simulada de tu avance durante la semana.</p>
-                    </div>
-                </div>
-                <div class="weekly-chart" aria-label="Progreso semanal simulado">
-                    ${[15, 20, 25, 30, 35, 40, Math.min(95, 20 + completed * 12)].map(value => `<span class="week-day" style="height:${value}%"></span>`).join('')}
-                </div>
-                <p class="chart-caption">${completed ? `Has completado ${completed} tarea(s).` : 'Tu grafico crecera cuando completes actividades.'}</p>
-            </div>
         </div>
     `;
 }
