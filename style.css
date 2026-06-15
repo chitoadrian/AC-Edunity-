@@ -12849,6 +12849,172 @@ body.is-dashboard #app-page.page.active {
     min-height: 100vh;
 }
 
+/* Dashboard: orden visual definitivo de tarjetas */
+#dashboard .dashboard-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(180px, 1fr)) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+    margin-bottom: 18px !important;
+}
+
+#dashboard .dashboard-stat-card {
+    min-height: 148px !important;
+    padding: 18px !important;
+}
+
+#dashboard .dashboard-stat-card .stat-header {
+    display: grid !important;
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+#dashboard .dashboard-stat-card .stat-label {
+    font-size: 12.5px !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere !important;
+}
+
+#dashboard .dashboard-stat-card .stat-value {
+    margin-top: 18px !important;
+    font-size: clamp(1.75rem, 3vw, 2.35rem) !important;
+    line-height: 1 !important;
+    overflow-wrap: anywhere !important;
+}
+
+#dashboard .dashboard-stat-card .stat-subtext {
+    min-height: 34px !important;
+    margin-top: 8px !important;
+}
+
+#dashboard .dashboard-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.82fr) minmax(0, 1fr) !important;
+    grid-template-areas:
+        "day day progress"
+        "tutor starter activity"
+        "weekly weekly weekly" !important;
+    gap: 16px !important;
+    align-items: start !important;
+    grid-auto-flow: row !important;
+}
+
+#dashboard .dashboard-day-card {
+    grid-area: day !important;
+}
+
+#dashboard .dashboard-progress-card {
+    grid-area: progress !important;
+}
+
+#dashboard .dashboard-tutor-card {
+    grid-area: tutor !important;
+}
+
+#dashboard .starter-card {
+    grid-area: starter !important;
+}
+
+#dashboard .activity-card {
+    grid-area: activity !important;
+}
+
+#dashboard .weekly-progress-card {
+    grid-area: weekly !important;
+    grid-column: auto !important;
+}
+
+#dashboard .dashboard-day-card,
+#dashboard .dashboard-progress-card,
+#dashboard .dashboard-tutor-card,
+#dashboard .starter-card,
+#dashboard .activity-card,
+#dashboard .weekly-progress-card {
+    max-height: none !important;
+    min-height: auto !important;
+    align-self: start !important;
+    overflow: visible !important;
+}
+
+#dashboard .dashboard-tutor-card,
+#dashboard .starter-card,
+#dashboard .activity-card {
+    padding: 18px !important;
+}
+
+#dashboard .dashboard-tutor-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+}
+
+#dashboard .dashboard-tutor-actions button {
+    min-width: 0 !important;
+    white-space: normal !important;
+}
+
+#dashboard .dashboard-steps li {
+    grid-template-columns: 36px minmax(0, 1fr) 68px !important;
+    align-items: center !important;
+}
+
+#dashboard .dashboard-steps li.done strong,
+#dashboard .dashboard-steps li.done small {
+    text-decoration: none !important;
+}
+
+#dashboard .dashboard-steps strong,
+#dashboard .dashboard-steps small,
+#dashboard .dashboard-activity .activity-text {
+    overflow-wrap: anywhere !important;
+}
+
+#dashboard .weekly-progress-card {
+    padding: 20px !important;
+}
+
+#dashboard .weekly-chart {
+    min-height: 190px !important;
+    padding: 18px 20px 0 !important;
+}
+
+@media (max-width: 1180px) {
+    #dashboard .dashboard-grid {
+        grid-template-columns: repeat(2, minmax(220px, 1fr)) !important;
+    }
+
+    #dashboard .dashboard-layout {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        grid-template-areas:
+            "day day"
+            "progress tutor"
+            "starter activity"
+            "weekly weekly" !important;
+    }
+}
+
+@media (max-width: 760px) {
+    #dashboard .dashboard-grid,
+    #dashboard .dashboard-layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    #dashboard .dashboard-layout {
+        grid-template-areas:
+            "day"
+            "progress"
+            "tutor"
+            "starter"
+            "activity"
+            "weekly" !important;
+    }
+
+    #dashboard .dashboard-tutor-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
 #landing-page .reveal,
 #landing-page .reveal-left,
 #landing-page .reveal-right,
