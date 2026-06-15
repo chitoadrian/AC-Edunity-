@@ -13015,6 +13015,108 @@ body.is-dashboard #app-page.page.active {
     }
 }
 
+/* Dashboard: estructura real en columnas sin huecos */
+#dashboard .dashboard-clean-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.82fr) minmax(0, 0.95fr) !important;
+    gap: 16px !important;
+    align-items: start !important;
+    grid-template-areas: none !important;
+}
+
+#dashboard .dashboard-column {
+    display: grid !important;
+    gap: 16px !important;
+    align-content: start !important;
+    min-width: 0 !important;
+}
+
+#dashboard .dashboard-clean-layout > .weekly-progress-card {
+    grid-column: 1 / -1 !important;
+    grid-area: auto !important;
+    margin-top: 2px !important;
+}
+
+#dashboard .dashboard-clean-layout .dashboard-day-card,
+#dashboard .dashboard-clean-layout .dashboard-progress-card,
+#dashboard .dashboard-clean-layout .dashboard-tutor-card,
+#dashboard .dashboard-clean-layout .starter-card,
+#dashboard .dashboard-clean-layout .activity-card {
+    grid-area: auto !important;
+    width: 100% !important;
+}
+
+#dashboard .dashboard-clean-layout .dashboard-panel-card {
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+#dashboard .dashboard-clean-layout .dashboard-day-card,
+#dashboard .dashboard-clean-layout .dashboard-tutor-card {
+    min-height: 0 !important;
+}
+
+#dashboard .dashboard-clean-layout .dashboard-progress-card {
+    text-align: left !important;
+}
+
+#dashboard .dashboard-clean-layout .dashboard-xp-ring {
+    width: 104px !important;
+    height: 104px !important;
+    margin: 4px auto 12px !important;
+}
+
+#dashboard .dashboard-clean-layout .starter-card .panel-title,
+#dashboard .dashboard-clean-layout .activity-card .panel-title,
+#dashboard .dashboard-clean-layout .dashboard-tutor-card .panel-title {
+    margin-bottom: 12px !important;
+}
+
+#dashboard .dashboard-clean-layout .dashboard-steps {
+    gap: 9px !important;
+}
+
+#dashboard .dashboard-clean-layout .dashboard-steps li {
+    min-height: 74px !important;
+    padding: 10px !important;
+}
+
+#dashboard .dashboard-clean-layout .dashboard-activity {
+    gap: 9px !important;
+}
+
+#dashboard .dashboard-clean-layout .dashboard-activity li {
+    min-height: 74px !important;
+}
+
+#dashboard .dashboard-clean-layout .weekly-progress-card {
+    padding: 22px !important;
+}
+
+#dashboard .dashboard-clean-layout .weekly-chart {
+    min-height: 210px !important;
+}
+
+@media (max-width: 1180px) {
+    #dashboard .dashboard-clean-layout {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    #dashboard .dashboard-clean-layout > .weekly-progress-card {
+        grid-column: 1 / -1 !important;
+    }
+}
+
+@media (max-width: 760px) {
+    #dashboard .dashboard-clean-layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    #dashboard .dashboard-clean-layout > .weekly-progress-card {
+        grid-column: auto !important;
+    }
+}
+
 #landing-page .reveal,
 #landing-page .reveal-left,
 #landing-page .reveal-right,

@@ -4652,110 +4652,116 @@ function renderDashboard(workspace) {
             ${dashboardCard('grades', 'Promedio actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} calificaciones registradas` : 'Registra tus calificaciones', gradeProgress)}
         </div>
 
-        <div class="dashboard-layout">
-            <div class="card dashboard-panel-card dashboard-day-card">
-                <div class="panel-title">
-                    <span class="panel-icon panel-icon-day"></span>
-                    <div>
-                        <h3>Mi dia</h3>
-                        <p>Tareas, eventos y recordatorios importantes.</p>
+        <div class="dashboard-layout dashboard-clean-layout">
+            <div class="dashboard-column dashboard-column-main">
+                <div class="card dashboard-panel-card dashboard-day-card">
+                    <div class="panel-title">
+                        <span class="panel-icon panel-icon-day"></span>
+                        <div>
+                            <h3>Mi dia</h3>
+                            <p>Tareas, eventos y recordatorios importantes.</p>
+                        </div>
+                    </div>
+                    ${dayItems.length ? `
+                        <ul class="dashboard-day-list">
+                            ${dayItems.map(item => `
+                                <li>
+                                    <span>${escapeHTML(item.type)}</span>
+                                    <div>
+                                        <strong>${escapeHTML(item.title)}</strong>
+                                        <small>${escapeHTML(item.meta)}</small>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    ` : `
+                        <div class="dashboard-empty-note">
+                            <strong>No tienes pendientes hoy.</strong>
+                            <span>Buen momento para adelantar una materia o preguntarle algo a Tutor.</span>
+                        </div>
+                    `}
+                </div>
+
+                <div class="card dashboard-panel-card dashboard-tutor-card">
+                    <div class="panel-title">
+                        <span class="panel-icon panel-icon-tutor"></span>
+                        <div>
+                            <h3>Tutor IA</h3>
+                            <p>Pregunta, resume apuntes o prepara un examen.</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-tutor-actions">
+                        <button type="button" onclick="navigateTo('ai-assistant')">Preguntar</button>
+                        <button type="button" onclick="generatePracticeCards()">Practicar</button>
+                        <button type="button" onclick="navigateTo('backpack')">Subir PDF</button>
                     </div>
                 </div>
-                ${dayItems.length ? `
-                    <ul class="dashboard-day-list">
-                        ${dayItems.map(item => `
-                            <li>
-                                <span>${escapeHTML(item.type)}</span>
+            </div>
+
+            <div class="dashboard-column dashboard-column-middle">
+                <div class="card dashboard-panel-card dashboard-progress-card">
+                    <div class="panel-title">
+                        <span class="panel-icon panel-icon-chart"></span>
+                        <div>
+                            <h3>Tu progreso</h3>
+                            <p>Nivel ${level} - ${xpCurrent}/1000 XP</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-xp-ring" style="--xp:${xpProgress}%">
+                        <span>${Math.round(xpProgress)}%</span>
+                        <small>avance</small>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${xpProgress}%"></div></div>
+                    <div class="dashboard-achievements">
+                        <span>${workspace.subjects.length ? 'Materia creada' : 'Primera materia pendiente'}</span>
+                        <span>${completed ? 'Tarea completada' : 'Completa tu primera tarea'}</span>
+                        <span>${workspace.resources.length ? 'Apunte subido' : 'Sube un apunte'}</span>
+                    </div>
+                </div>
+
+                <div class="card starter-card dashboard-panel-card">
+                    <div class="panel-title">
+                        <span class="panel-icon panel-icon-steps"></span>
+                        <div>
+                            <h3>${isEmpty ? 'Empieza configurando tu espacio academico' : 'Centro del estudiante'}</h3>
+                            <p>${isEmpty ? 'Sigue estos pasos para construir tu plataforma desde cero.' : 'Completa estos pasos para mantener tu espacio al dia.'}</p>
+                        </div>
+                    </div>
+                    <ol class="starter-list dashboard-steps">
+                        ${steps.slice(0, 4).map((step, index) => `
+                            <li class="${step.done ? 'done' : ''}">
+                                <span class="step-number">${step.done ? 'OK' : index + 1}</span>
                                 <div>
-                                    <strong>${escapeHTML(item.title)}</strong>
-                                    <small>${escapeHTML(item.meta)}</small>
+                                    <strong>${escapeHTML(step.label)}</strong>
+                                    <small>${escapeHTML(step.hint)}</small>
                                 </div>
+                                <button type="button" onclick="${step.action}">${step.done ? 'Listo' : 'Abrir'}</button>
                             </li>
                         `).join('')}
-                    </ul>
-                ` : `
-                    <div class="dashboard-empty-note">
-                        <strong>No tienes pendientes hoy.</strong>
-                        <span>Buen momento para adelantar una materia o preguntarle algo a Tutor.</span>
-                    </div>
-                `}
-            </div>
-
-            <div class="card dashboard-panel-card dashboard-progress-card">
-                <div class="panel-title">
-                    <span class="panel-icon panel-icon-chart"></span>
-                    <div>
-                        <h3>Tu progreso</h3>
-                        <p>Nivel ${level} - ${xpCurrent}/1000 XP</p>
-                    </div>
-                </div>
-                <div class="dashboard-xp-ring" style="--xp:${xpProgress}%">
-                    <span>${Math.round(xpProgress)}%</span>
-                    <small>avance</small>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${xpProgress}%"></div></div>
-                <div class="dashboard-achievements">
-                    <span>${workspace.subjects.length ? 'Materia creada' : 'Primera materia pendiente'}</span>
-                    <span>${completed ? 'Tarea completada' : 'Completa tu primera tarea'}</span>
-                    <span>${workspace.resources.length ? 'Apunte subido' : 'Sube un apunte'}</span>
+                    </ol>
                 </div>
             </div>
 
-            <div class="card dashboard-panel-card dashboard-tutor-card">
-                <div class="panel-title">
-                    <span class="panel-icon panel-icon-tutor"></span>
-                    <div>
-                        <h3>Tutor IA</h3>
-                        <p>Pregunta, resume apuntes o prepara un examen.</p>
+            <div class="dashboard-column dashboard-column-side">
+                <div class="card dashboard-panel-card activity-card">
+                    <div class="panel-title">
+                        <span class="panel-icon panel-icon-activity"></span>
+                        <div>
+                            <h3>Actividad reciente</h3>
+                            <p>Ultimos movimientos guardados en tu cuenta.</p>
+                        </div>
                     </div>
+                    ${recentItems.length ? `
+                        <ul class="activity-list dashboard-activity">${recentItems.map(item => `
+                            <li><span class="activity-time">${escapeHTML(item.time)}</span><span class="activity-text">${escapeHTML(item.text)}</span></li>
+                        `).join('')}</ul>
+                    ` : `
+                        <div class="dashboard-empty-note">
+                            <strong>Tu actividad aparecera aqui cuando empieces.</strong>
+                            <span>Crea una materia, registra tareas o sube un apunte.</span>
+                        </div>
+                    `}
                 </div>
-                <div class="dashboard-tutor-actions">
-                    <button type="button" onclick="navigateTo('ai-assistant')">Preguntar</button>
-                    <button type="button" onclick="generatePracticeCards()">Practicar</button>
-                    <button type="button" onclick="navigateTo('backpack')">Subir PDF</button>
-                </div>
-            </div>
-
-            <div class="card starter-card dashboard-panel-card">
-                <div class="panel-title">
-                    <span class="panel-icon panel-icon-steps"></span>
-                    <div>
-                        <h3>${isEmpty ? 'Empieza configurando tu espacio academico' : 'Centro del estudiante'}</h3>
-                        <p>${isEmpty ? 'Sigue estos pasos para construir tu plataforma desde cero.' : 'Completa estos pasos para mantener tu espacio al dia.'}</p>
-                    </div>
-                </div>
-                <ol class="starter-list dashboard-steps">
-                    ${steps.slice(0, 4).map((step, index) => `
-                        <li class="${step.done ? 'done' : ''}">
-                            <span class="step-number">${step.done ? 'OK' : index + 1}</span>
-                            <div>
-                                <strong>${escapeHTML(step.label)}</strong>
-                                <small>${escapeHTML(step.hint)}</small>
-                            </div>
-                            <button type="button" onclick="${step.action}">${step.done ? 'Listo' : 'Abrir'}</button>
-                        </li>
-                    `).join('')}
-                </ol>
-            </div>
-
-            <div class="card dashboard-panel-card activity-card">
-                <div class="panel-title">
-                    <span class="panel-icon panel-icon-activity"></span>
-                    <div>
-                        <h3>Actividad reciente</h3>
-                        <p>Ultimos movimientos guardados en tu cuenta.</p>
-                    </div>
-                </div>
-                ${recentItems.length ? `
-                    <ul class="activity-list dashboard-activity">${recentItems.map(item => `
-                        <li><span class="activity-time">${escapeHTML(item.time)}</span><span class="activity-text">${escapeHTML(item.text)}</span></li>
-                    `).join('')}</ul>
-                ` : `
-                    <div class="dashboard-empty-note">
-                        <strong>Tu actividad aparecera aqui cuando empieces.</strong>
-                        <span>Crea una materia, registra tareas o sube un apunte.</span>
-                    </div>
-                `}
             </div>
 
             <div class="card weekly-progress-card dashboard-panel-card">
