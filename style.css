@@ -12783,7 +12783,6 @@ body {
     min-height: 100%;
     height: auto;
     overflow-x: hidden;
-    overflow-y: auto;
 }
 
 html,
@@ -12791,6 +12790,10 @@ html.landing-mode,
 html.is-landing {
     overflow-y: auto;
     scroll-behavior: auto;
+}
+
+body {
+    overflow-y: visible;
 }
 
 body.landing-mode,
