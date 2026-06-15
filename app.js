@@ -238,6 +238,7 @@ function initializeApp() {
     renderSavedCalendarEvents();
     initStudyPet();
     initLandingReveal();
+    initLandingWheelControl();
 }
 
 function initLandingReveal() {
@@ -281,6 +282,19 @@ function resetLandingReveal() {
             item.classList.toggle('active', visible);
         });
     });
+}
+
+function initLandingWheelControl() {
+    window.addEventListener('wheel', event => {
+        if (!document.body.classList.contains('is-landing')) return;
+
+        const scroller = document.scrollingElement || document.documentElement;
+        const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+        if (maxScroll <= 0) return;
+
+        event.preventDefault();
+        scroller.scrollTop += event.deltaY;
+    }, { passive: false, capture: true });
 }
 
 // ============================================
