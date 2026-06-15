@@ -298,8 +298,14 @@ function showPage(pageId) {
 
     // Mostrar pagina seleccionada
     selectedPage.classList.add('active');
-    document.documentElement.classList.toggle('landing-mode', pageId === 'landing-page');
-    document.body.classList.toggle('landing-mode', pageId === 'landing-page');
+    const isLanding = pageId === 'landing-page';
+    const isDashboard = pageId === 'app-page';
+    document.documentElement.classList.toggle('landing-mode', isLanding);
+    document.documentElement.classList.toggle('is-landing', isLanding);
+    document.documentElement.classList.toggle('is-dashboard', isDashboard);
+    document.body.classList.toggle('landing-mode', isLanding);
+    document.body.classList.toggle('is-landing', isLanding);
+    document.body.classList.toggle('is-dashboard', isDashboard);
     window.scrollTo(0, 0);
 
     // Si es la app, mostrar la seccion por defecto

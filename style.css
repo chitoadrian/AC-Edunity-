@@ -12781,42 +12781,69 @@ body.light-theme .sidebar-footer {
 html,
 body {
     min-height: 100%;
+    height: auto;
     overflow-x: hidden;
+    overflow-y: auto;
 }
 
 html,
-html.landing-mode {
+html.landing-mode,
+html.is-landing {
     overflow-y: auto;
     scroll-behavior: auto;
 }
 
-body.landing-mode {
+body.landing-mode,
+body.is-landing {
     height: auto !important;
     min-height: auto !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
 }
 
-body.landing-mode #landing-page.page,
-body.landing-mode #landing-page.page.active {
+body.is-landing #app-page:not(.active),
+body.is-landing #login-page:not(.active),
+body.is-landing #register-page:not(.active) {
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+}
+
+body.is-landing #landing-page,
+body.is-landing #landing-page.page,
+body.is-landing #landing-page.page.active {
     height: auto !important;
     max-height: none !important;
     min-height: auto !important;
-    overflow-y: visible !important;
+    overflow: visible !important;
     overflow-x: hidden !important;
 }
 
-body.landing-mode #landing-page .hero,
-body.landing-mode #landing-page .features,
-body.landing-mode #landing-page .benefits,
-body.landing-mode #landing-page .about-project,
-body.landing-mode #landing-page .use-benefits,
-body.landing-mode #landing-page .landing-footer {
+body.is-landing .main-content,
+body.is-landing .content,
+body.is-landing .wrapper,
+body.is-landing .landing-container,
+body.is-landing .sections-wrapper,
+body.is-landing #landing-page .hero,
+body.is-landing #landing-page .features,
+body.is-landing #landing-page .benefits,
+body.is-landing #landing-page .about-project,
+body.is-landing #landing-page .use-benefits,
+body.is-landing #landing-page .landing-footer {
     height: auto !important;
     max-height: none !important;
     min-height: auto !important;
-    overflow-y: visible !important;
-    overflow-x: visible !important;
+    overflow: visible !important;
+}
+
+body.is-landing .sidebar {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+body.is-dashboard #app-page.page.active {
+    min-height: 100vh;
 }
 
 #landing-page .reveal,
