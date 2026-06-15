@@ -12797,7 +12797,7 @@ body.landing-mode,
 body.is-landing {
     height: auto !important;
     min-height: auto !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
     overflow-x: hidden !important;
 }
 
