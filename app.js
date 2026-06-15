@@ -237,6 +237,34 @@ function initializeApp() {
     renderSavedSubjects();
     renderSavedCalendarEvents();
     initStudyPet();
+    initLandingReveal();
+}
+
+function initLandingReveal() {
+    const revealItems = document.querySelectorAll(
+        '#landing-page .reveal, #landing-page .reveal-left, #landing-page .reveal-right, #landing-page .reveal-scale'
+    );
+
+    if (!revealItems.length) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+        revealItems.forEach(item => item.classList.add('active'));
+        return;
+    }
+
+    const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('active');
+            revealObserver.unobserve(entry.target);
+        });
+    }, {
+        threshold: 0.16,
+        rootMargin: '0px 0px -60px 0px'
+    });
+
+    revealItems.forEach(item => revealObserver.observe(item));
 }
 
 // ============================================

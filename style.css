@@ -12776,3 +12776,59 @@ body.light-theme .sidebar-footer {
         height: 100vh !important;
     }
 }
+
+/* Animaciones suaves solo para la pagina principal */
+#landing-page .reveal,
+#landing-page .reveal-left,
+#landing-page .reveal-right,
+#landing-page .reveal-scale {
+    opacity: 0;
+    transform: translateY(40px);
+    transition:
+        opacity 0.72s ease,
+        transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+}
+
+#landing-page .reveal-left {
+    transform: translateX(-36px);
+}
+
+#landing-page .reveal-right {
+    transform: translateX(36px);
+}
+
+#landing-page .reveal-scale {
+    transform: translateY(24px) scale(0.96);
+}
+
+#landing-page .reveal.active,
+#landing-page .reveal-left.active,
+#landing-page .reveal-right.active,
+#landing-page .reveal-scale.active {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+}
+
+#landing-page .delay-1 {
+    transition-delay: 0.12s;
+}
+
+#landing-page .delay-2 {
+    transition-delay: 0.22s;
+}
+
+#landing-page .delay-3 {
+    transition-delay: 0.32s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #landing-page .reveal,
+    #landing-page .reveal-left,
+    #landing-page .reveal-right,
+    #landing-page .reveal-scale {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
