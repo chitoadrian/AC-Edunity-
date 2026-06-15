@@ -298,8 +298,9 @@ function showPage(pageId) {
 
     // Mostrar pagina seleccionada
     selectedPage.classList.add('active');
+    document.documentElement.classList.toggle('landing-mode', pageId === 'landing-page');
     document.body.classList.toggle('landing-mode', pageId === 'landing-page');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
 
     // Si es la app, mostrar la seccion por defecto
     if (pageId === 'app-page' && !currentUser) {
