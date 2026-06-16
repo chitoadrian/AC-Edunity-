@@ -9620,6 +9620,92 @@ body.light-theme .calendar-day.has-event {
     min-width: 0;
 }
 
+#calendar #custom-events-list {
+    gap: 14px;
+}
+
+#calendar .event-custom {
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 82px minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+    padding: 24px 18px 22px;
+    overflow: hidden;
+}
+
+#calendar .event-custom .event-date {
+    min-width: 0;
+    width: 66px;
+    padding-top: 6px;
+}
+
+#calendar .event-custom .event-date .day {
+    font-size: 26px;
+    line-height: 1;
+}
+
+#calendar .event-custom .event-content {
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+}
+
+#calendar .event-custom .event-content h4,
+#calendar .event-custom .event-content p {
+    margin: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+#calendar .event-custom .event-badge,
+#calendar .event-custom .event-alert,
+#calendar .event-custom .email-simulation {
+    justify-self: start;
+    max-width: 100%;
+    white-space: normal;
+    text-align: left;
+}
+
+#calendar .event-custom .email-simulation {
+    border-radius: 18px;
+    line-height: 1.35;
+}
+
+#calendar .event-custom .card-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+#calendar .event-custom .card-actions button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+}
+
+#calendar .event-custom .card-actions .google-calendar-btn {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+    #calendar .event-custom {
+        grid-template-columns: 1fr;
+        padding: 20px 16px;
+    }
+
+    #calendar .event-custom .event-date {
+        width: auto;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 8px;
+    }
+}
+
 body.light-theme #calendar .calendar-mini {
     background: #ffffff;
     border-color: rgba(15, 23, 42, 0.10);
