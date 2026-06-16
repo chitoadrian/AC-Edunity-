@@ -13521,3 +13521,115 @@ body.is-dashboard #app-page.page.active {
         transition: none !important;
     }
 }
+
+/* Calendario: agenda academica compacta y sin textos salidos */
+#calendar .events-list {
+    overflow: hidden !important;
+}
+
+#calendar .calendar-container {
+    grid-template-columns: minmax(560px, 1.15fr) minmax(400px, 0.95fr) !important;
+}
+
+#calendar #custom-events-list {
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+#calendar .event-item.event-custom {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 20px !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+}
+
+#calendar .event-item.event-custom .event-date {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    padding: 0 !important;
+}
+
+#calendar .event-item.event-custom .event-date .day {
+    font-size: 25px !important;
+    line-height: 1 !important;
+}
+
+#calendar .event-item.event-custom .event-date .month {
+    font-size: 13px !important;
+    line-height: 1 !important;
+}
+
+#calendar .event-item.event-custom .event-content {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+}
+
+#calendar .event-item.event-custom .event-content h4,
+#calendar .event-item.event-custom .event-content p {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+}
+
+#calendar .event-item.event-custom .event-badge,
+#calendar .event-item.event-custom .event-alert,
+#calendar .event-item.event-custom .email-simulation {
+    width: fit-content !important;
+    max-width: 100% !important;
+    align-self: flex-start !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    line-height: 1.35 !important;
+}
+
+#calendar .event-item.event-custom .email-simulation {
+    width: 100% !important;
+    border-radius: 16px !important;
+    padding: 10px 12px !important;
+}
+
+#calendar .event-item.event-custom .card-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    margin-top: 2px !important;
+}
+
+#calendar .event-item.event-custom .card-actions button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 42px !important;
+    padding: 10px 12px !important;
+    border-radius: 16px !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+}
+
+#calendar .event-item.event-custom .card-actions .google-calendar-btn {
+    grid-column: 1 / -1 !important;
+}
+
+@media (max-width: 1180px) {
+    #calendar .event-item.event-custom .card-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
