@@ -11,6 +11,7 @@ let currentUser = null;
 let currentSection = 'dashboard';
 let isDarkTheme = !localStorage.getItem('theme') || localStorage.getItem('theme') === 'dark';
 let isTabletOrSmaller = window.innerWidth <= 768;
+let calendarViewDate = new Date(2026, 5, 1);
 
 // Datos simulados de usuarios. En el futuro esto puede conectarse con Supabase.
 const defaultUsers = {
@@ -1550,34 +1551,67 @@ function renderCalendarSection(workspace) {
     generateCalendar();
 }
 
+function getCalendarDateKey(year, month, day) {
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function getEventDateKey(event) {
+    const source = String(event.date || event.day || '').trim();
+    const match = source.match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : '';
+}
+
+function changeCalendarMonth(offset) {
+    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + offset, 1);
+    generateCalendar();
+}
+
 function generateCalendar() {
     const miniCalendar = document.getElementById('mini-calendar');
     if (!miniCalendar) return;
 
     const workspace = loadWorkspace();
-    const eventsByDay = workspace.events.reduce((acc, event) => {
-        const source = event.date || event.day || '';
-        const match = String(source).match(/\d{4}-\d{2}-(\d{2})$/);
-        const day = match ? Number(match[1]) : Number(source);
-        if (day >= 1 && day <= 30) {
-            acc[day] = acc[day] || [];
-            acc[day].push(event);
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+    const visibleCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+    const todayKey = getCalendarDateKey(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+
+    const eventsByDate = workspace.events.reduce((acc, event) => {
+        const dateKey = getEventDateKey(event);
+        if (dateKey) {
+            acc[dateKey] = acc[dateKey] || [];
+            acc[dateKey].push(event);
         }
         return acc;
     }, {});
-    let html = '<div class="calendar-title">Junio 2026</div><div class="calendar-grid">';
+
+    let html = `
+        <div class="calendar-toolbar">
+            <button class="calendar-month-btn" type="button" onclick="changeCalendarMonth(-1)" aria-label="Mes anterior">‹</button>
+            <div class="calendar-title-block">
+                <div class="calendar-title">${monthNames[month]} ${year}</div>
+                <p>Calendario academico mensual</p>
+            </div>
+            <button class="calendar-month-btn" type="button" onclick="changeCalendarMonth(1)" aria-label="Mes siguiente">›</button>
+        </div>
+        <div class="calendar-grid calendar-grid-wide">
+    `;
     ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(day => {
         html += `<div class="calendar-day-label">${day}</div>`;
     });
-    for (let i = 0; i < 35; i++) {
-        const day = i - 1;
-        if (day < 1 || day > 30) {
+    for (let i = 0; i < visibleCells; i++) {
+        const day = i - firstWeekday + 1;
+        if (day < 1 || day > daysInMonth) {
             html += '<div class="calendar-day muted">-</div>';
         } else {
-            const dayEvents = eventsByDay[day] || [];
+            const dateKey = getCalendarDateKey(year, month, day);
+            const dayEvents = eventsByDate[dateKey] || [];
             const title = dayEvents.map(event => event.title).join(', ');
             html += `
-                <div class="calendar-day ${dayEvents.length ? 'has-event' : ''}" title="${escapeHTML(title)}">
+                <div class="calendar-day ${dayEvents.length ? 'has-event' : ''} ${dateKey === todayKey ? 'is-today' : ''}" title="${escapeHTML(title)}">
                     <span class="calendar-day-number">${day}</span>
                     ${dayEvents.length ? `<span class="calendar-event-marker">${dayEvents.length}</span>` : ''}
                 </div>

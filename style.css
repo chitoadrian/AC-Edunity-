@@ -9510,6 +9510,156 @@ body.light-theme .calendar-day.has-event {
     box-shadow: 0 12px 28px rgba(14, 165, 233, 0.20);
 }
 
+/* Calendario academico horizontal */
+#calendar .calendar-container {
+    grid-template-columns: minmax(620px, 1.45fr) minmax(320px, 0.85fr);
+    align-items: start;
+    gap: 22px;
+}
+
+#calendar .calendar-side {
+    min-width: 0;
+}
+
+#calendar .calendar-mini {
+    padding: 24px;
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(73, 204, 249, 0.16), transparent 38%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+        rgba(30, 31, 37, 0.72);
+    border: 1px solid rgba(73, 204, 249, 0.16);
+    box-shadow: 0 22px 52px rgba(0, 0, 0, 0.18);
+}
+
+.calendar-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.calendar-title-block {
+    text-align: center;
+}
+
+.calendar-title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: clamp(22px, 2vw, 30px);
+    font-weight: 950;
+}
+
+.calendar-title-block p {
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.calendar-month-btn {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(73, 204, 249, 0.24);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 28px;
+    font-weight: 900;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.calendar-month-btn:hover {
+    transform: translateY(-2px);
+    border-color: rgba(73, 204, 249, 0.55);
+    background: rgba(73, 204, 249, 0.14);
+}
+
+#calendar .calendar-grid-wide {
+    gap: 10px;
+}
+
+#calendar .calendar-day-label {
+    min-height: 34px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#calendar .calendar-day {
+    min-height: 76px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    font-size: 16px;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+#calendar .calendar-day:not(.muted):hover {
+    transform: translateY(-2px);
+    border-color: rgba(73, 204, 249, 0.35);
+    background: rgba(73, 204, 249, 0.08);
+}
+
+#calendar .calendar-day.muted {
+    min-height: 76px;
+    color: rgba(165, 174, 194, 0.45);
+    background: rgba(255, 255, 255, 0.025);
+}
+
+#calendar .calendar-day.is-today:not(.has-event) {
+    border-color: rgba(253, 113, 175, 0.45);
+    box-shadow: inset 0 0 0 1px rgba(253, 113, 175, 0.18);
+}
+
+#calendar .events-list {
+    min-width: 0;
+}
+
+body.light-theme #calendar .calendar-mini {
+    background: #ffffff;
+    border-color: rgba(15, 23, 42, 0.10);
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.10);
+}
+
+body.light-theme #calendar .calendar-day {
+    background: rgba(15, 23, 42, 0.035);
+    border-color: rgba(15, 23, 42, 0.07);
+}
+
+body.light-theme #calendar .calendar-day.muted {
+    background: rgba(15, 23, 42, 0.02);
+}
+
+@media (max-width: 1120px) {
+    #calendar .calendar-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    #calendar .calendar-mini {
+        padding: 18px;
+    }
+
+    #calendar .calendar-day,
+    #calendar .calendar-day.muted {
+        min-height: 54px;
+        border-radius: 14px;
+        font-size: 14px;
+    }
+
+    .calendar-month-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 13px;
+    }
+}
+
 /* Tutor: asistente de estudio simulado */
 .nav-icon-tutor {
     position: relative;
