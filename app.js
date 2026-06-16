@@ -5922,12 +5922,12 @@ function initStudyPet() {
 
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
     const updateEyeDirection = event => {
-        const parrot = pet.querySelector('.pet-parrot');
-        if (!parrot) return;
+        const robot = pet.querySelector('.pet-robot');
+        if (!robot) return;
 
-        const rect = parrot.getBoundingClientRect();
-        const centerX = rect.left + rect.width * 0.56;
-        const centerY = rect.top + rect.height * 0.32;
+        const rect = robot.getBoundingClientRect();
+        const centerX = rect.left + rect.width * 0.5;
+        const centerY = rect.top + rect.height * 0.34;
         const deltaX = event.clientX - centerX;
         const deltaY = event.clientY - centerY;
         const distance = Math.max(Math.hypot(deltaX, deltaY), 1);
