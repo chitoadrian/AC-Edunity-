@@ -12,6 +12,7 @@ let currentSection = 'dashboard';
 let isDarkTheme = !localStorage.getItem('theme') || localStorage.getItem('theme') === 'dark';
 let isTabletOrSmaller = window.innerWidth <= 768;
 let calendarViewDate = new Date(2026, 5, 1);
+let sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
 
 // Datos simulados de usuarios. En el futuro esto puede conectarse con Supabase.
 const defaultUsers = {
@@ -327,6 +328,10 @@ function showPage(pageId) {
     if (pageId === 'app-page' && !currentUser) {
         showLanding();
     }
+
+    if (pageId === 'app-page') {
+        applySidebarCollapsedState();
+    }
 }
 
 function showLanding() {
@@ -536,6 +541,33 @@ function updateThemeIcon(icon) {
 
 let sidebarOpen = false;
 
+function applySidebarCollapsedState() {
+    const appPage = document.getElementById('app-page');
+    const control = document.querySelector('.app-sidebar-control');
+    if (!appPage) return;
+
+    const effectiveCollapsed = !isTabletOrSmaller && sidebarCollapsed;
+    appPage.classList.toggle('sidebar-collapsed', effectiveCollapsed);
+    if (control) {
+        const label = isTabletOrSmaller
+            ? (sidebarOpen ? 'Cerrar barra lateral' : 'Abrir barra lateral')
+            : (effectiveCollapsed ? 'Abrir barra lateral' : 'Cerrar barra lateral');
+        control.setAttribute('title', label);
+        control.setAttribute('aria-label', label);
+    }
+}
+
+function toggleSidebarCollapse() {
+    if (isTabletOrSmaller) {
+        toggleSidebar();
+        return;
+    }
+
+    sidebarCollapsed = !sidebarCollapsed;
+    localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed));
+    applySidebarCollapsedState();
+}
+
 function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
     sidebarOpen = !sidebarOpen;
@@ -545,12 +577,14 @@ function toggleSidebar() {
     } else {
         sidebar.classList.remove('open');
     }
+    applySidebarCollapsedState();
 }
 
 function closeSidebar() {
     const sidebar = document.querySelector('.sidebar');
     sidebar.classList.remove('open');
     sidebarOpen = false;
+    applySidebarCollapsedState();
 }
 
 function handleWindowResize() {
@@ -558,6 +592,7 @@ function handleWindowResize() {
     if (window.innerWidth > 768) {
         closeSidebar();
     }
+    applySidebarCollapsedState();
 }
 
 // ============================================

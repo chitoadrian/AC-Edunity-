@@ -12927,6 +12927,118 @@ body.light-theme .sidebar-footer {
     }
 }
 
+/* Control para abrir/cerrar la barra lateral del panel interno */
+.app-sidebar-control {
+    position: fixed;
+    top: 18px;
+    right: 22px;
+    z-index: 420;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 13px;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04)),
+        rgba(30, 31, 37, 0.82);
+    color: #ffffff;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(16px);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.app-sidebar-control:hover {
+    transform: translateY(-2px);
+    border-color: rgba(73, 204, 249, 0.45);
+    background:
+        linear-gradient(145deg, rgba(73, 204, 249, 0.18), rgba(123, 104, 238, 0.10)),
+        rgba(30, 31, 37, 0.9);
+}
+
+.app-sidebar-control span {
+    position: relative;
+    width: 19px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-radius: 5px;
+}
+
+.app-sidebar-control span::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 6px;
+    width: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.95;
+}
+
+#app-page.page.active .sidebar {
+    transition: transform 0.28s ease, opacity 0.28s ease, left 0.28s ease !important;
+}
+
+#app-page.sidebar-collapsed .sidebar {
+    transform: translateX(-104%) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+#app-page.sidebar-collapsed .main-content {
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding-inline: clamp(28px, 4vw, 56px) !important;
+}
+
+#app-page.sidebar-collapsed .section {
+    max-width: 1320px !important;
+    margin-inline: auto !important;
+}
+
+#app-page.sidebar-collapsed .app-sidebar-control {
+    left: 18px;
+    right: auto;
+}
+
+#app-page.sidebar-collapsed .app-sidebar-control span::before {
+    left: auto;
+    right: 6px;
+}
+
+body.light-theme .app-sidebar-control {
+    background: rgba(255, 255, 255, 0.92);
+    color: #1e293b;
+    border-color: rgba(15, 23, 42, 0.12);
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.14);
+}
+
+@media (max-width: 768px) {
+    .app-sidebar-control {
+        top: 14px;
+        right: 14px;
+        width: 40px;
+        height: 40px;
+    }
+
+    #app-page.sidebar-collapsed .sidebar {
+        transform: none !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    #app-page.sidebar-collapsed .main-content {
+        padding-inline: 18px !important;
+    }
+
+    #app-page.sidebar-collapsed .app-sidebar-control {
+        left: auto;
+        right: 14px;
+    }
+}
+
 /* Scroll limpio y animaciones suaves solo para la pagina principal */
 html,
 body {
