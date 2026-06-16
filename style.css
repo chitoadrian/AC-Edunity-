@@ -13633,3 +13633,90 @@ body.is-dashboard #app-page.page.active {
         grid-template-columns: 1fr !important;
     }
 }
+
+/* Calendario: correccion final de desbordes en Agenda academica */
+#calendar .calendar-container {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 380px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+#calendar .calendar-side,
+#calendar .events-list,
+#calendar #custom-events-list,
+#calendar .event-item.event-custom,
+#calendar .event-item.event-custom *,
+#calendar .event-item.event-custom *::before,
+#calendar .event-item.event-custom *::after {
+    box-sizing: border-box !important;
+}
+
+#calendar .events-list {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 18px !important;
+}
+
+#calendar .event-item.event-custom {
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+    padding: 18px !important;
+    border-left-width: 4px !important;
+}
+
+#calendar .event-item.event-custom .event-content h4 {
+    font-size: 16px !important;
+    line-height: 1.25 !important;
+}
+
+#calendar .event-item.event-custom .event-content p {
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+}
+
+#calendar .event-item.event-custom .event-alert,
+#calendar .event-item.event-custom .email-simulation {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 9px 12px !important;
+}
+
+#calendar .event-item.event-custom .email-simulation {
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+}
+
+#calendar .event-item.event-custom .card-actions {
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+#calendar .event-item.event-custom .card-actions button {
+    max-width: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+@media (max-width: 1280px) {
+    #calendar .calendar-container {
+        grid-template-columns: 1fr !important;
+        overflow: visible !important;
+    }
+
+    #calendar .event-item.event-custom .card-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 520px) {
+    #calendar .event-item.event-custom .card-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
