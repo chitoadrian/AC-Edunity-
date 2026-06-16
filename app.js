@@ -4810,28 +4810,6 @@ function renderDashboard(workspace) {
                 </div>
             </div>
 
-            <div class="dashboard-column dashboard-column-side">
-                <div class="card dashboard-panel-card activity-card">
-                    <div class="panel-title">
-                        <span class="panel-icon panel-icon-activity"></span>
-                        <div>
-                            <h3>Actividad reciente</h3>
-                            <p>Ultimos movimientos guardados en tu cuenta.</p>
-                        </div>
-                    </div>
-                    ${recentItems.length ? `
-                        <ul class="activity-list dashboard-activity">${recentItems.map(item => `
-                            <li><span class="activity-time">${escapeHTML(item.time)}</span><span class="activity-text">${escapeHTML(item.text)}</span></li>
-                        `).join('')}</ul>
-                    ` : `
-                        <div class="dashboard-empty-note">
-                            <strong>Tu actividad aparecera aqui cuando empieces.</strong>
-                            <span>Crea una materia, registra tareas o sube un apunte.</span>
-                        </div>
-                    `}
-                </div>
-            </div>
-
         </div>
     `;
 }

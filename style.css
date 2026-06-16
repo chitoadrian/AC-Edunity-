@@ -13720,3 +13720,34 @@ body.is-dashboard #app-page.page.active {
         grid-template-columns: 1fr !important;
     }
 }
+
+/* Dashboard menu: sin bloque de actividad reciente */
+#dashboard .dashboard-clean-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 18px !important;
+}
+
+#dashboard .dashboard-column-main,
+#dashboard .dashboard-column-middle {
+    min-width: 0 !important;
+}
+
+#dashboard .dashboard-column-side,
+#dashboard .activity-card {
+    display: none !important;
+}
+
+#dashboard .dashboard-column-middle .weekly-progress-card {
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+#dashboard .dashboard-column-middle .weekly-chart {
+    min-height: 230px !important;
+}
+
+@media (max-width: 980px) {
+    #dashboard .dashboard-clean-layout {
+        grid-template-columns: 1fr !important;
+    }
+}
