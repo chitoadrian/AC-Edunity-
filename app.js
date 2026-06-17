@@ -1,3 +1,5 @@
+console.log("🔥 APP.JS NUEVO AC EDUNITY CARGADO");
+
 /* ============================================
    AC Edunity - LOGICA PRINCIPAL
    JavaScript puro - Funcionalidades SPA
@@ -5997,6 +5999,1053 @@ function initStudyPet() {
         }
     });
 }
+
+// ============================================
+// SUPABASE AUTH + DATOS REALES
+// ============================================
+
+const SUPABASE_URL = 'https://pskbdeqaajprfhrjortm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_M3ABI_7yU49LkGO3Op-CLA_qsCDP7Lz';
+
+let supabaseClient = null;
+let workspaceState = null;
+let profileState = null;
+let authListenerReady = false;
+
+function logSupabaseError(context, error) {
+    if (!error) return;
+    console.error("ERROR SUPABASE:", error);
+    console.error(`[Supabase][${context}]`, {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        status: error.status,
+        full: error
+    });
+}
+
+function getSupabaseClient() {
+    if (supabaseClient) return supabaseClient;
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        throw new Error('Supabase no pudo cargarse en el navegador.');
+    }
+
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+        }
+    });
+
+    console.log('[Supabase] Cliente iniciado');
+    console.log('[Supabase] Cliente iniciado', {
+        url: SUPABASE_URL,
+        authReady: true
+    });
+
+    return supabaseClient;
+}
+
+function getWorkspaceExtrasKey() {
+    return `acEdunityExtras:${currentUser?.id || currentUser?.email || 'guest'}`;
+}
+
+function getWorkspaceClone(data) {
+    if (typeof structuredClone === 'function') return structuredClone(data);
+    return JSON.parse(JSON.stringify(data));
+}
+
+function getEmptyWorkspace() {
+    return {
+        subjects: [],
+        tasks: [],
+        events: [],
+        grades: [],
+        attendance: [],
+        resources: [],
+        xp: 0,
+        streak: 0,
+        recent: [],
+        taskMeta: {}
+    };
+}
+
+function loadWorkspaceExtras() {
+    try {
+        const raw = localStorage.getItem(getWorkspaceExtrasKey());
+        if (!raw) return {
+            events: [],
+            grades: [],
+            attendance: [],
+            resources: [],
+            recent: [],
+            taskMeta: {},
+            profileExtras: {},
+            tutorHistory: []
+        };
+        const parsed = JSON.parse(raw);
+        return {
+            events: Array.isArray(parsed.events) ? parsed.events : [],
+            grades: Array.isArray(parsed.grades) ? parsed.grades : [],
+            attendance: Array.isArray(parsed.attendance) ? parsed.attendance : [],
+            resources: Array.isArray(parsed.resources) ? parsed.resources : [],
+            recent: Array.isArray(parsed.recent) ? parsed.recent : [],
+            taskMeta: parsed.taskMeta && typeof parsed.taskMeta === 'object' ? parsed.taskMeta : {},
+            profileExtras: parsed.profileExtras && typeof parsed.profileExtras === 'object' ? parsed.profileExtras : {},
+            tutorHistory: Array.isArray(parsed.tutorHistory) ? parsed.tutorHistory : []
+        };
+    } catch (error) {
+        localStorage.removeItem(getWorkspaceExtrasKey());
+        return {
+            events: [],
+            grades: [],
+            attendance: [],
+            resources: [],
+            recent: [],
+            taskMeta: {},
+            profileExtras: {},
+            tutorHistory: []
+        };
+    }
+}
+
+function saveWorkspaceExtras(extras) {
+    localStorage.setItem(getWorkspaceExtrasKey(), JSON.stringify(extras));
+}
+
+function extractTaskMeta(tasks = []) {
+    return tasks.reduce((acc, task) => {
+        acc[task.id] = {
+            emailReminder: !!task.emailReminder,
+            email: task.email || ''
+        };
+        return acc;
+    }, {});
+}
+
+function normalizeSubjectColor(color) {
+    if (!color) return 'Morado';
+    const match = subjectColorOptions.find(option => option.toLowerCase() === String(color).toLowerCase());
+    return match || color;
+}
+
+function normalizeTaskPriority(priority) {
+    const value = String(priority || 'media').toLowerCase();
+    if (['alta', 'high'].includes(value)) return 'alta';
+    if (['baja', 'low'].includes(value)) return 'baja';
+    if (['normal'].includes(value)) return 'normal';
+    return 'media';
+}
+
+function normalizeTaskStatus(status) {
+    return String(status || 'pending').toLowerCase() === 'completed' ? 'completed' : 'pending';
+}
+
+function mergeWorkspaceState(remoteState = {}) {
+    const extras = loadWorkspaceExtras();
+    const taskMeta = extras.taskMeta || {};
+    const tasks = (remoteState.tasks || []).map(task => ({
+        ...task,
+        emailReminder: !!taskMeta[task.id]?.emailReminder,
+        email: taskMeta[task.id]?.email || currentUser?.email || ''
+    }));
+
+    workspaceState = {
+        ...getEmptyWorkspace(),
+        ...extras,
+        ...remoteState,
+        subjects: remoteState.subjects || [],
+        tasks,
+        xp: Number(remoteState.xp || 0),
+        streak: Number(remoteState.streak || 0),
+        taskMeta
+    };
+
+    return workspaceState;
+}
+
+function loadWorkspace() {
+    if (!workspaceState) {
+        workspaceState = mergeWorkspaceState();
+    }
+    return getWorkspaceClone(workspaceState);
+}
+
+function saveWorkspace(workspace) {
+    const current = workspaceState || getEmptyWorkspace();
+    const merged = {
+        ...current,
+        ...workspace,
+        subjects: Array.isArray(workspace.subjects) ? workspace.subjects : current.subjects,
+        tasks: Array.isArray(workspace.tasks) ? workspace.tasks : current.tasks
+    };
+
+    const extras = loadWorkspaceExtras();
+    const nextExtras = {
+        ...extras,
+        events: merged.events || [],
+        grades: merged.grades || [],
+        attendance: merged.attendance || [],
+        resources: merged.resources || [],
+        recent: merged.recent || [],
+        taskMeta: extractTaskMeta(merged.tasks || []),
+        profileExtras: extras.profileExtras || {},
+        tutorHistory: extras.tutorHistory || []
+    };
+
+    saveWorkspaceExtras(nextExtras);
+    workspaceState = mergeWorkspaceState({
+        subjects: merged.subjects || [],
+        tasks: (merged.tasks || []).map(task => ({
+            ...task,
+            emailReminder: !!nextExtras.taskMeta[task.id]?.emailReminder,
+            email: nextExtras.taskMeta[task.id]?.email || task.email || ''
+        })),
+        xp: profileState?.xp || 0,
+        streak: profileState?.streak || 0
+    });
+}
+
+function getPublicUserFromAuth(user, profile = null) {
+    const fullName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Estudiante';
+    return {
+        id: user.id,
+        email: user.email,
+        name: fullName,
+        role: profile?.role || 'Estudiante',
+        createdAt: profile?.created_at || user.created_at || ''
+    };
+}
+
+async function ensureProfileRow(user, fallbackName = '') {
+    const sb = getSupabaseClient();
+    const { data: existing, error: selectError } = await sb
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (selectError) {
+        logSupabaseError('profiles select own', selectError);
+        throw selectError;
+    }
+
+    if (existing) {
+        console.log('[Supabase] Perfil ya existente para usuario actual', {
+            userId: user.id,
+            profile: existing
+        });
+        if ((!existing.full_name || !existing.role) && (fallbackName || user.email)) {
+            const patch = {
+                full_name: existing.full_name || fallbackName || user.email.split('@')[0],
+                role: existing.role || 'Estudiante'
+            };
+            const { data: updated, error: updateError } = await sb
+                .from('profiles')
+                .update(patch)
+                .eq('id', user.id)
+                .select()
+                .single();
+
+            if (updateError) {
+                logSupabaseError('profiles update own', updateError);
+                throw updateError;
+            }
+            console.log('[Supabase] Perfil actualizado', updated);
+            return updated;
+        }
+        return existing;
+    }
+
+    const payload = {
+        id: user.id,
+        full_name: fallbackName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Estudiante',
+        role: 'Estudiante',
+        xp: 0,
+        streak: 0,
+        level: 1
+    };
+
+    const { data: created, error: insertError } = await sb
+        .from('profiles')
+        .insert(payload)
+        .select()
+        .single();
+
+    if (insertError) {
+        logSupabaseError('profiles insert own', insertError);
+        throw insertError;
+    }
+    console.log('[Supabase] Perfil creado en profiles', created);
+    return created;
+}
+
+async function syncWorkspaceFromSupabase() {
+    if (!currentUser?.id) {
+        profileState = null;
+        workspaceState = mergeWorkspaceState();
+        return workspaceState;
+    }
+
+    const sb = getSupabaseClient();
+    const [profileRes, subjectsRes, tasksRes] = await Promise.all([
+        sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle(),
+        sb.from('subjects').select('*').order('created_at', { ascending: true }),
+        sb.from('tasks').select('*').order('created_at', { ascending: false })
+    ]);
+
+    if (profileRes.error) {
+        logSupabaseError('profiles sync select', profileRes.error);
+        throw profileRes.error;
+    }
+    if (subjectsRes.error) {
+        logSupabaseError('subjects sync select', subjectsRes.error);
+        throw subjectsRes.error;
+    }
+    if (tasksRes.error) {
+        logSupabaseError('tasks sync select', tasksRes.error);
+        throw tasksRes.error;
+    }
+
+    profileState = profileRes.data || {
+        id: currentUser.id,
+        full_name: currentUser.name,
+        role: currentUser.role || 'Estudiante',
+        xp: 0,
+        streak: 0,
+        level: 1,
+        created_at: currentUser.createdAt || ''
+    };
+
+    currentUser = {
+        ...currentUser,
+        name: profileState.full_name || currentUser.name,
+        role: profileState.role || 'Estudiante',
+        createdAt: profileState.created_at || currentUser.createdAt || ''
+    };
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+    const subjects = (subjectsRes.data || []).map(subject => ({
+        id: subject.id,
+        name: subject.name,
+        icon: subject.icon || '',
+        color: normalizeSubjectColor(subject.color),
+        createdAt: subject.created_at || ''
+    }));
+
+    const subjectMap = new Map(subjects.map(subject => [subject.id, subject.name]));
+    const tasks = (tasksRes.data || []).map(task => ({
+        id: task.id,
+        subjectId: task.subject_id || '',
+        subject: subjectMap.get(task.subject_id) || '',
+        title: task.title,
+        description: task.description || '',
+        due: task.due_date || '',
+        priority: normalizeTaskPriority(task.priority),
+        status: normalizeTaskStatus(task.status),
+        createdAt: task.created_at || ''
+    }));
+
+    return mergeWorkspaceState({
+        subjects,
+        tasks,
+        xp: Number(profileState.xp || 0),
+        streak: Number(profileState.streak || 0)
+    });
+}
+
+async function bootstrapAuthenticatedApp(user, fallbackName = '') {
+    const profile = await ensureProfileRow(user, fallbackName);
+    currentUser = getPublicUserFromAuth(user, profile);
+    console.log('[Supabase] Usuario actual autenticado', currentUser);
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    await syncWorkspaceFromSupabase();
+    updateDashboardGreeting();
+}
+
+async function updateProfileProgress(deltaXp, { bumpStreak = false } = {}) {
+    if (!currentUser?.id || !profileState) return;
+
+    const nextXp = Math.max(0, Number(profileState.xp || 0) + Number(deltaXp || 0));
+    const nextStreak = bumpStreak ? Math.max(1, Number(profileState.streak || 0)) : Number(profileState.streak || 0);
+    const nextLevel = getLevel(nextXp);
+
+    profileState = {
+        ...profileState,
+        xp: nextXp,
+        streak: nextStreak,
+        level: nextLevel
+    };
+
+    if (workspaceState) {
+        workspaceState.xp = nextXp;
+        workspaceState.streak = nextStreak;
+    }
+
+    const { error } = await getSupabaseClient()
+        .from('profiles')
+        .update({ xp: nextXp, streak: nextStreak, level: nextLevel })
+        .eq('id', currentUser.id);
+
+    if (error) throw error;
+}
+
+function pushRecentMessage(text) {
+    const extras = loadWorkspaceExtras();
+    extras.recent = [
+        { text, time: 'Ahora' },
+        ...(extras.recent || [])
+    ].slice(0, 6);
+    saveWorkspaceExtras(extras);
+
+    if (workspaceState) {
+        workspaceState.recent = extras.recent;
+    }
+}
+
+function getCurrentUserProfile() {
+    const extras = loadWorkspaceExtras().profileExtras || {};
+    const safeName = currentUser?.name || profileState?.full_name || 'Estudiante';
+    return {
+        name: safeName,
+        role: profileState?.role || 'Estudiante',
+        career: extras.career || '',
+        bio: extras.bio || '',
+        interests: extras.interests || '',
+        avatarStyle: extras.avatarStyle || 'initials',
+        avatarText: extras.avatarText || '',
+        createdAt: profileState?.created_at || currentUser?.createdAt || '',
+        goals: Array.isArray(extras.goals) ? extras.goals : []
+    };
+}
+
+function saveCurrentUserProfile(profileUpdates) {
+    if (!currentUser?.id) return;
+
+    const extras = loadWorkspaceExtras();
+    extras.profileExtras = {
+        ...(extras.profileExtras || {}),
+        career: profileUpdates.career ?? extras.profileExtras?.career ?? '',
+        bio: profileUpdates.bio ?? extras.profileExtras?.bio ?? '',
+        interests: profileUpdates.interests ?? extras.profileExtras?.interests ?? '',
+        avatarStyle: profileUpdates.avatarStyle ?? extras.profileExtras?.avatarStyle ?? 'initials',
+        avatarText: profileUpdates.avatarText ?? extras.profileExtras?.avatarText ?? '',
+        goals: profileUpdates.goals ?? extras.profileExtras?.goals ?? []
+    };
+    saveWorkspaceExtras(extras);
+
+    if (profileUpdates.name) {
+        currentUser.name = profileUpdates.name;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        if (profileState) profileState.full_name = profileUpdates.name;
+    }
+    if (profileUpdates.role && profileState) {
+        profileState.role = profileUpdates.role;
+    }
+
+    const remotePatch = {};
+    if (profileUpdates.name) remotePatch.full_name = profileUpdates.name;
+    if (profileUpdates.role) remotePatch.role = profileUpdates.role;
+
+    if (Object.keys(remotePatch).length) {
+        getSupabaseClient()
+            .from('profiles')
+            .update(remotePatch)
+            .eq('id', currentUser.id)
+            .then(({ error }) => {
+                if (error) notify('No se pudo guardar todo el perfil en Supabase.', 'error');
+            });
+    }
+}
+
+function showLanding() {
+    clearAuthMessages();
+    showPage('landing-page');
+    resetLandingReveal();
+}
+
+function showApp() {
+    showPage('app-page');
+    updateDashboardGreeting();
+    refreshWorkspaceUI();
+    navigateTo(currentSection || 'dashboard');
+}
+
+async function handleRegister(event) {
+    event.preventDefault();
+    clearAuthMessages();
+
+    const name = document.getElementById('register-name').value.trim();
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value.trim();
+
+    if (!name || !email || !password) {
+        setAuthMessage('register', 'Completa nombre, email y contrasena para crear tu cuenta.', 'error');
+        return;
+    }
+
+    try {
+        const sb = getSupabaseClient();
+        const { data, error } = await sb.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { full_name: name }
+            }
+        });
+
+        if (error) {
+            logSupabaseError('auth signUp', error);
+            throw error;
+        }
+        if (!data.user) throw new Error('No se pudo crear el usuario en Auth.');
+
+        console.log('[Supabase] Resultado signUp', {
+            userId: data.user.id,
+            email: data.user.email,
+            hasSession: !!data.session
+        });
+
+        let authUser = data.user;
+        let authSession = data.session;
+
+        if (!authSession) {
+            const retryLogin = await sb.auth.signInWithPassword({ email, password });
+            if (retryLogin.error) {
+                logSupabaseError('auth signInWithPassword after signUp', retryLogin.error);
+                setAuthMessage('register', 'Cuenta creada. Si tu proyecto pide confirmacion por correo, confirma el email y luego inicia sesion.', 'success');
+                document.getElementById('register-name').value = '';
+                document.getElementById('register-email').value = '';
+                document.getElementById('register-password').value = '';
+                return;
+            }
+            authUser = retryLogin.data.user;
+            authSession = retryLogin.data.session;
+            console.log('[Supabase] Sesion abierta despues del registro', {
+                userId: authUser?.id,
+                hasSession: !!authSession
+            });
+        }
+
+        const extras = {
+            events: [],
+            grades: [],
+            attendance: [],
+            resources: [],
+            recent: [],
+            taskMeta: {},
+            profileExtras: {
+                career: '',
+                bio: '',
+                interests: '',
+                avatarStyle: 'initials',
+                avatarText: '',
+                goals: []
+            },
+            tutorHistory: []
+        };
+        currentUser = { id: authUser.id, email: authUser.email, name };
+        saveWorkspaceExtras(extras);
+
+        await bootstrapAuthenticatedApp(authUser, name);
+
+        document.getElementById('register-name').value = '';
+        document.getElementById('register-email').value = '';
+        document.getElementById('register-password').value = '';
+
+        notify('Cuenta creada correctamente. Tu espacio academico empieza vacio.', 'success');
+        showApp();
+    } catch (error) {
+        setAuthMessage('register', error.message || 'No se pudo crear la cuenta.', 'error');
+    }
+}
+
+async function handleLogin(event) {
+    event.preventDefault();
+    clearAuthMessages();
+
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+
+    try {
+        const sb = getSupabaseClient();
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) {
+            logSupabaseError('auth signInWithPassword', error);
+            throw error;
+        }
+        if (!data.user) throw new Error('No se encontro la cuenta.');
+
+        await bootstrapAuthenticatedApp(data.user);
+
+        document.getElementById('login-email').value = '';
+        document.getElementById('login-password').value = '';
+
+        notify('Sesion iniciada correctamente.', 'success');
+        showApp();
+    } catch (error) {
+        setAuthMessage('login', error.message || 'Email o contrasena incorrectos.', 'error');
+    }
+}
+
+async function handleLogout() {
+    try {
+        const sb = getSupabaseClient();
+        const { error } = await sb.auth.signOut({ scope: 'local' });
+        if (error) {
+            logSupabaseError('auth signOut', error);
+        }
+    } catch (error) {
+        notify('No se pudo cerrar la sesion de Supabase.', 'error');
+    }
+
+    currentUser = null;
+    profileState = null;
+    workspaceState = mergeWorkspaceState();
+    localStorage.removeItem('currentUser');
+    showLanding();
+    notify('Sesion cerrada.', 'info');
+}
+
+async function toggleTask(checkbox) {
+    const card = checkbox.closest('[data-id]');
+    const taskId = card?.dataset.id;
+    if (!taskId) return;
+
+    try {
+        const workspace = loadWorkspace();
+        const task = workspace.tasks.find(item => item.id === taskId);
+        if (!task) return;
+
+        const nextStatus = checkbox.checked ? 'completed' : 'pending';
+        const justCompleted = task.status !== 'completed' && nextStatus === 'completed';
+
+        const { error } = await getSupabaseClient()
+            .from('tasks')
+            .update({ status: nextStatus })
+            .eq('id', taskId)
+            .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        if (justCompleted) {
+            pushRecentMessage(`Completaste la tarea ${task.title}.`);
+            await updateProfileProgress(25, { bumpStreak: true });
+        }
+
+        await syncWorkspaceFromSupabase();
+        refreshWorkspaceUI();
+    } catch (error) {
+        checkbox.checked = !checkbox.checked;
+        notify(error.message || 'No se pudo actualizar la tarea.', 'error');
+    }
+}
+
+function openSubjectForm(subjectId = null) {
+    const workspace = loadWorkspace();
+    const subject = workspace.subjects.find(item => item.id === subjectId);
+
+    openQuickForm({
+        title: subject ? 'Editar materia' : 'Crear materia',
+        submitLabel: subject ? 'Actualizar materia' : 'Guardar materia',
+        fields: [
+            { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matematica' },
+            { name: 'icon', label: 'Icono o etiqueta', value: subject?.icon || '', placeholder: 'Ej: PROG' },
+            { name: 'color', label: 'Color identificador', type: 'select', options: subjectColorOptions, value: subject?.color || 'Morado' }
+        ],
+        onSubmit: async values => {
+            const name = values.name.trim();
+            if (!name) {
+                notify('Escribe el nombre de la materia.', 'error');
+                return;
+            }
+
+            try {
+                const sb = getSupabaseClient();
+                const payload = {
+                    user_id: currentUser.id,
+                    name,
+                    icon: values.icon.trim() || '',
+                    color: values.color || 'Morado'
+                };
+
+                if (subjectId) {
+                    const { data, error } = await sb
+                        .from('subjects')
+                        .update(payload)
+                        .eq('id', subjectId)
+                        .eq('user_id', currentUser.id);
+
+                    if (error) {
+                        logSupabaseError('subjects update', error);
+                        throw error;
+                    }
+                    console.log('[Supabase] Materia actualizada', {
+                        userId: currentUser.id,
+                        subjectId,
+                        payload,
+                        result: data
+                    });
+                    pushRecentMessage(`Editaste la materia ${name}.`);
+                } else {
+                    const { data, error } = await sb
+                        .from('subjects')
+                        .insert(payload);
+
+                    if (error) {
+                        logSupabaseError('subjects insert', error);
+                        throw error;
+                    }
+                    console.log('[Supabase] Materia insertada', {
+                        userId: currentUser.id,
+                        subject: payload,
+                        result: data
+                    });
+                    pushRecentMessage(`Creaste la materia ${name}.`);
+                    await updateProfileProgress(30, { bumpStreak: true });
+                }
+
+                await syncWorkspaceFromSupabase();
+                refreshWorkspaceUI();
+                notify(subjectId ? 'Materia actualizada.' : 'Materia creada correctamente.', 'success');
+            } catch (error) {
+                notify(error.message || 'No se pudo guardar la materia.', 'error');
+            }
+        }
+    });
+}
+
+async function deleteSubject(subjectId) {
+    const workspace = loadWorkspace();
+    const subject = workspace.subjects.find(item => item.id === subjectId);
+    if (!subject) return;
+
+    try {
+        const sb = getSupabaseClient();
+        const subjectTasks = workspace.tasks.filter(task => task.subjectId === subjectId);
+
+        if (subjectTasks.length) {
+            const { error: taskError } = await sb
+                .from('tasks')
+                .delete()
+                .eq('user_id', currentUser.id)
+                .eq('subject_id', subjectId);
+
+            if (taskError) {
+                logSupabaseError('tasks delete by subject', taskError);
+                throw taskError;
+            }
+        }
+
+        const { error } = await sb
+            .from('subjects')
+            .delete()
+            .eq('id', subjectId)
+            .eq('user_id', currentUser.id);
+
+        if (error) {
+            logSupabaseError('subjects delete', error);
+            throw error;
+        }
+
+        const extras = loadWorkspaceExtras();
+        subjectTasks.forEach(task => delete extras.taskMeta?.[task.id]);
+        saveWorkspaceExtras(extras);
+
+        pushRecentMessage(`Eliminaste la materia ${subject.name}.`);
+        await syncWorkspaceFromSupabase();
+        refreshWorkspaceUI();
+        notify('Materia eliminada junto con sus tareas.', 'info');
+    } catch (error) {
+        notify(error.message || 'No se pudo eliminar la materia.', 'error');
+    }
+}
+
+function renderSubjects(workspace) {
+    const grid = document.querySelector('.subjects-grid');
+    if (!grid) return;
+
+    grid.innerHTML = workspace.subjects.length ? workspace.subjects.map(subject => {
+        const relatedTasks = workspace.tasks.filter(task => task.subjectId === subject.id || task.subject === subject.name);
+        const taskCount = relatedTasks.length;
+        const completed = relatedTasks.filter(task => task.status === 'completed').length;
+        const pending = relatedTasks.filter(task => task.status !== 'completed').length;
+        const progress = taskCount ? Math.round((completed / taskCount) * 100) : 0;
+        const average = getSubjectAverage(workspace, subject.name);
+        const color = subjectColorMap[subject.color] || subjectColorMap.Morado;
+        const nextTask = relatedTasks
+            .filter(task => task.status !== 'completed' && task.due)
+            .sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
+
+        return `
+            <div class="subject-card subject-custom ac-colored-card" style="--subject-color:${color}">
+                <div class="subject-header">
+                    <h3><span class="subject-icon"></span> ${escapeHTML(subject.name)}</h3>
+                    <span class="subject-chip">${escapeHTML(subject.color || 'Morado')}</span>
+                </div>
+                <div class="subject-stats">
+                    <div class="stat"><span class="stat-name">Progreso</span><span class="stat-num">${progress}%</span></div>
+                    <div class="stat"><span class="stat-name">Pendientes</span><span class="stat-num">${pending}</span></div>
+                    <div class="stat"><span class="stat-name">Promedio</span><span class="stat-num">${average ? average.toFixed(2) : '--'}</span></div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${progress}%; background:linear-gradient(90deg, ${color}, #06b6d4)"></div></div>
+                <p class="last-activity">${nextTask ? `Proxima entrega: ${escapeHTML(nextTask.title)} (${escapeHTML(nextTask.due)})` : 'Sin entregas proximas registradas'}</p>
+                <div class="card-actions">
+                    <button class="btn-secondary btn-small" data-subject-edit="${escapeHTML(subject.id)}">Editar</button>
+                    <button class="btn-danger btn-small" data-subject-delete="${escapeHTML(subject.id)}">Eliminar</button>
+                </div>
+            </div>
+        `;
+    }).join('') : emptyStateHTML('No tienes materias registradas todavia.', 'Crear primera materia', 'addSubjectUI()');
+
+    grid.querySelectorAll('[data-subject-edit]').forEach(button => button.addEventListener('click', () => openSubjectForm(button.dataset.subjectEdit)));
+    grid.querySelectorAll('[data-subject-delete]').forEach(button => button.addEventListener('click', () => deleteSubject(button.dataset.subjectDelete)));
+}
+
+function openTaskForm(taskId = null) {
+    const workspace = loadWorkspace();
+    const task = workspace.tasks.find(item => item.id === taskId);
+
+    openQuickForm({
+        title: task ? 'Editar tarea' : 'Crear tarea',
+        submitLabel: task ? 'Actualizar tarea' : 'Guardar tarea',
+        fields: [
+            { name: 'title', label: 'Titulo', value: task?.title || '', placeholder: 'Ej: Taller de funciones' },
+            { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: task?.subject || '' },
+            { name: 'description', label: 'Descripcion', type: 'textarea', value: task?.description || '', placeholder: 'Detalles de la tarea' },
+            { name: 'due', label: 'Fecha limite', type: 'date', value: normalizeDate(task?.due) },
+            { name: 'priority', label: 'Prioridad', type: 'select', options: taskPriorityOptions, value: task?.priority || 'media' },
+            { name: 'emailReminder', label: 'Recordarme por Gmail', type: 'checkbox', checked: !!task?.emailReminder, required: false, help: 'Mostrar alerta visual cuando este proxima a vencer' },
+            { name: 'email', label: 'Correo para notificacion', type: 'email', value: task?.email || currentUser?.email || '', required: false, placeholder: 'usuario@gmail.com' }
+        ],
+        onSubmit: async values => {
+            const title = values.title.trim();
+            const subjectName = values.subject || '';
+            const subject = workspace.subjects.find(item => item.name === subjectName);
+            let savedTaskId = taskId;
+
+            if (!title || !subject) {
+                notify('Selecciona una materia valida y escribe el titulo.', 'error');
+                return;
+            }
+
+            try {
+                const sb = getSupabaseClient();
+                const payload = {
+                    user_id: currentUser.id,
+                    subject_id: subject.id,
+                    title,
+                    description: values.description.trim(),
+                    due_date: values.due || null,
+                    priority: normalizeTaskPriority(values.priority),
+                    status: task?.status === 'completed' ? 'completed' : 'pending'
+                };
+
+                if (taskId) {
+                    const { data, error } = await sb
+                        .from('tasks')
+                        .update(payload)
+                        .eq('id', taskId)
+                        .eq('user_id', currentUser.id);
+
+                    if (error) {
+                        logSupabaseError('tasks update', error);
+                        throw error;
+                    }
+                    console.log('[Supabase] Tarea actualizada', {
+                        userId: currentUser.id,
+                        taskId,
+                        payload,
+                        result: data
+                    });
+                    pushRecentMessage(`Editaste la tarea ${title}.`);
+                } else {
+                    const { data, error } = await sb
+                        .from('tasks')
+                        .insert(payload)
+                        .select('id')
+                        .single();
+
+                    if (error) {
+                        logSupabaseError('tasks insert', error);
+                        throw error;
+                    }
+                    savedTaskId = data.id;
+                    console.log('[Supabase] Tarea insertada', {
+                        userId: currentUser.id,
+                        task: payload,
+                        inserted: data
+                    });
+                    pushRecentMessage(`Agregaste la tarea ${title}.`);
+                    await updateProfileProgress(15, { bumpStreak: true });
+                }
+
+                const extras = loadWorkspaceExtras();
+                extras.taskMeta = extras.taskMeta || {};
+                if (savedTaskId) {
+                    extras.taskMeta[savedTaskId] = {
+                        emailReminder: values.emailReminder === 'yes',
+                        email: values.email.trim()
+                    };
+                }
+                saveWorkspaceExtras(extras);
+
+                await syncWorkspaceFromSupabase();
+                refreshWorkspaceUI();
+                notify(taskId ? 'Tarea actualizada.' : 'Tarea creada correctamente.', 'success');
+            } catch (error) {
+                notify(error.message || 'No se pudo guardar la tarea.', 'error');
+            }
+        }
+    });
+}
+
+async function deleteTask(taskId) {
+    const workspace = loadWorkspace();
+    const task = workspace.tasks.find(item => item.id === taskId);
+    if (!task) return;
+
+    try {
+        const { error } = await getSupabaseClient()
+            .from('tasks')
+            .delete()
+            .eq('id', taskId)
+            .eq('user_id', currentUser.id);
+
+        if (error) {
+            logSupabaseError('tasks delete', error);
+            throw error;
+        }
+
+        const extras = loadWorkspaceExtras();
+        delete extras.taskMeta?.[taskId];
+        saveWorkspaceExtras(extras);
+
+        pushRecentMessage(`Eliminaste la tarea ${task.title}.`);
+        await syncWorkspaceFromSupabase();
+        refreshWorkspaceUI();
+        notify('Tarea eliminada.', 'info');
+    } catch (error) {
+        notify(error.message || 'No se pudo eliminar la tarea.', 'error');
+    }
+}
+
+async function completeTask(taskId) {
+    const workspace = loadWorkspace();
+    const task = workspace.tasks.find(item => item.id === taskId);
+    if (!task) return;
+    if (task.status === 'completed') return;
+
+    try {
+        const { error } = await getSupabaseClient()
+            .from('tasks')
+            .update({ status: 'completed' })
+            .eq('id', taskId)
+            .eq('user_id', currentUser.id);
+
+        if (error) {
+            logSupabaseError('tasks complete', error);
+            throw error;
+        }
+
+        pushRecentMessage(`Completaste la tarea ${task.title}.`);
+        await updateProfileProgress(25, { bumpStreak: true });
+        await syncWorkspaceFromSupabase();
+        refreshWorkspaceUI();
+        notify('Tarea marcada como completada.', 'success');
+    } catch (error) {
+        notify(error.message || 'No se pudo completar la tarea.', 'error');
+    }
+}
+
+function refreshWorkspaceUI() {
+    const workspace = loadWorkspace();
+    renderDashboard(workspace);
+    renderSubjects(workspace);
+    renderTasks(workspace);
+    renderCalendarSection(workspace);
+    renderGrades(workspace);
+    renderAttendance(workspace);
+    renderProgress(workspace);
+    renderBackpack(workspace);
+    renderProfile(workspace);
+    updateGradeSubjectOptions(workspace);
+}
+
+async function initializeApp() {
+    if (isDarkTheme) {
+        document.body.classList.remove('light-theme');
+        updateThemeIcon('theme');
+    } else {
+        document.body.classList.add('light-theme');
+        updateThemeIcon('theme');
+    }
+
+    window.addEventListener('resize', handleWindowResize);
+    generateCalendar();
+    initStudyPet();
+    initLandingReveal();
+    initLandingWheelControl();
+
+    try {
+        const sb = getSupabaseClient();
+        console.log('[Supabase] initializeApp usando cliente real');
+
+        if (!authListenerReady) {
+            sb.auth.onAuthStateChange(async (authEvent, session) => {
+                if (authEvent === 'SIGNED_OUT') {
+                    currentUser = null;
+                    profileState = null;
+                    workspaceState = mergeWorkspaceState();
+                    localStorage.removeItem('currentUser');
+                    showLanding();
+                    return;
+                }
+
+                if (session?.user && (!currentUser || currentUser.id !== session.user.id)) {
+                    try {
+                        await bootstrapAuthenticatedApp(session.user);
+                        showApp();
+                    } catch (error) {
+                        notify('No se pudo restaurar la sesion.', 'error');
+                    }
+                }
+            });
+            authListenerReady = true;
+        }
+
+        const { data, error } = await sb.auth.getSession();
+        if (error) throw error;
+
+        if (data.session?.user) {
+            await bootstrapAuthenticatedApp(data.session.user);
+            showApp();
+        } else {
+            currentUser = null;
+            profileState = null;
+            workspaceState = mergeWorkspaceState();
+            showLanding();
+        }
+    } catch (error) {
+        currentUser = null;
+        profileState = null;
+        workspaceState = mergeWorkspaceState();
+        showLanding();
+        notify(error.message || 'No se pudo iniciar Supabase.', 'error');
+    }
+}
+
+// Forzamos que los handlers globales apunten a las funciones finales con Supabase.
+window.handleRegister = handleRegister;
+window.handleLogin = handleLogin;
+window.handleLogout = handleLogout;
+window.openSubjectForm = openSubjectForm;
+window.openTaskForm = openTaskForm;
+window.toggleTask = toggleTask;
+window.showApp = showApp;
+window.showLanding = showLanding;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
