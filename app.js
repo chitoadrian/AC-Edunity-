@@ -73,7 +73,7 @@ function notify(message, type = 'info') {
     }, 3200);
 }
 
-function setAuthMessage(pageId, message, type = 'error') {
+function setAuthMessage(pageId, message, type = 'error', action = null) {
     const page = document.getElementById(`${pageId}-page`);
     const card = page ? page.querySelector('.auth-card') : null;
     if (!card) {
@@ -91,10 +91,68 @@ function setAuthMessage(pageId, message, type = 'error') {
 
     messageBox.textContent = message;
     messageBox.className = `auth-message ${type}`;
+
+    if (action?.label && typeof action.onClick === 'function') {
+        const actionButton = document.createElement('button');
+        actionButton.type = 'button';
+        actionButton.className = 'btn-secondary btn-small';
+        actionButton.textContent = action.label;
+        actionButton.addEventListener('click', action.onClick);
+        messageBox.appendChild(document.createElement('br'));
+        messageBox.appendChild(actionButton);
+    }
 }
 
 function clearAuthMessages() {
     document.querySelectorAll('.auth-message').forEach(message => message.remove());
+}
+
+function translateSupabaseError(message = '') {
+    const text = String(message || '').toLowerCase();
+
+    if (text.includes('user already registered') || text.includes('already registered') || text.includes('already exists') || text.includes('email exists')) {
+        return 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
+    }
+
+    if (text.includes('rate limit') || text.includes('too many requests') || text.includes('over_email_send_rate_limit') || text.includes('email rate limit') || text.includes('for security purposes')) {
+        return 'Se alcanzó el límite de intentos. Espera unos minutos e intenta otra vez.';
+    }
+
+    if (text.includes('invalid login credentials') || text.includes('invalid credentials') || text.includes('invalid email or password')) {
+        return 'Correo o contraseña incorrectos.';
+    }
+
+    if (text.includes('email not confirmed') || text.includes('not confirmed')) {
+        return 'Debes confirmar tu correo antes de iniciar sesión.';
+    }
+
+    if (text.includes('password should be at least') || text.includes('weak password')) {
+        return 'La contraseña es muy corta o débil. Usa una contraseña más segura.';
+    }
+
+    if (text.includes('invalid email')) {
+        return 'Escribe un correo válido.';
+    }
+
+    if (text.includes('failed to fetch') || text.includes('network') || text.includes('fetch')) {
+        return 'No se pudo conectar con Supabase. Revisa tu conexión e intenta otra vez.';
+    }
+
+    return 'No se pudo completar la acción. Revisa los datos e intenta otra vez.';
+}
+
+function isAlreadyRegisteredError(message = '') {
+    return translateSupabaseError(message) === 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
+}
+
+function showLoginWithEmail(email = '') {
+    showLogin();
+    const loginEmail = document.getElementById('login-email');
+    if (loginEmail) {
+        loginEmail.value = email;
+        const password = document.getElementById('login-password');
+        if (password) password.focus();
+    }
 }
 
 function openQuickForm(config) {
@@ -6532,6 +6590,14 @@ async function handleRegister(event) {
         }
         if (!data.user) throw new Error('No se pudo crear el usuario en Auth.');
 
+        if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+            setAuthMessage('register', 'Este correo ya está registrado. Inicia sesión o usa otro correo.', 'error', {
+                label: 'Iniciar sesión con este correo',
+                onClick: () => showLoginWithEmail(email)
+            });
+            return;
+        }
+
         console.log('[Supabase] Resultado signUp', {
             userId: data.user.id,
             email: data.user.email,
@@ -6588,7 +6654,12 @@ async function handleRegister(event) {
         notify('Cuenta creada correctamente. Tu espacio academico empieza vacio.', 'success');
         showApp();
     } catch (error) {
-        setAuthMessage('register', error.message || 'No se pudo crear la cuenta.', 'error');
+        const message = translateSupabaseError(error.message);
+        const action = isAlreadyRegisteredError(error.message) ? {
+            label: 'Iniciar sesión con este correo',
+            onClick: () => showLoginWithEmail(email)
+        } : null;
+        setAuthMessage('register', message, 'error', action);
     }
 }
 
@@ -6598,6 +6669,11 @@ async function handleLogin(event) {
 
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value.trim();
+
+    if (!email || !password) {
+        setAuthMessage('login', 'Escribe tu correo y contraseña para iniciar sesión.', 'error');
+        return;
+    }
 
     try {
         const sb = getSupabaseClient();
@@ -6616,7 +6692,7 @@ async function handleLogin(event) {
         notify('Sesion iniciada correctamente.', 'success');
         showApp();
     } catch (error) {
-        setAuthMessage('login', error.message || 'Email o contrasena incorrectos.', 'error');
+        setAuthMessage('login', translateSupabaseError(error.message), 'error');
     }
 }
 
