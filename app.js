@@ -155,8 +155,8 @@ function renderQuickField(field) {
 
     if (field.type === 'select') {
         const options = (field.options || []).map(option => {
-            const value = typeof option === 'string' ? option : option.value;
-            const label = typeof option === 'string' ? option : option.label;
+            const value = getOptionValue(option);
+            const label = getOptionLabel(option);
             const selected = String(field.value || '') === String(value) ? 'selected' : '';
             return `<option value="${escapeHTML(value)}" ${selected}>${escapeHTML(label)}</option>`;
         }).join('');
@@ -166,8 +166,8 @@ function renderQuickField(field) {
 
     if (field.type === 'choice-grid') {
         const options = (field.options || []).map((option, index) => {
-            const value = typeof option === 'string' ? option : option.value;
-            const label = typeof option === 'string' ? option : option.label;
+            const value = getOptionValue(option);
+            const label = getOptionLabel(option);
             const tone = typeof option === 'string' ? '' : option.tone || '';
             const iconClass = typeof option === 'string' ? '' : option.iconClass || '';
             const checked = String(field.value || '') === String(value) || (!field.value && index === 0) ? 'checked' : '';
@@ -2608,8 +2608,10 @@ function renderTasks(workspace) {
                 const visualStatus = task.visualStatus;
                 const reminder = getTaskReminderAlert(task);
                 const priorityClass = getTaskPriorityClass(task.priority || 'media');
+                const taskSubject = workspace.subjects.find(subject => subject.id === task.subjectId || subject.name === task.subject);
+                const subjectColor = subjectColorMap[normalizeSubjectColor(taskSubject?.color)] || '#49ccf9';
                 return `
-                    <article class="task-item task-card-modern priority-${priorityClass}" data-status="${escapeHTML(visualStatus)}" data-id="${escapeHTML(task.id)}">
+                    <article class="task-item task-card-modern priority-${priorityClass}" style="--subject-color:${subjectColor}" data-status="${escapeHTML(visualStatus)}" data-id="${escapeHTML(task.id)}">
                         <div class="task-card-main">
                             <label class="task-checkbox task-check-modern" title="Marcar como completada">
                                 <input type="checkbox" onclick="toggleTask(this)" ${task.status === 'completed' ? 'checked' : ''}>
@@ -2620,7 +2622,7 @@ function renderTasks(workspace) {
                                     <h4>${escapeHTML(task.title)}</h4>
                                     <span class="task-status status-${escapeHTML(visualStatus)}">${escapeHTML(getTaskStatusLabel(visualStatus))}</span>
                                 </div>
-                                <p class="task-subject">${escapeHTML(task.subject || 'General')}</p>
+                                <p class="task-subject" style="color:${subjectColor}">${escapeHTML(task.subject || 'General')}</p>
                                 <p class="task-description">${escapeHTML(task.description || 'Sin descripcion registrada.')}</p>
                                 <div class="task-meta-grid">
                                     <span><strong>Fecha:</strong> ${escapeHTML(task.due || 'Sin fecha')}</span>
@@ -4844,6 +4846,10 @@ function normalizeSubjectIcon(icon) {
     return subjectBookOptions.some(option => option.value === icon) ? icon : 'book-blue';
 }
 
+function isKnownSubjectIcon(icon) {
+    return subjectBookOptions.some(option => option.value === icon);
+}
+
 function addSubjectUI() {
     openSubjectForm();
 }
@@ -4908,7 +4914,7 @@ function openSubjectForm(subjectId = null) {
 }
 
 function getSubjectMetrics(workspace, subject) {
-    const tasks = workspace.tasks.filter(task => task.subject === subject.name);
+    const tasks = workspace.tasks.filter(task => task.subjectId === subject.id || task.subject === subject.name);
     const pendingTasks = tasks.filter(task => task.status !== 'completed');
     const completedTasks = tasks.filter(task => task.status === 'completed');
     const grades = workspace.grades.filter(grade => grade.subject === subject.name);
@@ -4935,7 +4941,8 @@ function getSubjectMetrics(workspace, subject) {
 }
 
 function getSubjectIconMarkup(subject) {
-    const custom = String(subject.customIcon || '').trim().slice(0, 4);
+    const storedIcon = String(subject.icon || '').trim();
+    const custom = String(subject.customIcon || (!isKnownSubjectIcon(storedIcon) ? storedIcon : '')).trim().slice(0, 4);
     if (custom) {
         return `<span class="subject-icon subject-custom-label" aria-hidden="true">${escapeHTML(custom.toUpperCase())}</span>`;
     }
@@ -6015,6 +6022,7 @@ let authListenerReady = false;
 function logSupabaseError(context, error) {
     if (!error) return;
     console.error("ERROR SUPABASE:", error);
+    console.error("Error exacto:", error);
     console.error(`[Supabase][${context}]`, {
         message: error.message,
         code: error.code,
@@ -6125,10 +6133,32 @@ function extractTaskMeta(tasks = []) {
     }, {});
 }
 
+function getOptionValue(option) {
+    if (typeof option === 'string') return option;
+    if (option && typeof option === 'object') {
+        return option.value ?? option.name ?? option.color ?? option.label ?? '';
+    }
+    return option == null ? '' : String(option);
+}
+
+function getOptionLabel(option) {
+    if (typeof option === 'string') return option;
+    if (option && typeof option === 'object') {
+        return option.label ?? option.name ?? option.value ?? option.color ?? '';
+    }
+    return option == null ? '' : String(option);
+}
+
 function normalizeSubjectColor(color) {
     if (!color) return 'Morado';
-    const match = subjectColorOptions.find(option => option.toLowerCase() === String(color).toLowerCase());
-    return match || color;
+    const rawColor = getOptionValue(color);
+    const normalizedColor = String(rawColor || '').trim().toLowerCase();
+    const match = subjectColorOptions.find(option => {
+        const optionValue = String(getOptionValue(option)).trim().toLowerCase();
+        const optionLabel = String(getOptionLabel(option)).trim().toLowerCase();
+        return optionValue === normalizedColor || optionLabel === normalizedColor;
+    });
+    return getOptionValue(match) || rawColor || 'Morado';
 }
 
 function normalizeTaskPriority(priority) {
@@ -6292,8 +6322,8 @@ async function syncWorkspaceFromSupabase() {
     const sb = getSupabaseClient();
     const [profileRes, subjectsRes, tasksRes] = await Promise.all([
         sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle(),
-        sb.from('subjects').select('*').order('created_at', { ascending: true }),
-        sb.from('tasks').select('*').order('created_at', { ascending: false })
+        sb.from('subjects').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: true }),
+        sb.from('tasks').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false })
     ]);
 
     if (profileRes.error) {
@@ -6652,8 +6682,17 @@ function openSubjectForm(subjectId = null) {
         submitLabel: subject ? 'Actualizar materia' : 'Guardar materia',
         fields: [
             { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matematica' },
-            { name: 'icon', label: 'Icono o etiqueta', value: subject?.icon || '', placeholder: 'Ej: PROG' },
-            { name: 'color', label: 'Color identificador', type: 'select', options: subjectColorOptions, value: subject?.color || 'Morado' }
+            { name: 'icon', label: 'Icono de la materia', type: 'choice-grid', options: subjectBookOptions, value: normalizeSubjectIcon(subject?.icon) },
+            {
+                name: 'customIcon',
+                label: 'Icono personalizado opcional',
+                value: subject?.customIcon || (!isKnownSubjectIcon(String(subject?.icon || '')) ? subject?.icon || '' : ''),
+                required: false,
+                placeholder: 'Ej: MAT, BIO, IA'
+            },
+            { name: 'color', label: 'Color identificador', type: 'choice-grid', options: subjectColorOptions, value: normalizeSubjectColor(subject?.color || 'Azul') },
+            { name: 'description', label: 'Descripcion corta', type: 'textarea', rows: 3, value: subject?.description || '', required: false, placeholder: 'Ej: Algebra, geometria y resolucion de problemas.' },
+            { name: 'goal', label: 'Objetivo de la materia', type: 'textarea', rows: 3, value: subject?.goal || '', required: false, placeholder: 'Ej: Subir mi promedio y entregar tareas a tiempo.' }
         ],
         onSubmit: async values => {
             const name = values.name.trim();
@@ -6664,11 +6703,12 @@ function openSubjectForm(subjectId = null) {
 
             try {
                 const sb = getSupabaseClient();
+                const customIcon = String(values.customIcon || '').trim().slice(0, 4);
                 const payload = {
                     user_id: currentUser.id,
                     name,
-                    icon: values.icon.trim() || '',
-                    color: values.color || 'Morado'
+                    icon: customIcon || normalizeSubjectIcon(values.icon),
+                    color: normalizeSubjectColor(values.color || 'Azul')
                 };
 
                 if (subjectId) {
@@ -6766,40 +6806,54 @@ async function deleteSubject(subjectId) {
 function renderSubjects(workspace) {
     const grid = document.querySelector('.subjects-grid');
     if (!grid) return;
+    ensureSubjectsToolbar(grid);
+    const filteredSubjects = sortSubjectsForView(
+        workspace.subjects.filter(subject => normalizeTutorText(subject.name).includes(normalizeTutorText(subjectFilterText))),
+        workspace
+    );
 
-    grid.innerHTML = workspace.subjects.length ? workspace.subjects.map(subject => {
-        const relatedTasks = workspace.tasks.filter(task => task.subjectId === subject.id || task.subject === subject.name);
-        const taskCount = relatedTasks.length;
-        const completed = relatedTasks.filter(task => task.status === 'completed').length;
-        const pending = relatedTasks.filter(task => task.status !== 'completed').length;
-        const progress = taskCount ? Math.round((completed / taskCount) * 100) : 0;
-        const average = getSubjectAverage(workspace, subject.name);
+    grid.innerHTML = workspace.subjects.length ? (filteredSubjects.length ? filteredSubjects.map(subject => {
+        const metrics = getSubjectMetrics(workspace, subject);
         const color = subjectColorMap[subject.color] || subjectColorMap.Morado;
-        const nextTask = relatedTasks
-            .filter(task => task.status !== 'completed' && task.due)
-            .sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
 
         return `
-            <div class="subject-card subject-custom ac-colored-card" style="--subject-color:${color}">
+            <div class="subject-card subject-custom ac-colored-card subject-space-card" style="--subject-color:${color}">
+                <div class="subject-orbit" aria-hidden="true"></div>
                 <div class="subject-header">
-                    <h3><span class="subject-icon"></span> ${escapeHTML(subject.name)}</h3>
+                    <div class="subject-title">
+                        ${getSubjectIconMarkup(subject)}
+                        <div>
+                            <h3>${escapeHTML(subject.name)}</h3>
+                            <p>${escapeHTML(subject.description || 'Espacio academico personalizado')}</p>
+                        </div>
+                    </div>
                     <span class="subject-chip">${escapeHTML(subject.color || 'Morado')}</span>
                 </div>
-                <div class="subject-stats">
-                    <div class="stat"><span class="stat-name">Progreso</span><span class="stat-num">${progress}%</span></div>
-                    <div class="stat"><span class="stat-name">Pendientes</span><span class="stat-num">${pending}</span></div>
-                    <div class="stat"><span class="stat-name">Promedio</span><span class="stat-num">${average ? average.toFixed(2) : '--'}</span></div>
+                <div class="subject-progress-block">
+                    <div><span>Progreso</span><strong>${metrics.progress}%</strong></div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${metrics.progress}%; background:linear-gradient(90deg, ${color}, #49ccf9)"></div></div>
                 </div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${progress}%; background:linear-gradient(90deg, ${color}, #06b6d4)"></div></div>
-                <p class="last-activity">${nextTask ? `Proxima entrega: ${escapeHTML(nextTask.title)} (${escapeHTML(nextTask.due)})` : 'Sin entregas proximas registradas'}</p>
+                <div class="subject-metric-grid">
+                    <div><span>Pendientes</span><strong>${metrics.pendingTasks.length}</strong></div>
+                    <div><span>Completadas</span><strong>${metrics.completedTasks.length}</strong></div>
+                    <div><span>Promedio</span><strong>${metrics.average ? metrics.average.toFixed(2) : '--'}</strong></div>
+                    <div><span>Apuntes</span><strong>${metrics.resources.length}</strong></div>
+                </div>
+                <div class="subject-card-footer">
+                    <p><strong>Proxima entrega:</strong> ${metrics.nextEvent ? escapeHTML(`${metrics.nextEvent.title} - ${metrics.nextEvent.date || metrics.nextEvent.day || 'Sin fecha'}`) : 'Sin entregas programadas'}</p>
+                    <p><strong>Ultima actividad:</strong> ${escapeHTML(metrics.recentText)}</p>
+                </div>
                 <div class="card-actions">
+                    <button class="btn-primary btn-small" data-subject-open="${escapeHTML(subject.id)}">Abrir materia</button>
                     <button class="btn-secondary btn-small" data-subject-edit="${escapeHTML(subject.id)}">Editar</button>
                     <button class="btn-danger btn-small" data-subject-delete="${escapeHTML(subject.id)}">Eliminar</button>
                 </div>
             </div>
         `;
-    }).join('') : emptyStateHTML('No tienes materias registradas todavia.', 'Crear primera materia', 'addSubjectUI()');
+    }).join('') : emptyStateHTML('No se encontraron materias con esa busqueda.', 'Limpiar busqueda', "clearSubjectSearch()")) : emptyStateHTML('No tienes materias todavia. Organiza tu aprendizaje creando tu primera materia.', '+ Crear materia', 'addSubjectUI()');
 
+    bindSubjectsToolbar();
+    grid.querySelectorAll('[data-subject-open]').forEach(button => button.addEventListener('click', () => openSubjectDetails(button.dataset.subjectOpen)));
     grid.querySelectorAll('[data-subject-edit]').forEach(button => button.addEventListener('click', () => openSubjectForm(button.dataset.subjectEdit)));
     grid.querySelectorAll('[data-subject-delete]').forEach(button => button.addEventListener('click', () => deleteSubject(button.dataset.subjectDelete)));
 }
