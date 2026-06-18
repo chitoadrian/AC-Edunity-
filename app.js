@@ -158,7 +158,7 @@ function showLoginWithEmail(email = '') {
 function bindAuthForms() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
-    const logoutButton = document.querySelector('.sidebar-footer .btn-secondary.btn-block');
+    const logoutBtn = document.getElementById('logoutBtn');
 
     if (loginForm && !loginForm.dataset.supabaseBound) {
         loginForm.dataset.supabaseBound = 'true';
@@ -170,12 +170,9 @@ function bindAuthForms() {
         registerForm.addEventListener('submit', handleRegister);
     }
 
-    if (logoutButton && !logoutButton.dataset.supabaseBound) {
-        logoutButton.dataset.supabaseBound = 'true';
-        logoutButton.onclick = event => {
-            event.preventDefault();
-            handleLogout();
-        };
+    if (logoutBtn && !logoutBtn.dataset.supabaseBound) {
+        logoutBtn.dataset.supabaseBound = 'true';
+        logoutBtn.addEventListener('click', handleLogout);
     }
 }
 
@@ -418,7 +415,7 @@ function showPage(pageId) {
     }
 }
 
-function showLanding() {
+function legacyShowLandingLocal() {
     currentUser = null;
     localStorage.removeItem('currentUser');
     showPage('landing-page');
@@ -545,7 +542,7 @@ function legacyHandleRegisterLocal(event) {
     notify('Cuenta creada correctamente. Ya puedes personalizar AC Edunity.', 'success');
 }
 
-function handleLogout() {
+function legacyHandleLogoutLocal() {
     currentUser = null;
     localStorage.removeItem('currentUser');
     showLanding();
@@ -6982,8 +6979,13 @@ function saveCurrentUserProfile(profileUpdates) {
 function showLanding() {
     sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
     clearAuthMessages();
+    ['login-email', 'login-password', 'register-name', 'register-email', 'register-password'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
+    });
     showPage('landing-page');
     resetLandingReveal();
+    console.log("[APP] Mostrando landing");
 }
 
 function showDashboard() {
@@ -7213,7 +7215,8 @@ async function handleLogin(event) {
     }
 }
 
-async function handleLogout() {
+async function handleLogout(event) {
+    if (event?.preventDefault) event.preventDefault();
     if (logoutInProgress) return;
     logoutInProgress = true;
     console.log("[LOGOUT] Botón presionado");
@@ -7222,22 +7225,34 @@ async function handleLogout() {
         const sb = getSupabaseClient();
         const { error } = await sb.auth.signOut();
         if (error) {
-            logSupabaseError('auth signOut', error);
-            throw error;
+            console.error("[LOGOUT ERROR]", error);
+            if (typeof showToast === 'function') {
+                showToast("No se pudo cerrar sesión. Intenta otra vez.");
+            } else {
+                notify("No se pudo cerrar sesión. Intenta otra vez.", "error");
+            }
+            return;
         }
-        console.log("[LOGOUT] Sesión cerrada");
-    } catch (error) {
-        console.error("[LOGOUT] Error cerrando sesion", error);
-        notify('No se pudo cerrar la sesion de Supabase, pero se limpio la vista local.', 'info');
-    } finally {
+
         currentUser = null;
         profileState = null;
         workspaceState = mergeWorkspaceState();
-        localStorage.removeItem('currentUser');
-        sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
-        console.log("[APP] Mostrando landing después de cerrar sesión");
+        localStorage.removeItem("currentUser");
+        localStorage.removeItem("acEdunityUser");
+        sessionStorage.clear();
+
+        console.log("[LOGOUT] Sesión cerrada");
+        console.log("[APP] Mostrando landing");
         showLanding();
-        notify('Sesion cerrada.', 'info');
+        notify("Sesión cerrada.", "info");
+    } catch (error) {
+        console.error("[LOGOUT ERROR]", error);
+        if (typeof showToast === 'function') {
+            showToast("No se pudo cerrar sesión. Intenta otra vez.");
+        } else {
+            notify("No se pudo cerrar sesión. Intenta otra vez.", "error");
+        }
+    } finally {
         logoutInProgress = false;
     }
 }
@@ -7648,15 +7663,14 @@ async function initializeApp() {
     initLandingReveal();
     initLandingWheelControl();
 
-    const restoreDashboardAfterReload = canRestoreDashboardOnReload();
-    console.log("[APP] Mostrando landing al iniciar");
-    if (!restoreDashboardAfterReload) {
-        currentUser = null;
-        profileState = null;
-        workspaceState = mergeWorkspaceState();
-        localStorage.removeItem('currentUser');
-        showLanding();
-    }
+    console.log("[APP] Landing inicial");
+    currentUser = null;
+    profileState = null;
+    workspaceState = mergeWorkspaceState();
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('acEdunityUser');
+    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+    showLanding();
 
     try {
         const sb = getSupabaseClient();
@@ -7669,48 +7683,24 @@ async function initializeApp() {
                     profileState = null;
                     workspaceState = mergeWorkspaceState();
                     localStorage.removeItem('currentUser');
+                    localStorage.removeItem('acEdunityUser');
+                    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
                     showLanding();
                     return;
-                }
-
-                const shouldOpenDashboard = loginInProgress || restoreDashboardAfterReload || document.body.classList.contains('is-dashboard');
-                if (session?.user && shouldOpenDashboard && (!currentUser || currentUser.id !== session.user.id)) {
-                    try {
-                        currentUser = getPublicUserFromAuth(session.user);
-                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        showDashboard();
-                        await bootstrapAuthenticatedApp(session.user);
-                        showDashboard();
-                    } catch (error) {
-                        notify('No se pudo restaurar la sesion.', 'error');
-                    }
                 }
             });
             authListenerReady = true;
         }
 
-        const { data, error } = await sb.auth.getSession();
+        const { error } = await sb.auth.getSession();
         if (error) throw error;
-
-        if (data.session?.user && restoreDashboardAfterReload) {
-            currentUser = getPublicUserFromAuth(data.session.user);
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            showDashboard();
-            try {
-                await bootstrapAuthenticatedApp(data.session.user);
-                showDashboard();
-            } catch (bootstrapError) {
-                console.error('[LOGIN] Error restaurando datos de sesion:', bootstrapError);
-                notify('Sesion activa. No se pudieron cargar algunos datos de Supabase.', 'info');
-                showDashboard();
-            }
-        } else {
-            currentUser = null;
-            profileState = null;
-            workspaceState = mergeWorkspaceState();
-            localStorage.removeItem('currentUser');
-            showLanding();
-        }
+        currentUser = null;
+        profileState = null;
+        workspaceState = mergeWorkspaceState();
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('acEdunityUser');
+        sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+        showLanding();
     } catch (error) {
         currentUser = null;
         profileState = null;
