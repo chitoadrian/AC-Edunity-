@@ -158,6 +158,7 @@ function showLoginWithEmail(email = '') {
 function bindAuthForms() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
+    const logoutButton = document.querySelector('.sidebar-footer .btn-secondary.btn-block');
 
     if (loginForm && !loginForm.dataset.supabaseBound) {
         loginForm.dataset.supabaseBound = 'true';
@@ -167,6 +168,14 @@ function bindAuthForms() {
     if (registerForm && !registerForm.dataset.supabaseBound) {
         registerForm.dataset.supabaseBound = 'true';
         registerForm.addEventListener('submit', handleRegister);
+    }
+
+    if (logoutButton && !logoutButton.dataset.supabaseBound) {
+        logoutButton.dataset.supabaseBound = 'true';
+        logoutButton.onclick = event => {
+            event.preventDefault();
+            handleLogout();
+        };
     }
 }
 
@@ -6376,6 +6385,7 @@ let workspaceState = null;
 let profileState = null;
 let authListenerReady = false;
 let loginInProgress = false;
+let logoutInProgress = false;
 const DASHBOARD_SESSION_KEY = 'acEdunityDashboardActive';
 
 function wasPageReloaded() {
@@ -7204,22 +7214,32 @@ async function handleLogin(event) {
 }
 
 async function handleLogout() {
+    if (logoutInProgress) return;
+    logoutInProgress = true;
+    console.log("[LOGOUT] Botón presionado");
+
     try {
         const sb = getSupabaseClient();
-        const { error } = await sb.auth.signOut({ scope: 'local' });
+        const { error } = await sb.auth.signOut();
         if (error) {
             logSupabaseError('auth signOut', error);
+            throw error;
         }
+        console.log("[LOGOUT] Sesión cerrada");
     } catch (error) {
-        notify('No se pudo cerrar la sesion de Supabase.', 'error');
+        console.error("[LOGOUT] Error cerrando sesion", error);
+        notify('No se pudo cerrar la sesion de Supabase, pero se limpio la vista local.', 'info');
+    } finally {
+        currentUser = null;
+        profileState = null;
+        workspaceState = mergeWorkspaceState();
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+        console.log("[APP] Mostrando landing después de cerrar sesión");
+        showLanding();
+        notify('Sesion cerrada.', 'info');
+        logoutInProgress = false;
     }
-
-    currentUser = null;
-    profileState = null;
-    workspaceState = mergeWorkspaceState();
-    localStorage.removeItem('currentUser');
-    showLanding();
-    notify('Sesion cerrada.', 'info');
 }
 
 async function toggleTask(checkbox) {
