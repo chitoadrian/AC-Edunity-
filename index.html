@@ -219,7 +219,7 @@
             </div>
             <div class="auth-card">
                 <h2>Inicia sesion</h2>
-                <form onsubmit="handleLogin(event)">
+                <form id="login-form">
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" id="login-email" placeholder="tu@email.com" required>
@@ -250,7 +250,7 @@
             </div>
             <div class="auth-card">
                 <h2>Crear cuenta</h2>
-                <form onsubmit="handleRegister(event)">
+                <form id="register-form">
                     <div class="form-group">
                         <label>Nombre completo</label>
                         <input type="text" id="register-name" placeholder="Adrian Lopez" required>
@@ -1211,6 +1211,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=20260617-auth-errors-es"></script>
+    <script src="app.js?v=20260617-auth-flow-fix"></script>
 </body>
 </html>

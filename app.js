@@ -1,4 +1,4 @@
-console.log("🔥 APP.JS NUEVO AC EDUNITY CARGADO");
+console.log("APP.JS NUEVO AC EDUNITY CARGADO");
 
 /* ============================================
    AC Edunity - LOGICA PRINCIPAL
@@ -111,38 +111,38 @@ function translateSupabaseError(message = '') {
     const text = String(message || '').toLowerCase();
 
     if (text.includes('user already registered') || text.includes('already registered') || text.includes('already exists') || text.includes('email exists')) {
-        return 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
+        return 'Este correo ya esta registrado. Inicia sesion o usa otro correo.';
     }
 
     if (text.includes('rate limit') || text.includes('too many requests') || text.includes('over_email_send_rate_limit') || text.includes('email rate limit') || text.includes('for security purposes')) {
-        return 'Se alcanzó el límite de intentos. Espera unos minutos e intenta otra vez.';
+        return 'Se alcanzo el limite de intentos. Espera unos minutos e intenta otra vez.';
     }
 
     if (text.includes('invalid login credentials') || text.includes('invalid credentials') || text.includes('invalid email or password')) {
-        return 'Correo o contraseña incorrectos.';
+        return 'Correo o contrasena incorrectos.';
     }
 
     if (text.includes('email not confirmed') || text.includes('not confirmed')) {
-        return 'Debes confirmar tu correo antes de iniciar sesión.';
+        return 'Debes confirmar tu correo antes de iniciar sesion.';
     }
 
     if (text.includes('password should be at least') || text.includes('weak password')) {
-        return 'La contraseña es muy corta o débil. Usa una contraseña más segura.';
+        return 'La contrasena es muy corta o debil. Usa una contrasena mas segura.';
     }
 
     if (text.includes('invalid email')) {
-        return 'Escribe un correo válido.';
+        return 'Escribe un correo valido.';
     }
 
     if (text.includes('failed to fetch') || text.includes('network') || text.includes('fetch')) {
-        return 'No se pudo conectar con Supabase. Revisa tu conexión e intenta otra vez.';
+        return 'No se pudo conectar con Supabase. Revisa tu conexion e intenta otra vez.';
     }
 
-    return 'No se pudo completar la acción. Revisa los datos e intenta otra vez.';
+    return 'No se pudo completar la accion. Revisa los datos e intenta otra vez.';
 }
 
 function isAlreadyRegisteredError(message = '') {
-    return translateSupabaseError(message) === 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
+    return translateSupabaseError(message) === 'Este correo ya esta registrado. Inicia sesion o usa otro correo.';
 }
 
 function showLoginWithEmail(email = '') {
@@ -152,6 +152,21 @@ function showLoginWithEmail(email = '') {
         loginEmail.value = email;
         const password = document.getElementById('login-password');
         if (password) password.focus();
+    }
+}
+
+function bindAuthForms() {
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
+    if (loginForm && !loginForm.dataset.supabaseBound) {
+        loginForm.dataset.supabaseBound = 'true';
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    if (registerForm && !registerForm.dataset.supabaseBound) {
+        registerForm.dataset.supabaseBound = 'true';
+        registerForm.addEventListener('submit', handleRegister);
     }
 }
 
@@ -273,10 +288,10 @@ function renderQuickField(field) {
 }
 
 // ============================================
-// INICIALIZACION
+// INICIALIZACION LEGACY (reemplazada por Supabase al final del archivo)
 // ============================================
 
-function initializeApp() {
+function legacyInitializeAppLocal() {
     // Cargar tema guardado
     if (isDarkTheme) {
         document.body.classList.remove('light-theme');
@@ -415,7 +430,7 @@ function startPrototype() {
     showRegister();
 }
 
-function showApp() {
+function legacyShowAppLocal() {
     showPage('app-page');
     updateDashboardGreeting();
     navigateTo('dashboard');
@@ -451,10 +466,10 @@ function updateProfileInfo() {
 }
 
 // ============================================
-// AUTENTICACION
+// AUTENTICACION LEGACY LOCAL (no usada con Supabase)
 // ============================================
 
-function handleLogin(event) {
+function legacyHandleLoginLocal(event) {
     event.preventDefault();
     clearAuthMessages();
 
@@ -483,7 +498,7 @@ function handleLogin(event) {
     }
 }
 
-function handleRegister(event) {
+function legacyHandleRegisterLocal(event) {
     event.preventDefault();
     clearAuthMessages();
 
@@ -1318,7 +1333,7 @@ function refreshWorkspaceUI() {
     updateGradeSubjectOptions(workspace);
 }
 
-function showApp() {
+function legacyShowAppWithLocalWorkspace() {
     ensureWorkspace();
     showPage('app-page');
     updateDashboardGreeting();
@@ -1326,7 +1341,7 @@ function showApp() {
     navigateTo('dashboard');
 }
 
-function handleRegister(event) {
+function legacyHandleRegisterWithLocalWorkspace(event) {
     event.preventDefault();
     clearAuthMessages();
 
@@ -1367,7 +1382,7 @@ function handleRegister(event) {
     notify('Bienvenido a AC Edunity. Empieza creando tu primera materia.', 'success');
 }
 
-function handleLogin(event) {
+function legacyHandleLoginWithLocalWorkspace(event) {
     event.preventDefault();
     clearAuthMessages();
 
@@ -6591,8 +6606,8 @@ async function handleRegister(event) {
         if (!data.user) throw new Error('No se pudo crear el usuario en Auth.');
 
         if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-            setAuthMessage('register', 'Este correo ya está registrado. Inicia sesión o usa otro correo.', 'error', {
-                label: 'Iniciar sesión con este correo',
+            setAuthMessage('register', 'Este correo ya esta registrado. Inicia sesion o usa otro correo.', 'error', {
+                label: 'Iniciar sesion con este correo',
                 onClick: () => showLoginWithEmail(email)
             });
             return;
@@ -6603,27 +6618,6 @@ async function handleRegister(event) {
             email: data.user.email,
             hasSession: !!data.session
         });
-
-        let authUser = data.user;
-        let authSession = data.session;
-
-        if (!authSession) {
-            const retryLogin = await sb.auth.signInWithPassword({ email, password });
-            if (retryLogin.error) {
-                logSupabaseError('auth signInWithPassword after signUp', retryLogin.error);
-                setAuthMessage('register', 'Cuenta creada. Si tu proyecto pide confirmacion por correo, confirma el email y luego inicia sesion.', 'success');
-                document.getElementById('register-name').value = '';
-                document.getElementById('register-email').value = '';
-                document.getElementById('register-password').value = '';
-                return;
-            }
-            authUser = retryLogin.data.user;
-            authSession = retryLogin.data.session;
-            console.log('[Supabase] Sesion abierta despues del registro', {
-                userId: authUser?.id,
-                hasSession: !!authSession
-            });
-        }
 
         const extras = {
             events: [],
@@ -6642,21 +6636,29 @@ async function handleRegister(event) {
             },
             tutorHistory: []
         };
-        currentUser = { id: authUser.id, email: authUser.email, name };
+        currentUser = { id: data.user.id, email: data.user.email, name };
         saveWorkspaceExtras(extras);
-
-        await bootstrapAuthenticatedApp(authUser, name);
 
         document.getElementById('register-name').value = '';
         document.getElementById('register-email').value = '';
         document.getElementById('register-password').value = '';
+
+        if (!data.session) {
+            setAuthMessage('register', 'Cuenta creada. Ahora inicia sesion.', 'success', {
+                label: 'Iniciar sesion con este correo',
+                onClick: () => showLoginWithEmail(email)
+            });
+            return;
+        }
+
+        await bootstrapAuthenticatedApp(data.user, name);
 
         notify('Cuenta creada correctamente. Tu espacio academico empieza vacio.', 'success');
         showApp();
     } catch (error) {
         const message = translateSupabaseError(error.message);
         const action = isAlreadyRegisteredError(error.message) ? {
-            label: 'Iniciar sesión con este correo',
+            label: 'Iniciar sesion con este correo',
             onClick: () => showLoginWithEmail(email)
         } : null;
         setAuthMessage('register', message, 'error', action);
@@ -6671,19 +6673,24 @@ async function handleLogin(event) {
     const password = document.getElementById('login-password').value.trim();
 
     if (!email || !password) {
-        setAuthMessage('login', 'Escribe tu correo y contraseña para iniciar sesión.', 'error');
+        setAuthMessage('login', 'Escribe tu correo y contrasena para iniciar sesion.', 'error');
         return;
     }
 
     try {
         const sb = getSupabaseClient();
+        console.log("[Supabase] Intentando login", email);
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) {
+            console.error("[Supabase] Error login", error);
             logSupabaseError('auth signInWithPassword', error);
             throw error;
         }
         if (!data.user) throw new Error('No se encontro la cuenta.');
+        console.log("[Supabase] Login correcto", data);
 
+        currentUser = getPublicUserFromAuth(data.user);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
         await bootstrapAuthenticatedApp(data.user);
 
         document.getElementById('login-email').value = '';
@@ -6692,6 +6699,8 @@ async function handleLogin(event) {
         notify('Sesion iniciada correctamente.', 'success');
         showApp();
     } catch (error) {
+        console.error("[Supabase] Error login", error);
+        logSupabaseError('login flow', error);
         setAuthMessage('login', translateSupabaseError(error.message), 'error');
     }
 }
@@ -7105,6 +7114,8 @@ function refreshWorkspaceUI() {
 }
 
 async function initializeApp() {
+    bindAuthForms();
+
     if (isDarkTheme) {
         document.body.classList.remove('light-theme');
         updateThemeIcon('theme');
