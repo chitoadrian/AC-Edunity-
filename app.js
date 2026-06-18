@@ -1918,29 +1918,35 @@ function openAttendanceForm(attendanceId = null) {
                     date: values.date,
                     status: values.status
                 };
-                console.log("[ATTENDANCE] insertando asistencia", attendanceData);
+                console.log("[ATTENDANCE] guardando asistencia", attendanceData);
 
                 if (attendanceId) {
-                    const { error } = await getSupabaseClient()
+                    const { data, error } = await getSupabaseClient()
                         .from('attendance')
                         .update(attendanceData)
                         .eq('id', attendanceId)
-                        .eq('user_id', user.id);
+                        .eq('user_id', user.id)
+                        .select();
 
                     if (error) {
+                        console.error("[ATTENDANCE ERROR]", error);
                         logSupabaseError('attendance update', error);
                         throw error;
                     }
+                    console.log("[ATTENDANCE] guardado correcto", data);
                     pushRecentMessage(`Editaste asistencia en ${values.subject}.`);
                 } else {
-                    const { error } = await getSupabaseClient()
+                    const { data, error } = await getSupabaseClient()
                         .from('attendance')
-                        .insert(attendanceData);
+                        .insert(attendanceData)
+                        .select();
 
                     if (error) {
+                        console.error("[ATTENDANCE ERROR]", error);
                         logSupabaseError('attendance insert', error);
                         throw error;
                     }
+                    console.log("[ATTENDANCE] guardado correcto", data);
                     await updateProfileProgress(values.status === 'Asisti' ? 10 : 4, { bumpStreak: values.status === 'Asisti' });
                     pushRecentMessage(`Registraste asistencia en ${values.subject}.`);
                 }
@@ -1949,6 +1955,7 @@ function openAttendanceForm(attendanceId = null) {
                 refreshWorkspaceUI();
                 notify(attendanceId ? 'Asistencia actualizada.' : 'Asistencia registrada.', 'success');
             } catch (error) {
+                console.error("[ATTENDANCE ERROR]", error);
                 notify(error.message || 'No se pudo guardar la asistencia.', 'error');
             }
         }
@@ -3030,6 +3037,10 @@ function getGradeFinalValue(grade) {
     return items.reduce((sum, item) => sum + Number(item.value || 0), 0) / items.length;
 }
 
+function getFirstGradeItemDate(items = []) {
+    return items.find(item => item.date)?.date || '';
+}
+
 function formatGradeValue(value) {
     const numeric = Number(value || 0);
     return numeric.toFixed(numeric % 1 === 0 ? 0 : 2).replace(/\.00$/, '');
@@ -3213,9 +3224,11 @@ function openGradeForm(gradeId = null, defaults = {}) {
         if (event.target.name === 'itemValue') updateAveragePreview();
     });
 
-    modal.querySelector('form').addEventListener('submit', event => {
+    modal.querySelector('form').addEventListener('submit', async event => {
         event.preventDefault();
         const form = event.currentTarget;
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton ? submitButton.textContent : '';
         const activities = Array.from(form.querySelectorAll('[name="itemActivity"]'));
         const dates = Array.from(form.querySelectorAll('[name="itemDate"]'));
         const values = Array.from(form.querySelectorAll('[name="itemValue"]'));
@@ -3232,6 +3245,7 @@ function openGradeForm(gradeId = null, defaults = {}) {
 
         const value = gradeItems.reduce((sum, item) => sum + item.value, 0) / gradeItems.length;
         const fresh = loadWorkspace();
+        const subject = findSubjectByName(fresh, form.subject.value);
         const payload = {
             subject: form.subject.value,
             period: form.period.value,
@@ -3243,20 +3257,104 @@ function openGradeForm(gradeId = null, defaults = {}) {
             items: gradeItems
         };
 
-        if (gradeId) {
-            const item = fresh.grades.find(entry => entry.id === gradeId);
-            if (item) Object.assign(item, payload);
-            addRecent(fresh, `Editaste una calificacion de ${payload.subject}.`);
-        } else {
-            fresh.grades.push({ id: createId(), ...payload });
-            addXP(fresh, 20);
-            addRecent(fresh, `Registraste una calificacion en ${payload.subject}.`);
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Guardando...';
         }
 
-        saveWorkspace(fresh);
-        refreshWorkspaceUI();
-        closeModal();
-        notify(gradeId ? 'Calificacion actualizada.' : 'Calificacion registrada.', 'success');
+        try {
+            const user = await getCurrentSupabaseUser();
+            const gradePayload = {
+                user_id: user.id,
+                subject_id: subject?.id || null,
+                period: payload.period,
+                category: payload.category,
+                evaluation: payload.evaluation,
+                final_value: Number(value.toFixed(2)),
+                observation: payload.observation
+            };
+            console.log("[GRADES] guardando calificación", gradePayload);
+
+            let savedGrade = null;
+            if (gradeId) {
+                const { data, error } = await getSupabaseClient()
+                    .from('grades')
+                    .update(gradePayload)
+                    .eq('id', gradeId)
+                    .eq('user_id', user.id)
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error("[GRADES ERROR]", error);
+                    logSupabaseError('grades update', error);
+                    throw error;
+                }
+                savedGrade = data;
+                console.log("[GRADES] guardado correcto", data);
+
+                const { error: deleteItemsError } = await getSupabaseClient()
+                    .from('grade_items')
+                    .delete()
+                    .eq('grade_id', gradeId);
+
+                if (deleteItemsError) {
+                    console.error("[GRADES ERROR]", deleteItemsError);
+                    logSupabaseError('grade_items delete before update', deleteItemsError);
+                    throw deleteItemsError;
+                }
+                pushRecentMessage(`Editaste una calificacion de ${payload.subject}.`);
+            } else {
+                const { data, error } = await getSupabaseClient()
+                    .from('grades')
+                    .insert(gradePayload)
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error("[GRADES ERROR]", error);
+                    logSupabaseError('grades insert', error);
+                    throw error;
+                }
+                savedGrade = data;
+                console.log("[GRADES] guardado correcto", data);
+                await updateProfileProgress(20, { bumpStreak: true });
+                pushRecentMessage(`Registraste una calificacion en ${payload.subject}.`);
+            }
+
+            const gradeItemPayload = gradeItems.map(item => ({
+                grade_id: savedGrade.id,
+                activity: item.activity,
+                item_date: item.date || null,
+                value: item.value
+            }));
+            console.log("[GRADE_ITEMS] guardando nota individual", gradeItemPayload);
+
+            if (gradeItemPayload.length) {
+                const { error: itemsError } = await getSupabaseClient()
+                    .from('grade_items')
+                    .insert(gradeItemPayload);
+
+                if (itemsError) {
+                    console.error("[GRADES ERROR]", itemsError);
+                    logSupabaseError('grade_items insert', itemsError);
+                    throw itemsError;
+                }
+            }
+
+            await syncWorkspaceFromSupabase();
+            refreshWorkspaceUI();
+            closeModal();
+            notify(gradeId ? 'Calificacion actualizada.' : 'Calificacion registrada.', 'success');
+        } catch (error) {
+            console.error("[GRADES ERROR]", error);
+            notify(error.message || 'No se pudo guardar la calificacion.', 'error');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+            }
+        }
     });
 
     document.body.appendChild(modal);
@@ -3264,14 +3362,42 @@ function openGradeForm(gradeId = null, defaults = {}) {
     modal.querySelector('input, textarea, select')?.focus();
 }
 
-function deleteGrade(gradeId) {
+async function deleteGrade(gradeId) {
     const workspace = loadWorkspace();
     const grade = workspace.grades.find(item => item.id === gradeId);
-    workspace.grades = workspace.grades.filter(item => item.id !== gradeId);
-    if (grade) addRecent(workspace, `Eliminaste una calificacion de ${grade.subject}.`);
-    saveWorkspace(workspace);
-    refreshWorkspaceUI();
-    notify('Calificacion eliminada.', 'info');
+    try {
+        const user = await getCurrentSupabaseUser();
+        const { error: itemsError } = await getSupabaseClient()
+            .from('grade_items')
+            .delete()
+            .eq('grade_id', gradeId);
+
+        if (itemsError) {
+            console.error("[GRADES ERROR]", itemsError);
+            logSupabaseError('grade_items delete', itemsError);
+            throw itemsError;
+        }
+
+        const { error } = await getSupabaseClient()
+            .from('grades')
+            .delete()
+            .eq('id', gradeId)
+            .eq('user_id', user.id);
+
+        if (error) {
+            console.error("[GRADES ERROR]", error);
+            logSupabaseError('grades delete', error);
+            throw error;
+        }
+
+        if (grade) pushRecentMessage(`Eliminaste una calificacion de ${grade.subject}.`);
+        await syncWorkspaceFromSupabase();
+        refreshWorkspaceUI();
+        notify('Calificacion eliminada.', 'info');
+    } catch (error) {
+        console.error("[GRADES ERROR]", error);
+        notify(error.message || 'No se pudo eliminar la calificacion.', 'error');
+    }
 }
 
 function openGradeBucket(subject, period, category) {
@@ -6564,13 +6690,14 @@ async function syncWorkspaceFromSupabase() {
     }
 
     const sb = getSupabaseClient();
-    const [profileRes, subjectsRes, tasksRes, eventsRes, attendanceRes, resourcesRes] = await Promise.all([
+    const [profileRes, subjectsRes, tasksRes, eventsRes, attendanceRes, resourcesRes, gradesRes] = await Promise.all([
         sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle(),
         sb.from('subjects').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: true }),
         sb.from('tasks').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
         sb.from('events').select('*').eq('user_id', currentUser.id).order('event_date', { ascending: true }),
         sb.from('attendance').select('*').eq('user_id', currentUser.id).order('date', { ascending: false }),
-        sb.from('resources').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false })
+        sb.from('resources').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
+        sb.from('grades').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false })
     ]);
 
     if (profileRes.error) {
@@ -6596,6 +6723,10 @@ async function syncWorkspaceFromSupabase() {
     if (resourcesRes.error) {
         logSupabaseError('resources sync select', resourcesRes.error);
         throw resourcesRes.error;
+    }
+    if (gradesRes.error) {
+        logSupabaseError('grades sync select', gradesRes.error);
+        throw gradesRes.error;
     }
 
     profileState = profileRes.data || {
@@ -6676,12 +6807,59 @@ async function syncWorkspaceFromSupabase() {
         usedAI: Boolean(resource.used_ai || resource.usedAI)
     }));
 
+    const gradeRows = gradesRes.data || [];
+    const gradeIds = gradeRows.map(grade => grade.id).filter(Boolean);
+    let gradeItemsRows = [];
+    if (gradeIds.length) {
+        const gradeItemsRes = await sb
+            .from('grade_items')
+            .select('*')
+            .in('grade_id', gradeIds)
+            .order('item_date', { ascending: true });
+
+        if (gradeItemsRes.error) {
+            logSupabaseError('grade_items sync select', gradeItemsRes.error);
+            throw gradeItemsRes.error;
+        }
+        gradeItemsRows = gradeItemsRes.data || [];
+    }
+
+    const gradeItemsByGrade = gradeItemsRows.reduce((acc, item) => {
+        if (!acc[item.grade_id]) acc[item.grade_id] = [];
+        acc[item.grade_id].push({
+            id: item.id,
+            activity: item.activity || '',
+            date: item.item_date || '',
+            value: Number(item.value || 0)
+        });
+        return acc;
+    }, {});
+
+    const grades = gradeRows.map(grade => {
+        const items = gradeItemsByGrade[grade.id] || [];
+        return {
+            id: grade.id,
+            subjectId: grade.subject_id || '',
+            subject: subjectMap.get(grade.subject_id) || 'General',
+            period: grade.period || 'p1',
+            category: grade.category || 'partial1',
+            evaluation: grade.evaluation || 'Calificacion',
+            value: Number(grade.final_value || 0),
+            finalValue: Number(grade.final_value || 0),
+            date: getFirstGradeItemDate(items),
+            observation: grade.observation || '',
+            items,
+            createdAt: grade.created_at || ''
+        };
+    });
+
     return mergeWorkspaceState({
         subjects,
         tasks,
         events,
         attendance,
         resources,
+        grades,
         xp: Number(profileState.xp || 0),
         streak: Number(profileState.streak || 0)
     });
