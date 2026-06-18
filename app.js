@@ -1906,42 +1906,78 @@ function openAttendanceForm(attendanceId = null) {
             { name: 'date', label: 'Fecha', type: 'date', value: normalizeDate(attendance?.date || new Date().toISOString()) },
             { name: 'status', label: 'Estado', type: 'choice-grid', options: attendanceStatusOptions, value: attendance?.status || 'Asisti' }
         ],
-        onSubmit: values => {
+        onSubmit: async values => {
             const fresh = loadWorkspace();
-            if (attendanceId) {
-                const item = fresh.attendance.find(entry => entry.id === attendanceId);
-                if (item) {
-                    item.subject = values.subject;
-                    item.date = values.date;
-                    item.status = values.status;
-                    addRecent(fresh, `Editaste asistencia en ${values.subject}.`);
-                }
-            } else {
-                fresh.attendance.push({
-                    id: createId(),
-                    subject: values.subject,
+            const subject = findSubjectByName(fresh, values.subject);
+
+            try {
+                const user = await getCurrentSupabaseUser();
+                const attendanceData = {
+                    user_id: user.id,
+                    subject_id: subject?.id || null,
                     date: values.date,
-                    status: values.status,
-                    createdAt: new Date().toISOString()
-                });
-                addXP(fresh, values.status === 'Asisti' ? 10 : 4);
-                addRecent(fresh, `Registraste asistencia en ${values.subject}.`);
+                    status: values.status
+                };
+                console.log("[ATTENDANCE] insertando asistencia", attendanceData);
+
+                if (attendanceId) {
+                    const { error } = await getSupabaseClient()
+                        .from('attendance')
+                        .update(attendanceData)
+                        .eq('id', attendanceId)
+                        .eq('user_id', user.id);
+
+                    if (error) {
+                        logSupabaseError('attendance update', error);
+                        throw error;
+                    }
+                    pushRecentMessage(`Editaste asistencia en ${values.subject}.`);
+                } else {
+                    const { error } = await getSupabaseClient()
+                        .from('attendance')
+                        .insert(attendanceData);
+
+                    if (error) {
+                        logSupabaseError('attendance insert', error);
+                        throw error;
+                    }
+                    await updateProfileProgress(values.status === 'Asisti' ? 10 : 4, { bumpStreak: values.status === 'Asisti' });
+                    pushRecentMessage(`Registraste asistencia en ${values.subject}.`);
+                }
+
+                await syncWorkspaceFromSupabase();
+                refreshWorkspaceUI();
+                notify(attendanceId ? 'Asistencia actualizada.' : 'Asistencia registrada.', 'success');
+            } catch (error) {
+                notify(error.message || 'No se pudo guardar la asistencia.', 'error');
             }
-            saveWorkspace(fresh);
-            refreshWorkspaceUI();
-            notify(attendanceId ? 'Asistencia actualizada.' : 'Asistencia registrada.', 'success');
         }
     });
 }
 
-function deleteAttendance(attendanceId) {
+async function deleteAttendance(attendanceId) {
     const workspace = loadWorkspace();
     const attendance = workspace.attendance.find(item => item.id === attendanceId);
-    workspace.attendance = workspace.attendance.filter(item => item.id !== attendanceId);
-    if (attendance) addRecent(workspace, `Eliminaste asistencia de ${attendance.subject}.`);
-    saveWorkspace(workspace);
-    refreshWorkspaceUI();
-    notify('Registro de asistencia eliminado.', 'info');
+    try {
+        const user = await getCurrentSupabaseUser();
+        const { error } = await getSupabaseClient()
+            .from('attendance')
+            .delete()
+            .eq('id', attendanceId)
+            .eq('user_id', user.id);
+
+        if (error) {
+            logSupabaseError('attendance delete', error);
+            throw error;
+        }
+
+        if (attendance) pushRecentMessage(`Eliminaste asistencia de ${attendance.subject}.`);
+        await syncWorkspaceFromSupabase();
+        refreshWorkspaceUI();
+        notify('Registro de asistencia eliminado.', 'info');
+    } catch (error) {
+        notify(error.message || 'No se pudo eliminar la asistencia.', 'error');
+    }
 }
 
 function filterAttendance(filter, button) {
@@ -2320,6 +2356,33 @@ function createId() {
 
 function getSubjectOptions(workspace) {
     return workspace.subjects.length ? workspace.subjects.map(subject => subject.name) : ['General'];
+}
+
+async function getCurrentSupabaseUser() {
+    const sb = getSupabaseClient();
+    const { data, error } = await sb.auth.getUser();
+    if (error) {
+        logSupabaseError('auth getUser', error);
+        throw error;
+    }
+    if (!data.user) throw new Error('Inicia sesion para guardar datos en Supabase.');
+
+    if (!currentUser || currentUser.id !== data.user.id) {
+        currentUser = getPublicUserFromAuth(data.user, profileState);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    }
+
+    return data.user;
+}
+
+function findSubjectByName(workspace, subjectName = '') {
+    const normalized = normalizeTutorText(subjectName);
+    if (!normalized || normalized === 'general') return null;
+    return workspace.subjects.find(subject => normalizeTutorText(subject.name) === normalized) || null;
+}
+
+function getSubjectNameById(subjects, subjectId = '') {
+    return subjects.find(subject => subject.id === subjectId)?.name || '';
 }
 
 function getSubjectAverage(workspace, subjectName) {
@@ -2780,43 +2843,81 @@ function openEventForm(eventId = null) {
         fields: [
             { name: 'title', label: 'Titulo del evento', value: event?.title || '', placeholder: 'Ej: Examen final' },
             { name: 'type', label: 'Tipo', type: 'select', options: eventTypeOptions, value: event?.type || 'recordatorio' },
+            { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: event?.subject || 'General' },
             { name: 'date', label: 'Fecha', type: 'date', value: normalizeDate(event?.date) },
             { name: 'time', label: 'Hora', type: 'time', value: event?.time || '08:00' },
+            { name: 'description', label: 'Descripcion', type: 'textarea', rows: 3, value: event?.description || '', required: false, placeholder: 'Detalle del evento' },
             { name: 'email', label: 'Correo del usuario', type: 'email', value: event?.email || currentUser?.email || '', placeholder: 'usuario@email.com' },
             { name: 'emailReminder', label: 'Recordatorio por correo', type: 'checkbox', checked: Boolean(event?.emailReminder), help: 'Activar recordatorio por correo' },
             { name: 'googleCalendar', label: 'Abrir tambien en Google Calendar', type: 'checkbox', checked: !eventId, help: 'Se abrira Google Calendar para guardar el evento y activar notificaciones reales.' }
         ],
-        onSubmit: values => {
+        onSubmit: async values => {
             const fresh = loadWorkspace();
+            const subject = findSubjectByName(fresh, values.subject);
             const payload = {
                 title: values.title.trim(),
                 type: values.type,
+                subject: values.subject,
+                subjectId: subject?.id || '',
                 date: values.date,
                 day: values.date,
                 time: values.time,
+                description: values.description?.trim() || '',
                 email: values.email.trim(),
                 emailReminder: values.emailReminder === 'yes',
                 googleCalendar: values.googleCalendar === 'yes'
             };
             let savedEventId = eventId;
 
-            if (eventId) {
-                const item = fresh.events.find(entry => entry.id === eventId);
-                if (item) Object.assign(item, payload);
-                addRecent(fresh, `Editaste el evento ${payload.title}.`);
-            } else {
-                savedEventId = createId();
-                fresh.events.push({ id: savedEventId, ...payload });
-                addXP(fresh, 20);
-                addRecent(fresh, `Agendaste ${payload.title}.`);
-            }
+            try {
+                const user = await getCurrentSupabaseUser();
+                const eventData = {
+                    user_id: user.id,
+                    subject_id: subject?.id || null,
+                    title: payload.title,
+                    type: payload.type,
+                    event_date: payload.date,
+                    event_time: payload.time || null,
+                    description: payload.description
+                };
+                console.log("[EVENTS] insertando evento", eventData);
 
-            fresh.events.sort((a, b) => `${a.date || ''} ${a.time || ''}`.localeCompare(`${b.date || ''} ${b.time || ''}`));
-            saveWorkspace(fresh);
-            refreshWorkspaceUI();
-            notify(payload.emailReminder ? getReminderMessage(payload) : 'Evento guardado correctamente.', 'success');
-            if (payload.googleCalendar) {
-                openGoogleCalendarEvent(savedEventId);
+                if (eventId) {
+                    const { error } = await getSupabaseClient()
+                        .from('events')
+                        .update(eventData)
+                        .eq('id', eventId)
+                        .eq('user_id', user.id);
+
+                    if (error) {
+                        logSupabaseError('events update', error);
+                        throw error;
+                    }
+                    pushRecentMessage(`Editaste el evento ${payload.title}.`);
+                } else {
+                    const { data, error } = await getSupabaseClient()
+                        .from('events')
+                        .insert(eventData)
+                        .select()
+                        .single();
+
+                    if (error) {
+                        logSupabaseError('events insert', error);
+                        throw error;
+                    }
+                    savedEventId = data?.id || savedEventId;
+                    await updateProfileProgress(20, { bumpStreak: true });
+                    pushRecentMessage(`Agendaste ${payload.title}.`);
+                }
+
+                await syncWorkspaceFromSupabase();
+                refreshWorkspaceUI();
+                notify(payload.emailReminder ? getReminderMessage(payload) : 'Evento guardado correctamente.', 'success');
+                if (payload.googleCalendar && savedEventId) {
+                    openGoogleCalendarEvent(savedEventId);
+                }
+            } catch (error) {
+                notify(error.message || 'No se pudo guardar el evento.', 'error');
             }
 
             // Futuro real: aqui se podria conectar EmailJS, un backend propio,
@@ -2825,14 +2926,29 @@ function openEventForm(eventId = null) {
     });
 }
 
-function deleteEvent(eventId) {
+async function deleteEvent(eventId) {
     const workspace = loadWorkspace();
     const event = workspace.events.find(item => item.id === eventId);
-    workspace.events = workspace.events.filter(item => item.id !== eventId);
-    if (event) addRecent(workspace, `Eliminaste el evento ${event.title}.`);
-    saveWorkspace(workspace);
-    refreshWorkspaceUI();
-    notify('Evento eliminado.', 'info');
+    try {
+        const user = await getCurrentSupabaseUser();
+        const { error } = await getSupabaseClient()
+            .from('events')
+            .delete()
+            .eq('id', eventId)
+            .eq('user_id', user.id);
+
+        if (error) {
+            logSupabaseError('events delete', error);
+            throw error;
+        }
+
+        if (event) pushRecentMessage(`Eliminaste el evento ${event.title}.`);
+        await syncWorkspaceFromSupabase();
+        refreshWorkspaceUI();
+        notify('Evento eliminado.', 'info');
+    } catch (error) {
+        notify(error.message || 'No se pudo eliminar el evento.', 'error');
+    }
 }
 
 function renderCalendarSection(workspace) {
@@ -3368,14 +3484,29 @@ function openResourceForm(resourceId = null) {
     });
 }
 
-function deleteResource(resourceId) {
+async function deleteResource(resourceId) {
     const workspace = loadWorkspace();
     const resource = workspace.resources.find(item => item.id === resourceId);
-    workspace.resources = workspace.resources.filter(item => item.id !== resourceId);
-    if (resource) addRecent(workspace, `Eliminaste el recurso ${resource.title}.`);
-    saveWorkspace(workspace);
-    refreshWorkspaceUI();
-    notify('Recurso eliminado.', 'info');
+    try {
+        const user = await getCurrentSupabaseUser();
+        const { error } = await getSupabaseClient()
+            .from('resources')
+            .delete()
+            .eq('id', resourceId)
+            .eq('user_id', user.id);
+
+        if (error) {
+            logSupabaseError('resources delete', error);
+            throw error;
+        }
+
+        if (resource) pushRecentMessage(`Eliminaste el recurso ${resource.title}.`);
+        await syncWorkspaceFromSupabase();
+        refreshWorkspaceUI();
+        notify('Recurso eliminado.', 'info');
+    } catch (error) {
+        notify(error.message || 'No se pudo eliminar el recurso.', 'error');
+    }
 }
 
 function renderBackpack(workspace) {
@@ -5362,6 +5493,7 @@ function openResourceForm(resourceId = null) {
         ],
         onSubmit: async values => {
             const fresh = loadWorkspace();
+            const subject = findSubjectByName(fresh, values.subject);
             const uploadedFile = values.file && values.file.name ? values.file : null;
             const fileName = uploadedFile?.name || resource?.fileName || `${values.title.trim()}.pdf`;
             let fileDataUrl = resource?.fileDataUrl || '';
@@ -5389,21 +5521,47 @@ function openResourceForm(resourceId = null) {
             };
 
             try {
+                const user = await getCurrentSupabaseUser();
+                const resourceData = {
+                    user_id: user.id,
+                    subject_id: subject?.id || null,
+                    title: payload.title,
+                    file_name: payload.fileName,
+                    file_url: payload.fileDataUrl || payload.fileUrl || null,
+                    description: payload.description
+                };
+                console.log("[RESOURCES] insertando recurso", resourceData);
+
                 if (resourceId) {
-                    const item = fresh.resources.find(entry => entry.id === resourceId);
-                    if (item) Object.assign(item, payload);
-                    addRecent(fresh, `Editaste el recurso ${payload.title}.`);
+                    const { error } = await getSupabaseClient()
+                        .from('resources')
+                        .update(resourceData)
+                        .eq('id', resourceId)
+                        .eq('user_id', user.id);
+
+                    if (error) {
+                        logSupabaseError('resources update', error);
+                        throw error;
+                    }
+                    pushRecentMessage(`Editaste el recurso ${payload.title}.`);
                 } else {
-                    fresh.resources.push({ id: createId(), usedAI: false, ...payload });
-                    addXP(fresh, 20);
-                    addRecent(fresh, `Subiste el PDF ${payload.title}.`);
+                    const { error } = await getSupabaseClient()
+                        .from('resources')
+                        .insert(resourceData);
+
+                    if (error) {
+                        logSupabaseError('resources insert', error);
+                        throw error;
+                    }
+                    await updateProfileProgress(20, { bumpStreak: true });
+                    pushRecentMessage(`Subiste el PDF ${payload.title}.`);
                 }
-                saveWorkspace(fresh);
             } catch (error) {
-                notify('El PDF es muy pesado para guardarlo en este prototipo. Prueba con un archivo mas pequeno.', 'error');
+                notify(error.message || 'No se pudo guardar el recurso en Supabase.', 'error');
                 return;
             }
 
+            await syncWorkspaceFromSupabase();
             refreshWorkspaceUI();
             notify(resourceId ? 'Recurso actualizado.' : 'PDF guardado correctamente.', 'success');
         }
@@ -6106,6 +6264,7 @@ function canRestoreDashboardOnReload() {
 
 function logSupabaseError(context, error) {
     if (!error) return;
+    console.error("[SUPABASE ERROR]", error);
     console.error("ERROR SUPABASE:", error);
     console.error("Error exacto:", error);
     console.error(`[Supabase][${context}]`, {
@@ -6405,10 +6564,13 @@ async function syncWorkspaceFromSupabase() {
     }
 
     const sb = getSupabaseClient();
-    const [profileRes, subjectsRes, tasksRes] = await Promise.all([
+    const [profileRes, subjectsRes, tasksRes, eventsRes, attendanceRes, resourcesRes] = await Promise.all([
         sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle(),
         sb.from('subjects').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: true }),
-        sb.from('tasks').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false })
+        sb.from('tasks').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
+        sb.from('events').select('*').eq('user_id', currentUser.id).order('event_date', { ascending: true }),
+        sb.from('attendance').select('*').eq('user_id', currentUser.id).order('date', { ascending: false }),
+        sb.from('resources').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false })
     ]);
 
     if (profileRes.error) {
@@ -6422,6 +6584,18 @@ async function syncWorkspaceFromSupabase() {
     if (tasksRes.error) {
         logSupabaseError('tasks sync select', tasksRes.error);
         throw tasksRes.error;
+    }
+    if (eventsRes.error) {
+        logSupabaseError('events sync select', eventsRes.error);
+        throw eventsRes.error;
+    }
+    if (attendanceRes.error) {
+        logSupabaseError('attendance sync select', attendanceRes.error);
+        throw attendanceRes.error;
+    }
+    if (resourcesRes.error) {
+        logSupabaseError('resources sync select', resourcesRes.error);
+        throw resourcesRes.error;
     }
 
     profileState = profileRes.data || {
@@ -6463,9 +6637,51 @@ async function syncWorkspaceFromSupabase() {
         createdAt: task.created_at || ''
     }));
 
+    const events = (eventsRes.data || []).map(event => ({
+        id: event.id,
+        subjectId: event.subject_id || '',
+        subject: subjectMap.get(event.subject_id) || '',
+        title: event.title || '',
+        type: event.type || 'evento',
+        date: event.event_date || '',
+        day: event.event_date || '',
+        time: String(event.event_time || '').slice(0, 5),
+        description: event.description || '',
+        createdAt: event.created_at || ''
+    }));
+
+    const attendance = (attendanceRes.data || []).map(record => ({
+        id: record.id,
+        subjectId: record.subject_id || '',
+        subject: subjectMap.get(record.subject_id) || 'General',
+        date: record.date || '',
+        status: record.status || 'Asisti',
+        createdAt: record.created_at || ''
+    }));
+
+    const resources = (resourcesRes.data || []).map(resource => ({
+        id: resource.id,
+        subjectId: resource.subject_id || '',
+        subject: subjectMap.get(resource.subject_id) || 'General',
+        title: resource.title || '',
+        fileName: resource.file_name || 'PDF',
+        fileDataUrl: resource.file_url || '',
+        fileUrl: resource.file_url || '',
+        fileMime: 'application/pdf',
+        description: resource.description || '',
+        content: resource.description || '',
+        type: 'PDF',
+        tag: resource.tag || 'Apunte',
+        uploadedAt: resource.created_at || new Date().toISOString(),
+        usedAI: Boolean(resource.used_ai || resource.usedAI)
+    }));
+
     return mergeWorkspaceState({
         subjects,
         tasks,
+        events,
+        attendance,
+        resources,
         xp: Number(profileState.xp || 0),
         streak: Number(profileState.streak || 0)
     });
