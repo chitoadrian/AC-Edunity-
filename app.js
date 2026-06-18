@@ -6092,6 +6092,17 @@ let workspaceState = null;
 let profileState = null;
 let authListenerReady = false;
 let loginInProgress = false;
+const DASHBOARD_SESSION_KEY = 'acEdunityDashboardActive';
+
+function wasPageReloaded() {
+    const navigationEntry = performance.getEntriesByType?.('navigation')?.[0];
+    if (navigationEntry) return navigationEntry.type === 'reload';
+    return performance.navigation?.type === 1;
+}
+
+function canRestoreDashboardOnReload() {
+    return wasPageReloaded() && sessionStorage.getItem(DASHBOARD_SESSION_KEY) === 'true';
+}
 
 function logSupabaseError(context, error) {
     if (!error) return;
@@ -6565,6 +6576,7 @@ function saveCurrentUserProfile(profileUpdates) {
 }
 
 function showLanding() {
+    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
     clearAuthMessages();
     showPage('landing-page');
     resetLandingReveal();
@@ -6586,6 +6598,7 @@ function showDashboard() {
     document.documentElement.classList.add('is-dashboard');
     document.body.classList.remove('landing-mode', 'is-landing');
     document.body.classList.add('is-dashboard');
+    sessionStorage.setItem(DASHBOARD_SESSION_KEY, 'true');
     currentSection = 'dashboard';
 
     applySidebarCollapsedState();
@@ -6747,6 +6760,7 @@ async function handleLogin(event) {
         currentUser = getPublicUserFromAuth(authUser);
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         console.log("[LOGIN] currentUser:", currentUser);
+        console.log("[LOGIN] Login correcto, entrando al dashboard");
         console.log("[LOGIN] Mostrando dashboard");
         showDashboard();
 
@@ -7220,6 +7234,16 @@ async function initializeApp() {
     initLandingReveal();
     initLandingWheelControl();
 
+    const restoreDashboardAfterReload = canRestoreDashboardOnReload();
+    console.log("[APP] Mostrando landing al iniciar");
+    if (!restoreDashboardAfterReload) {
+        currentUser = null;
+        profileState = null;
+        workspaceState = mergeWorkspaceState();
+        localStorage.removeItem('currentUser');
+        showLanding();
+    }
+
     try {
         const sb = getSupabaseClient();
         console.log('[Supabase] initializeApp usando cliente real');
@@ -7235,7 +7259,8 @@ async function initializeApp() {
                     return;
                 }
 
-                if (session?.user && (!currentUser || currentUser.id !== session.user.id)) {
+                const shouldOpenDashboard = loginInProgress || restoreDashboardAfterReload || document.body.classList.contains('is-dashboard');
+                if (session?.user && shouldOpenDashboard && (!currentUser || currentUser.id !== session.user.id)) {
                     try {
                         currentUser = getPublicUserFromAuth(session.user);
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -7253,7 +7278,7 @@ async function initializeApp() {
         const { data, error } = await sb.auth.getSession();
         if (error) throw error;
 
-        if (data.session?.user) {
+        if (data.session?.user && restoreDashboardAfterReload) {
             currentUser = getPublicUserFromAuth(data.session.user);
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             showDashboard();
@@ -7269,6 +7294,7 @@ async function initializeApp() {
             currentUser = null;
             profileState = null;
             workspaceState = mergeWorkspaceState();
+            localStorage.removeItem('currentUser');
             showLanding();
         }
     } catch (error) {
