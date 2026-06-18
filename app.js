@@ -6668,6 +6668,7 @@ async function handleRegister(event) {
 async function handleLogin(event) {
     event.preventDefault();
     clearAuthMessages();
+    console.log("[LOGIN] Botón presionado");
 
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value.trim();
@@ -6679,9 +6680,12 @@ async function handleLogin(event) {
 
     try {
         const sb = getSupabaseClient();
+        console.log("[LOGIN] Intentando entrar con:", email);
         console.log("[Supabase] Intentando login", email);
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        console.log("[LOGIN] Resultado Supabase:", data);
         if (error) {
+            console.error("[LOGIN] Error Supabase:", error);
             console.error("[Supabase] Error login", error);
             logSupabaseError('auth signInWithPassword', error);
             throw error;
@@ -6691,14 +6695,38 @@ async function handleLogin(event) {
 
         currentUser = getPublicUserFromAuth(data.user);
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        await bootstrapAuthenticatedApp(data.user);
+
+        try {
+            await bootstrapAuthenticatedApp(data.user);
+        } catch (bootstrapError) {
+            console.error("[LOGIN] Error cargando perfil o datos:", bootstrapError);
+            logSupabaseError('login bootstrap data', bootstrapError);
+            profileState = {
+                id: data.user.id,
+                full_name: currentUser.name,
+                role: 'Estudiante',
+                xp: 0,
+                streak: 0,
+                level: 1,
+                created_at: data.user.created_at || ''
+            };
+            workspaceState = mergeWorkspaceState({
+                subjects: [],
+                tasks: [],
+                xp: 0,
+                streak: 0
+            });
+            notify('Sesion iniciada. No se pudieron cargar algunos datos de Supabase.', 'info');
+        }
 
         document.getElementById('login-email').value = '';
         document.getElementById('login-password').value = '';
 
+        console.log("[LOGIN] Entrando al dashboard");
         notify('Sesion iniciada correctamente.', 'success');
         showApp();
     } catch (error) {
+        console.error("[LOGIN] Error Supabase:", error);
         console.error("[Supabase] Error login", error);
         logSupabaseError('login flow', error);
         setAuthMessage('login', translateSupabaseError(error.message), 'error');
