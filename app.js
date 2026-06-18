@@ -6091,6 +6091,7 @@ let supabaseClient = null;
 let workspaceState = null;
 let profileState = null;
 let authListenerReady = false;
+let loginInProgress = false;
 
 function logSupabaseError(context, error) {
     if (!error) return;
@@ -6569,11 +6570,44 @@ function showLanding() {
     resetLandingReveal();
 }
 
+function showDashboard() {
+    const appPage = document.getElementById('app-page');
+    if (!appPage) {
+        console.error('[LOGIN] No se encontro #app-page para mostrar el dashboard');
+        return;
+    }
+
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+
+    appPage.classList.add('active');
+    document.documentElement.classList.remove('landing-mode', 'is-landing');
+    document.documentElement.classList.add('is-dashboard');
+    document.body.classList.remove('landing-mode', 'is-landing');
+    document.body.classList.add('is-dashboard');
+    currentSection = 'dashboard';
+
+    applySidebarCollapsedState();
+
+    try {
+        updateDashboardGreeting();
+        refreshWorkspaceUI();
+        navigateTo('dashboard');
+    } catch (error) {
+        console.error('[LOGIN] Error renderizando dashboard:', error);
+        const dashboardSection = document.getElementById('dashboard');
+        if (dashboardSection) {
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            dashboardSection.classList.add('active');
+        }
+    }
+
+    window.scrollTo(0, 0);
+}
+
 function showApp() {
-    showPage('app-page');
-    updateDashboardGreeting();
-    refreshWorkspaceUI();
-    navigateTo(currentSection || 'dashboard');
+    showDashboard();
 }
 
 async function handleRegister(event) {
@@ -6666,7 +6700,17 @@ async function handleRegister(event) {
 }
 
 async function handleLogin(event) {
-    event.preventDefault();
+    if (event?.preventDefault) event.preventDefault();
+    if (loginInProgress) return;
+
+    loginInProgress = true;
+    const loginForm = document.getElementById('login-form');
+    const loginButton = loginForm ? loginForm.querySelector('button[type="submit"]') : null;
+    const originalButtonText = loginButton ? loginButton.textContent : '';
+    if (loginButton) {
+        loginButton.disabled = true;
+        loginButton.textContent = 'Entrando...';
+    }
     clearAuthMessages();
     console.log("[LOGIN] Botón presionado");
 
@@ -6675,6 +6719,11 @@ async function handleLogin(event) {
 
     if (!email || !password) {
         setAuthMessage('login', 'Escribe tu correo y contrasena para iniciar sesion.', 'error');
+        loginInProgress = false;
+        if (loginButton) {
+            loginButton.disabled = false;
+            loginButton.textContent = originalButtonText;
+        }
         return;
     }
 
@@ -6690,25 +6739,31 @@ async function handleLogin(event) {
             logSupabaseError('auth signInWithPassword', error);
             throw error;
         }
-        if (!data.user) throw new Error('No se encontro la cuenta.');
+        const authUser = data.user || data.session?.user;
+        if (!data.session && !authUser) throw new Error('No se encontro la cuenta.');
+        console.log("[LOGIN] Supabase OK");
         console.log("[Supabase] Login correcto", data);
 
-        currentUser = getPublicUserFromAuth(data.user);
+        currentUser = getPublicUserFromAuth(authUser);
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        console.log("[LOGIN] currentUser:", currentUser);
+        console.log("[LOGIN] Mostrando dashboard");
+        showDashboard();
 
         try {
-            await bootstrapAuthenticatedApp(data.user);
+            await bootstrapAuthenticatedApp(authUser);
+            showDashboard();
         } catch (bootstrapError) {
             console.error("[LOGIN] Error cargando perfil o datos:", bootstrapError);
             logSupabaseError('login bootstrap data', bootstrapError);
             profileState = {
-                id: data.user.id,
+                id: authUser.id,
                 full_name: currentUser.name,
                 role: 'Estudiante',
                 xp: 0,
                 streak: 0,
                 level: 1,
-                created_at: data.user.created_at || ''
+                created_at: authUser.created_at || ''
             };
             workspaceState = mergeWorkspaceState({
                 subjects: [],
@@ -6717,6 +6772,7 @@ async function handleLogin(event) {
                 streak: 0
             });
             notify('Sesion iniciada. No se pudieron cargar algunos datos de Supabase.', 'info');
+            showDashboard();
         }
 
         document.getElementById('login-email').value = '';
@@ -6730,6 +6786,12 @@ async function handleLogin(event) {
         console.error("[Supabase] Error login", error);
         logSupabaseError('login flow', error);
         setAuthMessage('login', translateSupabaseError(error.message), 'error');
+    } finally {
+        loginInProgress = false;
+        if (loginButton) {
+            loginButton.disabled = false;
+            loginButton.textContent = originalButtonText;
+        }
     }
 }
 
@@ -7175,8 +7237,11 @@ async function initializeApp() {
 
                 if (session?.user && (!currentUser || currentUser.id !== session.user.id)) {
                     try {
+                        currentUser = getPublicUserFromAuth(session.user);
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        showDashboard();
                         await bootstrapAuthenticatedApp(session.user);
-                        showApp();
+                        showDashboard();
                     } catch (error) {
                         notify('No se pudo restaurar la sesion.', 'error');
                     }
@@ -7189,8 +7254,17 @@ async function initializeApp() {
         if (error) throw error;
 
         if (data.session?.user) {
-            await bootstrapAuthenticatedApp(data.session.user);
-            showApp();
+            currentUser = getPublicUserFromAuth(data.session.user);
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            showDashboard();
+            try {
+                await bootstrapAuthenticatedApp(data.session.user);
+                showDashboard();
+            } catch (bootstrapError) {
+                console.error('[LOGIN] Error restaurando datos de sesion:', bootstrapError);
+                notify('Sesion activa. No se pudieron cargar algunos datos de Supabase.', 'info');
+                showDashboard();
+            }
         } else {
             currentUser = null;
             profileState = null;
@@ -7213,6 +7287,7 @@ window.handleLogout = handleLogout;
 window.openSubjectForm = openSubjectForm;
 window.openTaskForm = openTaskForm;
 window.toggleTask = toggleTask;
+window.showDashboard = showDashboard;
 window.showApp = showApp;
 window.showLanding = showLanding;
 
