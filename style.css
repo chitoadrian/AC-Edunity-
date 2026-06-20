@@ -13959,3 +13959,412 @@ body.is-dashboard #app-page.page.active {
         transform-origin: right bottom;
     }
 }
+
+/* Card polish: Materias, Tareas y Mochila Digital */
+:root {
+    --ac-card-surface: rgba(35, 40, 56, 0.72);
+    --ac-card-line: rgba(255, 255, 255, 0.11);
+    --ac-card-muted: rgba(226, 232, 240, 0.72);
+    --ac-card-shadow: 0 18px 46px rgba(3, 7, 18, 0.24);
+    --ac-card-shadow-hover: 0 24px 64px rgba(3, 7, 18, 0.30);
+}
+
+@keyframes acCardBorderSpin {
+    to { transform: rotate(360deg); }
+}
+
+#subjects .subjects-grid,
+#tasks .task-list-modern,
+#backpack .backpack-container {
+    width: min(100%, 1120px) !important;
+    margin-inline: auto !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+    align-items: stretch !important;
+}
+
+#subjects .subject-space-card,
+#tasks .task-card-modern,
+#backpack .library-resource-card,
+.subject-card,
+.task-card,
+.resource-card {
+    position: relative !important;
+    isolation: isolate !important;
+    overflow: hidden !important;
+    border: 1px solid var(--ac-card-line) !important;
+    border-radius: 24px !important;
+    background:
+        radial-gradient(circle at 14% 10%, color-mix(in srgb, var(--subject-color, var(--resource-color, var(--task-color, #49ccf9))) 18%, transparent), transparent 34%),
+        radial-gradient(circle at 96% 6%, rgba(253, 113, 175, 0.10), transparent 30%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.035)),
+        var(--ac-card-surface) !important;
+    box-shadow: var(--ac-card-shadow) !important;
+    backdrop-filter: blur(18px) !important;
+    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background 220ms ease !important;
+}
+
+#subjects .subject-space-card::before,
+#tasks .task-card-modern::before,
+#backpack .library-resource-card::before,
+.subject-card::before,
+.task-card::before,
+.resource-card::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 2 !important;
+    padding: 1.5px !important;
+    border-radius: inherit !important;
+    background: conic-gradient(from 0deg, #49ccf9, #7b68ee, #fd71af, #49ccf9, #00c875, #49ccf9) !important;
+    opacity: 0.58 !important;
+    animation: acCardBorderSpin 10s linear infinite !important;
+    pointer-events: none !important;
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0) !important;
+    -webkit-mask-composite: xor !important;
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0) !important;
+    mask-composite: exclude !important;
+}
+
+#subjects .subject-space-card::after,
+#tasks .task-card-modern::after,
+#backpack .library-resource-card::after,
+.subject-card::after,
+.task-card::after,
+.resource-card::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 1px !important;
+    z-index: -1 !important;
+    border-radius: 23px !important;
+    background:
+        radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--subject-color, var(--resource-color, var(--task-color, #49ccf9))) 16%, transparent), transparent 38%),
+        linear-gradient(145deg, rgba(40, 45, 62, 0.96), rgba(25, 29, 42, 0.96)) !important;
+}
+
+#subjects .subject-space-card:hover,
+#tasks .task-card-modern:hover,
+#backpack .library-resource-card:hover,
+.subject-card:hover,
+.task-card:hover,
+.resource-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: var(--ac-card-shadow-hover) !important;
+    border-color: rgba(73, 204, 249, 0.28) !important;
+}
+
+#subjects .subject-space-card {
+    min-height: 0 !important;
+    padding: 20px !important;
+}
+
+#subjects .subject-header {
+    align-items: flex-start !important;
+    gap: 14px !important;
+    margin-bottom: 16px !important;
+}
+
+#subjects .subject-title {
+    gap: 12px !important;
+}
+
+#subjects .subject-title h3,
+#tasks .task-title-row h4,
+#backpack .library-resource-card h4 {
+    color: #ffffff !important;
+    letter-spacing: 0 !important;
+}
+
+#subjects .subject-title h3 {
+    font-size: 20px !important;
+}
+
+#subjects .subject-title p,
+#subjects .subject-card-footer p,
+#tasks .task-description,
+#backpack .resource-description,
+#backpack .resource-type {
+    color: var(--ac-card-muted) !important;
+}
+
+#subjects .subject-icon,
+#subjects .subject-symbol,
+#subjects .subject-custom-label,
+#backpack .library-resource-card .resource-icon.resource-pdf-icon {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    border-radius: 17px !important;
+    box-shadow: 0 14px 28px color-mix(in srgb, var(--subject-color, var(--resource-color, #49ccf9)) 24%, transparent) !important;
+}
+
+#subjects .subject-chip,
+#backpack .resource-subject-chip {
+    border: 1px solid color-mix(in srgb, var(--subject-color, var(--resource-color, #49ccf9)) 42%, rgba(255, 255, 255, 0.16)) !important;
+    background: color-mix(in srgb, var(--subject-color, var(--resource-color, #49ccf9)) 22%, rgba(255, 255, 255, 0.08)) !important;
+    color: #f8fbff !important;
+    box-shadow: none !important;
+}
+
+#subjects .subject-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+}
+
+#subjects .subject-metric-grid div,
+#tasks .task-meta-grid span,
+#tasks .task-summary-strip div,
+#backpack .resource-data span,
+#backpack .resource-status {
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+#subjects .subject-metric-grid div {
+    min-height: 68px !important;
+    padding: 11px !important;
+    border-radius: 16px !important;
+}
+
+#subjects .subject-card-footer {
+    min-height: 0 !important;
+    padding: 12px !important;
+    margin: 14px 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.075) !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+#tasks .task-card-modern {
+    padding: 18px !important;
+    gap: 14px !important;
+}
+
+#tasks .task-card-main {
+    grid-template-columns: 40px minmax(0, 1fr) !important;
+    gap: 13px !important;
+}
+
+#tasks .task-title-row {
+    align-items: center !important;
+}
+
+#tasks .task-title-row h4 {
+    font-size: 18px !important;
+}
+
+#tasks .task-subject {
+    width: fit-content !important;
+    margin-top: 8px !important;
+    padding: 5px 10px !important;
+    border-radius: 999px !important;
+    background: color-mix(in srgb, var(--subject-color, #49ccf9) 18%, transparent) !important;
+    font-size: 12px !important;
+}
+
+#tasks .task-meta-grid {
+    gap: 8px !important;
+}
+
+#tasks .task-meta-grid span {
+    min-height: 34px !important;
+    padding: 8px 10px !important;
+    border-radius: 12px !important;
+}
+
+#tasks .task-priority,
+#tasks .task-status {
+    min-height: 25px !important;
+    padding: 5px 9px !important;
+    font-size: 10.5px !important;
+    letter-spacing: 0.02em !important;
+}
+
+#backpack .library-resource-card {
+    min-height: 0 !important;
+    padding: 20px !important;
+    gap: 13px !important;
+}
+
+#backpack .library-resource-card .resource-top {
+    grid-template-columns: 54px minmax(0, 1fr) !important;
+    gap: 13px !important;
+    align-items: center !important;
+}
+
+#backpack .library-resource-card .resource-icon.resource-pdf-icon::before {
+    left: 13px !important;
+    top: 9px !important;
+    width: 28px !important;
+    height: 34px !important;
+    border-radius: 7px !important;
+}
+
+#backpack .library-resource-card .resource-icon.resource-pdf-icon::after {
+    left: 16px !important;
+    bottom: 13px !important;
+    font-size: 8px !important;
+}
+
+#backpack .resource-description {
+    min-height: 0 !important;
+    margin: 2px 0 !important;
+}
+
+#backpack .library-resource-card .resource-actions,
+.resource-actions,
+.task-actions,
+.subject-actions,
+#subjects .card-actions,
+#tasks .task-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    align-items: center !important;
+}
+
+#backpack .library-resource-card .resource-actions {
+    margin-top: 4px !important;
+}
+
+.resource-actions button,
+.task-actions button,
+.subject-actions button,
+#subjects .card-actions button,
+#tasks .task-actions button,
+#backpack .resource-actions button {
+    flex: 1 1 128px !important;
+    min-height: 38px !important;
+    padding: 9px 13px !important;
+    border-radius: 14px !important;
+    font-size: 13px !important;
+    font-weight: 850 !important;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease !important;
+}
+
+#subjects .card-actions .btn-primary,
+#tasks .task-actions .btn-primary,
+#backpack .resource-actions .btn-primary {
+    border-color: rgba(73, 204, 249, 0.48) !important;
+    background: linear-gradient(135deg, rgba(123, 104, 238, 0.86), rgba(73, 204, 249, 0.82)) !important;
+    box-shadow: 0 12px 28px rgba(73, 204, 249, 0.14) !important;
+}
+
+#subjects .card-actions .btn-secondary,
+#tasks .task-actions .btn-secondary,
+#backpack .resource-actions .btn-secondary {
+    color: #dbe7f8 !important;
+    border-color: rgba(148, 163, 184, 0.20) !important;
+    background: rgba(255, 255, 255, 0.055) !important;
+}
+
+#subjects .card-actions .btn-danger,
+#tasks .task-actions .btn-danger,
+#backpack .resource-actions .btn-danger {
+    color: #ff9ec9 !important;
+    border-color: rgba(253, 113, 175, 0.34) !important;
+    background: rgba(253, 113, 175, 0.12) !important;
+}
+
+.resource-actions button:hover,
+.task-actions button:hover,
+.subject-actions button:hover,
+#subjects .card-actions button:hover,
+#tasks .task-actions button:hover,
+#backpack .resource-actions button:hover {
+    transform: translateY(-2px) !important;
+}
+
+body.light-theme {
+    --ac-card-surface: rgba(255, 255, 255, 0.84);
+    --ac-card-line: rgba(30, 41, 59, 0.10);
+    --ac-card-muted: #64748b;
+    --ac-card-shadow: 0 18px 42px rgba(15, 23, 42, 0.10);
+    --ac-card-shadow-hover: 0 22px 54px rgba(15, 23, 42, 0.16);
+}
+
+body.light-theme #subjects .subject-space-card::after,
+body.light-theme #tasks .task-card-modern::after,
+body.light-theme #backpack .library-resource-card::after,
+body.light-theme .subject-card::after,
+body.light-theme .task-card::after,
+body.light-theme .resource-card::after {
+    background:
+        radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--subject-color, var(--resource-color, var(--task-color, #49ccf9))) 14%, transparent), transparent 38%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.96)) !important;
+}
+
+body.light-theme #subjects .subject-title h3,
+body.light-theme #tasks .task-title-row h4,
+body.light-theme #backpack .library-resource-card h4 {
+    color: #172033 !important;
+}
+
+body.light-theme #subjects .subject-title p,
+body.light-theme #subjects .subject-card-footer p,
+body.light-theme #tasks .task-description,
+body.light-theme #backpack .resource-description,
+body.light-theme #backpack .resource-type {
+    color: #64748b !important;
+}
+
+body.light-theme #subjects .subject-card-footer,
+body.light-theme #subjects .subject-metric-grid div,
+body.light-theme #tasks .task-meta-grid span,
+body.light-theme #tasks .task-summary-strip div,
+body.light-theme #backpack .resource-data span,
+body.light-theme #backpack .resource-status {
+    background: rgba(248, 250, 252, 0.84) !important;
+    border-color: rgba(30, 41, 59, 0.08) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #subjects .subject-space-card::before,
+    #tasks .task-card-modern::before,
+    #backpack .library-resource-card::before,
+    .subject-card::before,
+    .task-card::before,
+    .resource-card::before {
+        animation: none !important;
+    }
+}
+
+@media (max-width: 980px) {
+    #subjects .subjects-grid,
+    #tasks .task-list-modern,
+    #backpack .backpack-container {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 640px) {
+    #subjects .subject-space-card,
+    #tasks .task-card-modern,
+    #backpack .library-resource-card {
+        padding: 16px !important;
+        border-radius: 20px !important;
+    }
+
+    #tasks .task-card-main {
+        grid-template-columns: 1fr !important;
+    }
+
+    #subjects .subject-metric-grid,
+    #tasks .task-meta-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .resource-actions button,
+    .task-actions button,
+    .subject-actions button,
+    #subjects .card-actions button,
+    #tasks .task-actions button,
+    #backpack .resource-actions button {
+        flex-basis: 100% !important;
+    }
+}
