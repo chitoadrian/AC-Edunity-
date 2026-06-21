@@ -14865,3 +14865,410 @@ body.light-theme #backpack .library-resource-card::after {
         padding-left: 0 !important;
     }
 }
+
+/* Final neon pass: compact cards + subject modal */
+@keyframes neonBorderSlide {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 400% 50%; }
+}
+
+#subjects .subjects-grid,
+#tasks .task-list-modern,
+#backpack .backpack-container {
+    width: min(100%, 1120px) !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 540px)) !important;
+    justify-content: center !important;
+    gap: 18px !important;
+}
+
+#subjects .subject-space-card,
+#tasks .task-card-modern,
+#backpack .library-resource-card,
+.subject-detail-card {
+    position: relative !important;
+    isolation: isolate !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(0, 212, 255, 0.20) !important;
+    border-radius: 24px !important;
+    background:
+        radial-gradient(circle at 85% 10%, rgba(0, 212, 255, 0.16), transparent 28%),
+        radial-gradient(circle at 15% 90%, rgba(180, 70, 255, 0.14), transparent 32%),
+        linear-gradient(145deg, rgba(8, 14, 35, 0.98), rgba(25, 28, 55, 0.95)) !important;
+    box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.35),
+        0 0 24px rgba(0, 170, 255, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+
+#subjects .subject-space-card,
+#tasks .task-card-modern,
+#backpack .library-resource-card {
+    max-width: 540px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 20px !important;
+}
+
+#subjects .subject-space-card::before,
+#tasks .task-card-modern::before,
+#backpack .library-resource-card::before,
+.subject-detail-card::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    padding: 2px !important;
+    border-radius: inherit !important;
+    background: linear-gradient(90deg, #8b5cf6, #00d4ff, #38bdf8, #ec4899, #8b5cf6) !important;
+    background-size: 400% 400% !important;
+    animation: neonBorderSlide 4s linear infinite !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+    opacity: 1 !important;
+    transform: none !important;
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0) !important;
+    -webkit-mask-composite: xor !important;
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0) !important;
+    mask-composite: exclude !important;
+}
+
+#subjects .subject-space-card::after,
+#tasks .task-card-modern::after,
+#backpack .library-resource-card::after,
+.subject-detail-card::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 2px !important;
+    border-radius: 22px !important;
+    background:
+        radial-gradient(circle at top right, rgba(0, 170, 255, 0.10), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.08), transparent 35%) !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+#subjects .subject-space-card > *,
+#tasks .task-card-modern > *,
+#backpack .library-resource-card > *,
+.subject-detail-card > * {
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+#subjects .subject-space-card:hover,
+#tasks .task-card-modern:hover,
+#backpack .library-resource-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow:
+        0 24px 54px rgba(0, 0, 0, 0.40),
+        0 0 34px rgba(0, 212, 255, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+#subjects .subject-header {
+    min-height: 0 !important;
+    margin: 0 0 10px !important;
+    padding: 0 0 10px !important;
+    align-items: flex-start !important;
+}
+
+#subjects .subject-title {
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+#subjects .subject-title h3 {
+    margin: 0 !important;
+    font-size: 19px !important;
+    line-height: 1.12 !important;
+}
+
+#subjects .subject-title p {
+    margin-top: 3px !important;
+    font-size: 12px !important;
+    line-height: 1.32 !important;
+}
+
+#subjects .subject-chip {
+    min-height: 28px !important;
+    padding: 5px 9px !important;
+    font-size: 11px !important;
+}
+
+#subjects .subject-icon,
+#subjects .subject-symbol,
+#subjects .subject-custom-label {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+}
+
+#subjects .subject-orbit {
+    display: none !important;
+}
+
+#subjects .subject-progress-block {
+    margin: 10px 0 !important;
+}
+
+#subjects .subject-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+#subjects .subject-metric-grid div {
+    min-height: 54px !important;
+    padding: 9px 10px !important;
+}
+
+#subjects .subject-metric-grid span {
+    font-size: 9.5px !important;
+}
+
+#subjects .subject-metric-grid strong {
+    font-size: 19px !important;
+}
+
+#subjects .subject-card-footer {
+    min-height: 0 !important;
+    margin: 8px 0 10px !important;
+    padding: 9px 10px !important;
+}
+
+#subjects .subject-card-footer p {
+    font-size: 11.5px !important;
+}
+
+#tasks .task-card-modern {
+    padding: 20px !important;
+    gap: 10px !important;
+}
+
+#tasks .task-card-main {
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+}
+
+#tasks .task-check-modern,
+#tasks .task-check-modern span {
+    width: 38px !important;
+    height: 38px !important;
+}
+
+#tasks .task-title-row h4 {
+    font-size: 17px !important;
+}
+
+#tasks .task-description,
+#backpack .resource-description {
+    font-size: 12px !important;
+}
+
+#tasks .task-meta-grid span {
+    min-height: 30px !important;
+    padding: 7px 8px !important;
+}
+
+#backpack .library-resource-card {
+    padding: 20px !important;
+    gap: 9px !important;
+}
+
+#backpack .library-resource-card .resource-top {
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 10px !important;
+}
+
+#backpack .library-resource-card .resource-icon.resource-pdf-icon {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+}
+
+#backpack .library-resource-card h4 {
+    font-size: 18px !important;
+}
+
+#backpack .resource-meta-row,
+#backpack .resource-data {
+    gap: 6px !important;
+}
+
+#backpack .resource-description {
+    margin: 0 !important;
+    padding: 9px 10px !important;
+}
+
+#subjects .card-actions,
+#tasks .task-actions,
+#backpack .resource-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 7px !important;
+}
+
+#tasks .task-actions {
+    padding-left: 50px !important;
+}
+
+#subjects .card-actions button,
+#tasks .task-actions button,
+#backpack .resource-actions button {
+    flex: 1 1 118px !important;
+    min-height: 42px !important;
+    height: 42px !important;
+    padding: 8px 11px !important;
+    border-radius: 14px !important;
+    font-size: 12px !important;
+}
+
+.subject-detail-modal {
+    padding: 18px !important;
+}
+
+.subject-detail-card {
+    width: min(92vw, 1100px) !important;
+    max-width: 1100px !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+    padding: 26px !important;
+    border-radius: 28px !important;
+}
+
+.subject-detail-card .quick-modal-close {
+    top: 18px !important;
+    right: 18px !important;
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(73, 204, 249, 0.22) !important;
+    background: rgba(8, 14, 35, 0.72) !important;
+    color: #ffffff !important;
+}
+
+.subject-detail-hero {
+    display: grid !important;
+    grid-template-columns: 58px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+    margin: 0 54px 16px 0 !important;
+    padding-bottom: 16px !important;
+    border-bottom: 1px solid rgba(73, 204, 249, 0.12) !important;
+}
+
+.subject-detail-hero h3 {
+    margin: 6px 0 4px !important;
+    font-size: clamp(1.8rem, 4vw, 2.6rem) !important;
+}
+
+.subject-detail-hero p {
+    max-width: 760px !important;
+    font-size: 14px !important;
+    line-height: 1.45 !important;
+}
+
+.subject-detail-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+}
+
+.subject-detail-stats div,
+.subject-detail-columns section {
+    border: 1px solid rgba(73, 204, 249, 0.12) !important;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(73, 204, 249, 0.08), transparent 36%),
+        rgba(255, 255, 255, 0.055) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.subject-detail-stats div {
+    min-height: 82px !important;
+    padding: 13px !important;
+}
+
+.subject-detail-stats strong {
+    font-size: 24px !important;
+}
+
+.subject-detail-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+}
+
+.subject-detail-columns section {
+    padding: 14px !important;
+    border-radius: 18px !important;
+}
+
+.subject-detail-columns h4 {
+    margin-bottom: 10px !important;
+    font-size: 17px !important;
+}
+
+.subject-detail-columns p {
+    padding: 8px 0 !important;
+    font-size: 12.5px !important;
+}
+
+body.light-theme #subjects .subject-space-card,
+body.light-theme #tasks .task-card-modern,
+body.light-theme #backpack .library-resource-card,
+body.light-theme .subject-detail-card {
+    background:
+        radial-gradient(circle at 85% 10%, rgba(0, 180, 255, 0.13), transparent 28%),
+        radial-gradient(circle at 15% 90%, rgba(180, 70, 255, 0.10), transparent 32%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(242, 247, 255, 0.95)) !important;
+}
+
+body.light-theme #subjects .subject-space-card::after,
+body.light-theme #tasks .task-card-modern::after,
+body.light-theme #backpack .library-resource-card::after,
+body.light-theme .subject-detail-card::after {
+    background:
+        radial-gradient(circle at top right, rgba(0, 170, 255, 0.07), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.05), transparent 35%) !important;
+}
+
+@media (max-width: 760px) {
+    .subject-detail-stats,
+    .subject-detail-columns {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+@media (max-width: 640px) {
+    #subjects .subjects-grid,
+    #tasks .task-list-modern,
+    #backpack .backpack-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    #subjects .subject-space-card,
+    #tasks .task-card-modern,
+    #backpack .library-resource-card,
+    .subject-detail-card {
+        padding: 18px !important;
+        border-radius: 22px !important;
+    }
+
+    #tasks .task-card-main,
+    .subject-detail-hero,
+    .subject-detail-stats,
+    .subject-detail-columns {
+        grid-template-columns: 1fr !important;
+    }
+
+    #tasks .task-actions {
+        padding-left: 0 !important;
+    }
+
+    .subject-detail-hero {
+        margin-right: 48px !important;
+    }
+}
