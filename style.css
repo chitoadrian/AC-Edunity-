@@ -15870,6 +15870,72 @@ body.light-theme .subject-detail-columns p {
     color: #475467 !important;
 }
 
+/* Tasks scroll fix: keep cards in the normal page flow */
+#tasks,
+#tasks.section,
+#tasks .section-content,
+#tasks .tasks-container,
+#tasks .tasks-list,
+#tasks #tasks-list,
+#tasks .task-board,
+#tasks .task-list-modern {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+}
+
+#tasks .tasks-container {
+    display: block !important;
+}
+
+#tasks .tasks-list {
+    display: grid !important;
+    gap: 18px !important;
+}
+
+#tasks .task-board.task-list-modern,
+#tasks .task-list-modern {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 24px !important;
+    align-items: stretch !important;
+    grid-auto-rows: 1fr !important;
+}
+
+#tasks .task-card-modern {
+    height: auto !important;
+    min-height: 420px !important;
+    max-height: none !important;
+    overflow: hidden !important;
+}
+
+body.is-dashboard {
+    overflow-y: auto !important;
+}
+
+body.is-dashboard .main-content,
+body.is-dashboard .dashboard-content,
+body.is-dashboard .app-content {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+}
+
+@media (max-width: 900px) {
+    #tasks .task-board.task-list-modern,
+    #tasks .task-list-modern {
+        grid-template-columns: 1fr !important;
+        grid-auto-rows: auto !important;
+    }
+
+    #tasks .task-card-modern {
+        min-height: 0 !important;
+    }
+}
+
 @media (min-width: 1180px) {
     #subjects .subjects-grid,
     #backpack .backpack-container {
