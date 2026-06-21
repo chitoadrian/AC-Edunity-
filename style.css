@@ -15883,10 +15883,10 @@ body.light-theme .subject-detail-columns p {
 #dashboard .dashboard-student-hero {
     display: grid !important;
     grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.72fr) !important;
-    gap: 22px !important;
+    gap: 20px !important;
     align-items: stretch !important;
-    margin-bottom: 22px !important;
-    padding: clamp(24px, 3vw, 34px) !important;
+    margin-bottom: 20px !important;
+    padding: clamp(22px, 2.6vw, 30px) !important;
     border: 1px solid rgba(255, 255, 255, 0.13) !important;
     border-radius: 30px !important;
     background:
@@ -15956,8 +15956,8 @@ body.light-theme .subject-detail-columns p {
     display: grid !important;
     align-content: center !important;
     gap: 16px !important;
-    min-height: 220px !important;
-    padding: 24px !important;
+    min-height: 190px !important;
+    padding: 22px !important;
     border: 1px solid rgba(255, 255, 255, 0.14) !important;
     border-radius: 26px !important;
     background:
@@ -15998,8 +15998,8 @@ body.light-theme .subject-detail-columns p {
 #dashboard .dashboard-grid {
     display: grid !important;
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 16px !important;
-    margin-bottom: 18px !important;
+    gap: 18px !important;
+    margin-bottom: 20px !important;
 }
 
 #dashboard .dashboard-stat-card {
@@ -16081,10 +16081,10 @@ body.light-theme .subject-detail-columns p {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     grid-template-areas:
-        "progress activity"
-        "day starter"
+        "progress day"
+        "starter activity"
         "weekly weekly" !important;
-    gap: 18px !important;
+    gap: 20px !important;
     align-items: start !important;
 }
 
@@ -16114,7 +16114,7 @@ body.light-theme .subject-detail-columns p {
     grid-template-columns: 54px minmax(0, 1fr) !important;
     align-items: center !important;
     gap: 14px !important;
-    margin-bottom: 18px !important;
+    margin-bottom: 16px !important;
 }
 
 #dashboard .panel-title h3 {
@@ -16191,7 +16191,7 @@ body.light-theme .subject-detail-columns p {
 #dashboard .dashboard-steps li {
     display: grid !important;
     align-items: center !important;
-    min-height: 72px !important;
+    min-height: 68px !important;
     padding: 12px !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 18px !important;
@@ -16255,14 +16255,16 @@ body.light-theme .subject-detail-columns p {
 }
 
 #dashboard .dashboard-steps li {
-    grid-template-columns: 44px minmax(0, 1fr) 82px !important;
-    gap: 12px !important;
+    grid-template-columns: 38px minmax(0, 1fr) 74px !important;
+    gap: 10px !important;
+    min-height: 64px !important;
+    padding: 10px 12px !important;
 }
 
 #dashboard .dashboard-steps .step-number {
-    width: 42px !important;
-    height: 42px !important;
-    border-radius: 14px !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 12px !important;
     background: linear-gradient(135deg, var(--dash-purple), var(--dash-blue)) !important;
     color: #ffffff !important;
 }
@@ -16277,7 +16279,7 @@ body.light-theme .subject-detail-columns p {
 }
 
 #dashboard .dashboard-steps button {
-    min-height: 36px !important;
+    min-height: 32px !important;
     border: 1px solid rgba(56, 189, 248, 0.20) !important;
     border-radius: 999px !important;
     background: rgba(56, 189, 248, 0.09) !important;
@@ -16292,6 +16294,7 @@ body.light-theme .subject-detail-columns p {
 }
 
 #dashboard .weekly-progress-card {
+    width: 100% !important;
     padding: 24px !important;
 }
 
@@ -16300,7 +16303,7 @@ body.light-theme .subject-detail-columns p {
     align-items: end !important;
     justify-content: space-between !important;
     gap: clamp(10px, 2vw, 22px) !important;
-    min-height: 210px !important;
+    min-height: 190px !important;
     padding: 18px 20px 0 !important;
     border: 1px solid rgba(255, 255, 255, 0.075) !important;
     border-radius: 22px !important;
@@ -16391,13 +16394,11 @@ body.light-theme #dashboard .weekly-chart {
     }
 
     #dashboard .dashboard-clean-layout {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         grid-template-areas:
-            "progress"
-            "activity"
-            "day"
-            "starter"
-            "weekly" !important;
+            "progress day"
+            "starter activity"
+            "weekly weekly" !important;
     }
 
     #dashboard .dashboard-grid {
@@ -16424,6 +16425,16 @@ body.light-theme #dashboard .weekly-chart {
         grid-template-columns: 1fr !important;
         justify-items: center !important;
         text-align: center !important;
+    }
+
+    #dashboard .dashboard-clean-layout {
+        grid-template-columns: 1fr !important;
+        grid-template-areas:
+            "progress"
+            "day"
+            "starter"
+            "activity"
+            "weekly" !important;
     }
 
     #dashboard .dashboard-steps li {
