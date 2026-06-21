@@ -15923,3 +15923,230 @@ body.light-theme .subject-detail-columns p {
         animation: none !important;
     }
 }
+
+/* Subject-colored cards: equal heights + four-side moving neon border */
+@keyframes neonTop {
+    from { left: -46%; }
+    to { left: 101%; }
+}
+
+@keyframes neonRight {
+    from { top: -46%; }
+    to { top: 101%; }
+}
+
+@keyframes neonBottom {
+    from { right: -46%; }
+    to { right: 101%; }
+}
+
+@keyframes neonLeft {
+    from { bottom: -46%; }
+    to { bottom: 101%; }
+}
+
+#subjects .subjects-grid,
+#tasks .task-list-modern,
+#backpack .backpack-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 24px !important;
+    align-items: stretch !important;
+    grid-auto-rows: 1fr !important;
+    width: min(100%, 1120px) !important;
+    margin-inline: auto !important;
+}
+
+#subjects .subject-space-card,
+#tasks .task-card-modern,
+#backpack .library-resource-card {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background:
+        radial-gradient(circle at 85% 10%, var(--subject-color-soft, rgba(56, 189, 248, 0.22)), transparent 32%) padding-box,
+        radial-gradient(circle at 10% 90%, rgba(168, 85, 247, 0.14), transparent 36%) padding-box,
+        linear-gradient(145deg, rgba(8, 14, 35, 0.98), rgba(26, 29, 58, 0.95)) padding-box !important;
+    box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.34),
+        0 0 28px var(--subject-color-glow, rgba(56, 189, 248, 0.28)),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+
+#subjects .subject-space-card {
+    min-height: 430px !important;
+    padding: 22px !important;
+}
+
+#tasks .task-card-modern {
+    min-height: 430px !important;
+    padding: 20px !important;
+}
+
+#backpack .library-resource-card {
+    min-height: 390px !important;
+    padding: 20px !important;
+}
+
+#subjects .subject-space-card::before,
+#tasks .task-card-modern::before,
+#backpack .library-resource-card::before,
+.subject-detail-card::before {
+    opacity: 0.34 !important;
+}
+
+#subjects .subject-space-card > *:not(.neon-lines),
+#tasks .task-card-modern > *:not(.neon-lines),
+#backpack .library-resource-card > *:not(.neon-lines),
+.subject-detail-card > *:not(.neon-lines) {
+    position: relative !important;
+    z-index: 4 !important;
+}
+
+#subjects .card-actions,
+#tasks .task-actions,
+#backpack .resource-actions {
+    margin-top: auto !important;
+    padding-top: 14px !important;
+}
+
+#tasks .task-content {
+    display: flex !important;
+    min-width: 0 !important;
+    flex-direction: column !important;
+}
+
+#tasks .task-description {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    min-height: 40px !important;
+}
+
+#tasks .task-reminder-alert {
+    min-height: 46px !important;
+    max-height: 68px !important;
+    overflow: hidden !important;
+}
+
+#subjects .subject-chip,
+#tasks .task-subject,
+#tasks .task-status,
+#backpack .resource-subject-chip {
+    border-color: var(--subject-color, #38bdf8) !important;
+    background: var(--subject-color-soft, rgba(56, 189, 248, 0.18)) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 18px var(--subject-color-glow, rgba(56, 189, 248, 0.32)) !important;
+}
+
+#subjects .progress-fill,
+#tasks .task-check-modern span,
+#backpack .library-resource-card .resource-icon.resource-pdf-icon {
+    box-shadow: 0 0 18px var(--subject-color-glow, rgba(56, 189, 248, 0.34)) !important;
+}
+
+.neon-lines {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 3 !important;
+    border-radius: inherit !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+.neon-line {
+    position: absolute !important;
+    display: block !important;
+    opacity: 0.96 !important;
+    pointer-events: none !important;
+    background: linear-gradient(90deg, transparent, var(--subject-color, #38bdf8), #00d4ff, #ec4899, transparent) !important;
+    filter:
+        drop-shadow(0 0 8px var(--subject-color, #38bdf8))
+        drop-shadow(0 0 14px rgba(0, 212, 255, 0.70)) !important;
+}
+
+.neon-line.top {
+    top: 0 !important;
+    left: -46% !important;
+    width: 46% !important;
+    height: 2px !important;
+    animation: neonTop 3.5s linear infinite !important;
+}
+
+.neon-line.right {
+    top: -46% !important;
+    right: 0 !important;
+    width: 2px !important;
+    height: 46% !important;
+    background: linear-gradient(180deg, transparent, var(--subject-color, #38bdf8), #00d4ff, #ec4899, transparent) !important;
+    animation: neonRight 3.5s linear infinite !important;
+    animation-delay: 0.875s !important;
+}
+
+.neon-line.bottom {
+    right: -46% !important;
+    bottom: 0 !important;
+    width: 46% !important;
+    height: 2px !important;
+    animation: neonBottom 3.5s linear infinite !important;
+    animation-delay: 1.75s !important;
+}
+
+.neon-line.left {
+    bottom: -46% !important;
+    left: 0 !important;
+    width: 2px !important;
+    height: 46% !important;
+    background: linear-gradient(180deg, transparent, var(--subject-color, #38bdf8), #00d4ff, #ec4899, transparent) !important;
+    animation: neonLeft 3.5s linear infinite !important;
+    animation-delay: 2.625s !important;
+}
+
+.subject-detail-card {
+    background:
+        radial-gradient(circle at 85% 10%, var(--subject-color-soft, rgba(56, 189, 248, 0.22)), transparent 32%) padding-box,
+        radial-gradient(circle at 10% 90%, rgba(168, 85, 247, 0.14), transparent 36%) padding-box,
+        linear-gradient(145deg, rgba(8, 14, 35, 0.98), rgba(26, 29, 58, 0.95)) padding-box !important;
+    box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.48),
+        0 0 34px var(--subject-color-glow, rgba(56, 189, 248, 0.32)) !important;
+}
+
+#subjects .card-actions button,
+#tasks .task-actions button,
+#backpack .resource-actions button {
+    height: 44px !important;
+    min-height: 44px !important;
+    border-radius: 16px !important;
+    white-space: nowrap !important;
+}
+
+#tasks .task-actions button[data-task-calendar] {
+    font-size: 11px !important;
+}
+
+@media (max-width: 900px) {
+    #subjects .subjects-grid,
+    #tasks .task-list-modern,
+    #backpack .backpack-container {
+        grid-template-columns: 1fr !important;
+        grid-auto-rows: auto !important;
+    }
+
+    #subjects .subject-space-card,
+    #tasks .task-card-modern,
+    #backpack .library-resource-card {
+        min-height: 0 !important;
+        height: auto !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .neon-line {
+        animation: none !important;
+    }
+}

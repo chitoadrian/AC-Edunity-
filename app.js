@@ -2758,9 +2758,10 @@ function renderTasks(workspace) {
                 const reminder = getTaskReminderAlert(task);
                 const priorityClass = getTaskPriorityClass(task.priority || 'media');
                 const taskSubject = workspace.subjects.find(subject => subject.id === task.subjectId || subject.name === task.subject);
-                const subjectColor = subjectColorMap[normalizeSubjectColor(taskSubject?.color)] || '#49ccf9';
+                const subjectColor = getAcademicColorValue(taskSubject?.color);
                 return `
-                    <article class="task-item task-card-modern priority-${priorityClass}" style="--subject-color:${subjectColor}" data-status="${escapeHTML(visualStatus)}" data-id="${escapeHTML(task.id)}">
+                    <article class="task-item task-card-modern priority-${priorityClass}" style="${getAcademicCardStyle(subjectColor)}" data-status="${escapeHTML(visualStatus)}" data-id="${escapeHTML(task.id)}">
+                        ${neonLinesHTML()}
                         <div class="task-card-main">
                             <label class="task-checkbox task-check-modern" title="Marcar como completada">
                                 <input type="checkbox" onclick="toggleTask(this)" ${task.status === 'completed' ? 'checked' : ''}>
@@ -5400,11 +5401,12 @@ function openSubjectDetails(subjectId) {
     const subject = workspace.subjects.find(item => item.id === subjectId);
     if (!subject) return;
     const metrics = getSubjectMetrics(workspace, subject);
-    const color = subjectColorMap[subject.color] || subjectColorMap.Morado;
+    const color = getAcademicColorValue(subject.color);
     const modal = document.createElement('div');
     modal.className = 'quick-modal subject-detail-modal';
     modal.innerHTML = `
-        <div class="quick-modal-card subject-detail-card" style="--subject-color:${color}" role="dialog" aria-modal="true" aria-label="Detalle de ${escapeHTML(subject.name)}">
+        <div class="quick-modal-card subject-detail-card" style="${getAcademicCardStyle(color)}" role="dialog" aria-modal="true" aria-label="Detalle de ${escapeHTML(subject.name)}">
+            ${neonLinesHTML()}
             <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
             <div class="subject-detail-hero">
                 ${getSubjectIconMarkup(subject)}
@@ -5859,11 +5861,12 @@ function renderBackpack(workspace) {
     container.innerHTML = workspace.resources.length ? (resources.length ? resources.map(resource => {
         const description = resource.description || resource.content || 'Sin descripcion';
         const shortDescription = description.length > 120 ? `${description.slice(0, 120)}...` : description;
-        const color = getResourceColor(workspace, resource);
+        const color = getAcademicColorValue(getResourceColor(workspace, resource));
         const status = getResourceStatus(resource);
         const uploadedAt = resource.uploadedAt || resource.createdAt || new Date().toISOString();
         return `
-            <article class="resource-card library-resource-card" style="--resource-color:${escapeHTML(color)}">
+            <article class="resource-card library-resource-card" style="${getAcademicCardStyle(color)}">
+                ${neonLinesHTML()}
                 <div class="resource-top">
                     <div class="resource-icon resource-pdf-icon" aria-hidden="true"></div>
                     <div class="resource-info">
@@ -6536,6 +6539,31 @@ function normalizeSubjectColor(color) {
         return optionValue === normalizedColor || optionLabel === normalizedColor;
     });
     return getOptionValue(match) || rawColor || 'Morado';
+}
+
+function getAcademicColorValue(color) {
+    const rawColor = getOptionValue(color);
+    if (typeof rawColor === 'string' && /^#[0-9a-f]{3,8}$/i.test(rawColor.trim())) {
+        return rawColor.trim();
+    }
+    const normalizedColor = normalizeSubjectColor(color);
+    return subjectColorMap[normalizedColor] || subjectColorMap[rawColor] || '#38bdf8';
+}
+
+function getAcademicCardStyle(color) {
+    const safeColor = getAcademicColorValue(color);
+    return `--subject-color:${safeColor};--resource-color:${safeColor};--subject-color-soft:color-mix(in srgb, ${safeColor} 22%, transparent);--subject-color-glow:color-mix(in srgb, ${safeColor} 56%, transparent);`;
+}
+
+function neonLinesHTML() {
+    return `
+        <div class="neon-lines" aria-hidden="true">
+            <span class="neon-line top"></span>
+            <span class="neon-line right"></span>
+            <span class="neon-line bottom"></span>
+            <span class="neon-line left"></span>
+        </div>
+    `;
 }
 
 function normalizeTaskPriority(priority) {
@@ -7432,10 +7460,11 @@ function renderSubjects(workspace) {
 
     grid.innerHTML = workspace.subjects.length ? (filteredSubjects.length ? filteredSubjects.map(subject => {
         const metrics = getSubjectMetrics(workspace, subject);
-        const color = subjectColorMap[subject.color] || subjectColorMap.Morado;
+        const color = getAcademicColorValue(subject.color);
 
         return `
-            <div class="subject-card subject-custom ac-colored-card subject-space-card" style="--subject-color:${color}">
+            <div class="subject-card subject-custom ac-colored-card subject-space-card" style="${getAcademicCardStyle(color)}">
+                ${neonLinesHTML()}
                 <div class="subject-orbit" aria-hidden="true"></div>
                 <div class="subject-header">
                     <div class="subject-title">
