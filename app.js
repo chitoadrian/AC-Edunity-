@@ -6557,11 +6557,11 @@ function getAcademicCardStyle(color) {
 
 function neonLinesHTML() {
     return `
-        <div class="neon-lines" aria-hidden="true">
-            <span class="neon-line top"></span>
-            <span class="neon-line right"></span>
-            <span class="neon-line bottom"></span>
-            <span class="neon-line left"></span>
+        <div class="neon-border-lines" aria-hidden="true">
+            <span class="neon-line neon-top"></span>
+            <span class="neon-line neon-right"></span>
+            <span class="neon-line neon-bottom"></span>
+            <span class="neon-line neon-left"></span>
         </div>
     `;
 }

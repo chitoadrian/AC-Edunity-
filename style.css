@@ -16021,6 +16021,122 @@ body.light-theme .subject-detail-card {
     }
 }
 
+/* Visible runner neon border: one light travels top -> right -> bottom -> left */
+@keyframes neonMoveTop {
+    from { left: -35%; }
+    to { left: 100%; }
+}
+
+@keyframes neonMoveRight {
+    from { top: -35%; }
+    to { top: 100%; }
+}
+
+@keyframes neonMoveBottom {
+    from { right: -35%; }
+    to { right: 100%; }
+}
+
+@keyframes neonMoveLeft {
+    from { bottom: -35%; }
+    to { bottom: 100%; }
+}
+
+#subjects .subject-space-card,
+#tasks .task-card-modern,
+#backpack .library-resource-card,
+.subject-detail-card,
+.subject-card,
+.task-card,
+.resource-card {
+    position: relative !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+}
+
+.neon-lines {
+    display: none !important;
+}
+
+.neon-border-lines {
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: inherit !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+    z-index: 30 !important;
+}
+
+.neon-border-lines .neon-line {
+    position: absolute !important;
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    filter:
+        drop-shadow(0 0 6px var(--subject-color, #00d4ff))
+        drop-shadow(0 0 12px #00d4ff)
+        drop-shadow(0 0 18px #ec4899) !important;
+}
+
+.neon-border-lines .neon-top {
+    top: 0 !important;
+    left: -35% !important;
+    width: 35% !important;
+    height: 3px !important;
+    background: linear-gradient(90deg, transparent, var(--subject-color, #00d4ff), #00d4ff, #ec4899, transparent) !important;
+    animation: neonMoveTop 3.2s linear infinite !important;
+}
+
+.neon-border-lines .neon-right {
+    top: -35% !important;
+    right: 0 !important;
+    width: 3px !important;
+    height: 35% !important;
+    background: linear-gradient(180deg, transparent, var(--subject-color, #00d4ff), #00d4ff, #ec4899, transparent) !important;
+    animation: neonMoveRight 3.2s linear infinite !important;
+    animation-delay: 0.8s !important;
+}
+
+.neon-border-lines .neon-bottom {
+    bottom: 0 !important;
+    right: -35% !important;
+    width: 35% !important;
+    height: 3px !important;
+    background: linear-gradient(90deg, transparent, #ec4899, #00d4ff, var(--subject-color, #00d4ff), transparent) !important;
+    animation: neonMoveBottom 3.2s linear infinite !important;
+    animation-delay: 1.6s !important;
+}
+
+.neon-border-lines .neon-left {
+    bottom: -35% !important;
+    left: 0 !important;
+    width: 3px !important;
+    height: 35% !important;
+    background: linear-gradient(180deg, transparent, #ec4899, #00d4ff, var(--subject-color, #00d4ff), transparent) !important;
+    animation: neonMoveLeft 3.2s linear infinite !important;
+    animation-delay: 2.4s !important;
+}
+
+#subjects .subject-space-card > *:not(.neon-border-lines),
+#tasks .task-card-modern > *:not(.neon-border-lines),
+#backpack .library-resource-card > *:not(.neon-border-lines),
+.subject-detail-card > *:not(.neon-border-lines),
+.subject-card > *:not(.neon-border-lines),
+.task-card > *:not(.neon-border-lines),
+.resource-card > *:not(.neon-border-lines) {
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .neon-border-lines .neon-top,
+    .neon-border-lines .neon-right,
+    .neon-border-lines .neon-bottom,
+    .neon-border-lines .neon-left {
+        animation: none !important;
+    }
+}
+
 /* Tasks scroll fix: keep cards in the normal page flow */
 #tasks,
 #tasks.section,
