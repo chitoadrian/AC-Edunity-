@@ -15870,6 +15870,572 @@ body.light-theme .subject-detail-columns p {
     color: #475467 !important;
 }
 
+/* Dashboard academico: panel colorido, compacto y con bloques utiles */
+#dashboard {
+    --dash-blue: #38bdf8;
+    --dash-purple: #8b5cf6;
+    --dash-pink: #ec4899;
+    --dash-green: #34d399;
+    --dash-yellow: #facc15;
+    --dash-orange: #fb923c;
+}
+
+#dashboard .dashboard-student-hero {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.72fr) !important;
+    gap: 22px !important;
+    align-items: stretch !important;
+    margin-bottom: 22px !important;
+    padding: clamp(24px, 3vw, 34px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.13) !important;
+    border-radius: 30px !important;
+    background:
+        radial-gradient(circle at 12% 10%, rgba(56, 189, 248, 0.30), transparent 32%),
+        radial-gradient(circle at 82% 18%, rgba(236, 72, 153, 0.28), transparent 34%),
+        linear-gradient(135deg, rgba(139, 92, 246, 0.34), rgba(14, 165, 233, 0.18) 46%, rgba(236, 72, 153, 0.18)),
+        rgba(15, 23, 42, 0.72) !important;
+    box-shadow: 0 28px 78px rgba(15, 23, 42, 0.36), 0 0 52px rgba(56, 189, 248, 0.12) !important;
+    overflow: hidden !important;
+}
+
+#dashboard .dashboard-hero-copy {
+    display: grid !important;
+    align-content: center !important;
+    gap: 14px !important;
+}
+
+#dashboard .dashboard-eyebrow {
+    width: fit-content !important;
+    padding: 9px 15px !important;
+    border: 1px solid rgba(56, 189, 248, 0.34) !important;
+    border-radius: 999px !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+    color: var(--dash-blue) !important;
+    font-size: 12px !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+}
+
+#dashboard .dashboard-hero-copy h1 {
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: clamp(2.1rem, 4vw, 4rem) !important;
+    line-height: 1.02 !important;
+}
+
+#dashboard .dashboard-hero-copy p {
+    max-width: 680px !important;
+    margin: 0 !important;
+    color: rgba(226, 232, 240, 0.82) !important;
+    font-size: 17px !important;
+}
+
+#dashboard .dashboard-hero-meta,
+#dashboard .dashboard-hero-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+
+#dashboard .dashboard-hero-meta span {
+    padding: 9px 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.13) !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.86) !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+}
+
+#dashboard .dashboard-hero-actions {
+    margin: 6px 0 0 !important;
+}
+
+#dashboard .dashboard-hero-widget {
+    display: grid !important;
+    align-content: center !important;
+    gap: 16px !important;
+    min-height: 220px !important;
+    padding: 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 26px !important;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.20), transparent 40%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.045)) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 22px 46px rgba(0, 0, 0, 0.16) !important;
+}
+
+#dashboard .dashboard-hero-widget strong {
+    color: #ffffff !important;
+    font-size: 1.35rem !important;
+}
+
+#dashboard .dashboard-hero-widget p {
+    margin: 5px 0 0 !important;
+    color: rgba(226, 232, 240, 0.78) !important;
+    line-height: 1.45 !important;
+}
+
+#dashboard .quick-actions-bar button,
+#dashboard .dashboard-hero-widget .btn-primary {
+    min-height: 42px !important;
+    padding: 0 18px !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 999px !important;
+    background:
+        linear-gradient(135deg, rgba(56, 189, 248, 0.92), rgba(139, 92, 246, 0.86) 52%, rgba(236, 72, 153, 0.86)) !important;
+    color: #ffffff !important;
+    box-shadow: 0 16px 34px rgba(56, 189, 248, 0.16) !important;
+}
+
+#dashboard .quick-actions-bar button:hover,
+#dashboard .dashboard-hero-widget .btn-primary:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 22px 42px rgba(236, 72, 153, 0.18) !important;
+}
+
+#dashboard .dashboard-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    margin-bottom: 18px !important;
+}
+
+#dashboard .dashboard-stat-card {
+    position: relative !important;
+    min-height: 166px !important;
+    padding: 18px !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-radius: 24px !important;
+    background:
+        radial-gradient(circle at 92% 12%, color-mix(in srgb, var(--card-accent, #38bdf8), transparent 76%), transparent 44%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.035)),
+        rgba(18, 24, 38, 0.82) !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.20), 0 0 32px color-mix(in srgb, var(--card-accent, #38bdf8), transparent 86%) !important;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease !important;
+    overflow: hidden !important;
+}
+
+#dashboard .dashboard-stat-card:nth-child(1) { --card-accent: var(--dash-blue); }
+#dashboard .dashboard-stat-card:nth-child(2) { --card-accent: var(--dash-green); }
+#dashboard .dashboard-stat-card:nth-child(3) { --card-accent: var(--dash-orange); }
+#dashboard .dashboard-stat-card:nth-child(4) { --card-accent: var(--dash-pink); }
+
+#dashboard .dashboard-stat-card:hover,
+#dashboard .dashboard-panel-card:hover {
+    transform: translateY(-3px) !important;
+    border-color: color-mix(in srgb, var(--card-accent, #38bdf8), transparent 52%) !important;
+    box-shadow: 0 24px 62px rgba(0, 0, 0, 0.24), 0 0 38px color-mix(in srgb, var(--card-accent, #38bdf8), transparent 80%) !important;
+}
+
+#dashboard .dashboard-stat-card .stat-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+#dashboard .dashboard-stat-card .stat-icon,
+#dashboard .panel-icon,
+#dashboard .hero-widget-icon {
+    background: linear-gradient(135deg, var(--card-accent, #38bdf8), #8b5cf6) !important;
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--card-accent, #38bdf8), transparent 70%) !important;
+}
+
+#dashboard .dashboard-stat-card .stat-label {
+    color: rgba(226, 232, 240, 0.88) !important;
+    font-size: 12px !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.02em !important;
+    text-transform: uppercase !important;
+}
+
+#dashboard .dashboard-stat-card .stat-value {
+    margin-top: 18px !important;
+    color: var(--card-accent, #38bdf8) !important;
+    font-size: clamp(1.85rem, 3.2vw, 2.75rem) !important;
+    font-weight: 950 !important;
+}
+
+#dashboard .dashboard-stat-card .stat-subtext {
+    color: rgba(203, 213, 225, 0.78) !important;
+    font-size: 13px !important;
+    line-height: 1.38 !important;
+}
+
+#dashboard .dashboard-stat-card .progress-bar,
+#dashboard .dashboard-panel-card .progress-bar {
+    height: 8px !important;
+    border-radius: 999px !important;
+    background: rgba(15, 23, 42, 0.60) !important;
+    overflow: hidden !important;
+}
+
+#dashboard .dashboard-stat-card .progress-fill,
+#dashboard .dashboard-panel-card .progress-fill {
+    background: linear-gradient(90deg, var(--dash-purple), var(--dash-blue), var(--dash-pink)) !important;
+    transition: width 500ms ease !important;
+}
+
+#dashboard .dashboard-clean-layout {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-areas:
+        "progress activity"
+        "day starter"
+        "weekly weekly" !important;
+    gap: 18px !important;
+    align-items: start !important;
+}
+
+#dashboard .dashboard-progress-card { grid-area: progress !important; --card-accent: var(--dash-purple); }
+#dashboard .activity-card { grid-area: activity !important; --card-accent: var(--dash-pink); }
+#dashboard .dashboard-day-card { grid-area: day !important; --card-accent: var(--dash-blue); }
+#dashboard .starter-card { grid-area: starter !important; --card-accent: var(--dash-green); }
+#dashboard .weekly-progress-card { grid-area: weekly !important; --card-accent: var(--dash-orange); }
+
+#dashboard .dashboard-panel-card {
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 22px !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-radius: 26px !important;
+    background:
+        radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--card-accent, #38bdf8), transparent 78%), transparent 42%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.082), rgba(255, 255, 255, 0.030)),
+        rgba(18, 24, 38, 0.84) !important;
+    box-shadow: 0 22px 55px rgba(0, 0, 0, 0.20) !important;
+    overflow: visible !important;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease !important;
+}
+
+#dashboard .panel-title {
+    display: grid !important;
+    grid-template-columns: 54px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 14px !important;
+    margin-bottom: 18px !important;
+}
+
+#dashboard .panel-title h3 {
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: clamp(1.25rem, 2vw, 1.8rem) !important;
+}
+
+#dashboard .panel-title p {
+    margin: 4px 0 0 !important;
+    color: rgba(203, 213, 225, 0.72) !important;
+    font-size: 13.5px !important;
+    line-height: 1.4 !important;
+}
+
+#dashboard .dashboard-progress-body {
+    display: grid !important;
+    grid-template-columns: 132px minmax(0, 1fr) !important;
+    gap: 20px !important;
+    align-items: center !important;
+}
+
+#dashboard .dashboard-xp-ring {
+    width: 132px !important;
+    height: 132px !important;
+    margin: 0 !important;
+    background:
+        radial-gradient(circle, rgba(18, 24, 38, 0.98) 0 55%, transparent 56%),
+        conic-gradient(var(--dash-blue) var(--xp, 0%), rgba(255, 255, 255, 0.10) 0) !important;
+}
+
+#dashboard .dashboard-progress-details {
+    display: grid !important;
+    gap: 10px !important;
+}
+
+#dashboard .dashboard-progress-details strong {
+    color: #ffffff !important;
+    font-size: 1.2rem !important;
+}
+
+#dashboard .dashboard-progress-details > span {
+    color: rgba(203, 213, 225, 0.76) !important;
+    font-size: 13px !important;
+}
+
+#dashboard .dashboard-achievements {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin: 2px 0 0 !important;
+}
+
+#dashboard .dashboard-achievements span {
+    padding: 7px 10px !important;
+    border: 1px solid rgba(52, 211, 153, 0.18) !important;
+    border-radius: 999px !important;
+    background: rgba(52, 211, 153, 0.12) !important;
+    color: #a7f3d0 !important;
+}
+
+#dashboard .dashboard-activity,
+#dashboard .dashboard-day-list,
+#dashboard .dashboard-steps {
+    display: grid !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+#dashboard .dashboard-activity li,
+#dashboard .dashboard-day-list li,
+#dashboard .dashboard-steps li {
+    display: grid !important;
+    align-items: center !important;
+    min-height: 72px !important;
+    padding: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 18px !important;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)) !important;
+    overflow: hidden !important;
+}
+
+#dashboard .dashboard-activity li {
+    grid-template-columns: 18px minmax(0, 1fr) !important;
+    gap: 12px !important;
+}
+
+#dashboard .activity-dot {
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 999px !important;
+    background: var(--dash-blue) !important;
+    box-shadow: 0 0 0 7px rgba(56, 189, 248, 0.12), 0 0 20px rgba(56, 189, 248, 0.45) !important;
+}
+
+#dashboard .activity-tasks .activity-dot { background: var(--dash-green) !important; }
+#dashboard .activity-resources .activity-dot { background: var(--dash-orange) !important; }
+#dashboard .activity-calendar .activity-dot { background: var(--dash-pink) !important; }
+
+#dashboard .dashboard-activity small,
+#dashboard .dashboard-day-list li > span,
+#dashboard .dashboard-steps small {
+    color: rgba(203, 213, 225, 0.68) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+}
+
+#dashboard .dashboard-activity strong,
+#dashboard .dashboard-day-list strong,
+#dashboard .dashboard-steps strong {
+    display: block !important;
+    color: #ffffff !important;
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+}
+
+#dashboard .dashboard-day-list li {
+    grid-template-columns: 82px minmax(0, 1fr) !important;
+    gap: 12px !important;
+}
+
+#dashboard .dashboard-day-list li > span {
+    display: inline-grid !important;
+    place-items: center !important;
+    min-height: 34px !important;
+    border-radius: 999px !important;
+    background: rgba(56, 189, 248, 0.13) !important;
+    color: var(--dash-blue) !important;
+    text-transform: uppercase !important;
+}
+
+#dashboard .dashboard-day-list small {
+    color: rgba(203, 213, 225, 0.70) !important;
+    font-size: 12px !important;
+}
+
+#dashboard .dashboard-steps li {
+    grid-template-columns: 44px minmax(0, 1fr) 82px !important;
+    gap: 12px !important;
+}
+
+#dashboard .dashboard-steps .step-number {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 14px !important;
+    background: linear-gradient(135deg, var(--dash-purple), var(--dash-blue)) !important;
+    color: #ffffff !important;
+}
+
+#dashboard .dashboard-steps li.done {
+    border-color: rgba(52, 211, 153, 0.26) !important;
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.16), rgba(56, 189, 248, 0.05)) !important;
+}
+
+#dashboard .dashboard-steps li.done .step-number {
+    background: linear-gradient(135deg, var(--dash-green), var(--dash-blue)) !important;
+}
+
+#dashboard .dashboard-steps button {
+    min-height: 36px !important;
+    border: 1px solid rgba(56, 189, 248, 0.20) !important;
+    border-radius: 999px !important;
+    background: rgba(56, 189, 248, 0.09) !important;
+    color: #7dd3fc !important;
+    font-size: 12px !important;
+}
+
+#dashboard .dashboard-steps li.done button {
+    border-color: rgba(52, 211, 153, 0.25) !important;
+    background: rgba(52, 211, 153, 0.12) !important;
+    color: #86efac !important;
+}
+
+#dashboard .weekly-progress-card {
+    padding: 24px !important;
+}
+
+#dashboard .weekly-chart {
+    display: flex !important;
+    align-items: end !important;
+    justify-content: space-between !important;
+    gap: clamp(10px, 2vw, 22px) !important;
+    min-height: 210px !important;
+    padding: 18px 20px 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.075) !important;
+    border-radius: 22px !important;
+    background: rgba(15, 23, 42, 0.42) !important;
+    overflow: hidden !important;
+}
+
+#dashboard .weekly-chart .week-day {
+    flex: 1 1 0 !important;
+    max-width: 82px !important;
+    min-height: 22px !important;
+    border-radius: 18px 18px 0 0 !important;
+    background: linear-gradient(180deg, var(--dash-blue), var(--dash-purple) 56%, var(--dash-pink)) !important;
+    box-shadow: 0 0 22px rgba(56, 189, 248, 0.24) !important;
+    transition: height 500ms ease, transform 180ms ease !important;
+}
+
+#dashboard .weekly-chart .week-day:hover {
+    transform: translateY(-4px) !important;
+}
+
+#dashboard .chart-caption {
+    margin: 12px 0 0 !important;
+    color: rgba(203, 213, 225, 0.70) !important;
+}
+
+#dashboard .dashboard-empty-note {
+    min-height: 112px !important;
+    border-color: rgba(56, 189, 248, 0.25) !important;
+    background: rgba(56, 189, 248, 0.06) !important;
+}
+
+#dashboard .dashboard-empty-note.compact {
+    min-height: 148px !important;
+}
+
+body.light-theme #dashboard .dashboard-student-hero {
+    background:
+        radial-gradient(circle at 14% 8%, rgba(56, 189, 248, 0.22), transparent 34%),
+        radial-gradient(circle at 88% 8%, rgba(236, 72, 153, 0.18), transparent 34%),
+        linear-gradient(135deg, #ffffff, #eef6ff 48%, #fff1f8) !important;
+}
+
+body.light-theme #dashboard .dashboard-hero-copy h1,
+body.light-theme #dashboard .dashboard-hero-widget strong,
+body.light-theme #dashboard .dashboard-stat-card .stat-label,
+body.light-theme #dashboard .panel-title h3,
+body.light-theme #dashboard .dashboard-progress-details strong,
+body.light-theme #dashboard .dashboard-activity strong,
+body.light-theme #dashboard .dashboard-day-list strong,
+body.light-theme #dashboard .dashboard-steps strong {
+    color: #111827 !important;
+}
+
+body.light-theme #dashboard .dashboard-hero-copy p,
+body.light-theme #dashboard .dashboard-hero-meta span,
+body.light-theme #dashboard .dashboard-hero-widget p,
+body.light-theme #dashboard .dashboard-stat-card .stat-subtext,
+body.light-theme #dashboard .panel-title p,
+body.light-theme #dashboard .dashboard-progress-details > span,
+body.light-theme #dashboard .dashboard-day-list small,
+body.light-theme #dashboard .dashboard-steps small,
+body.light-theme #dashboard .dashboard-activity small,
+body.light-theme #dashboard .chart-caption {
+    color: #64748b !important;
+}
+
+body.light-theme #dashboard .dashboard-stat-card,
+body.light-theme #dashboard .dashboard-panel-card,
+body.light-theme #dashboard .dashboard-hero-widget {
+    background:
+        radial-gradient(circle at 92% 12%, color-mix(in srgb, var(--card-accent, #38bdf8), transparent 88%), transparent 44%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.88)) !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+body.light-theme #dashboard .dashboard-activity li,
+body.light-theme #dashboard .dashboard-day-list li,
+body.light-theme #dashboard .dashboard-steps li,
+body.light-theme #dashboard .weekly-chart {
+    background: rgba(248, 250, 252, 0.92) !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+@media (max-width: 1180px) {
+    #dashboard .dashboard-student-hero {
+        grid-template-columns: 1fr !important;
+    }
+
+    #dashboard .dashboard-clean-layout {
+        grid-template-columns: 1fr !important;
+        grid-template-areas:
+            "progress"
+            "activity"
+            "day"
+            "starter"
+            "weekly" !important;
+    }
+
+    #dashboard .dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    #dashboard .dashboard-progress-body {
+        grid-template-columns: 120px minmax(0, 1fr) !important;
+    }
+}
+
+@media (max-width: 720px) {
+    #dashboard .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    #dashboard .dashboard-student-hero,
+    #dashboard .dashboard-panel-card,
+    #dashboard .dashboard-stat-card {
+        border-radius: 22px !important;
+    }
+
+    #dashboard .dashboard-progress-body {
+        grid-template-columns: 1fr !important;
+        justify-items: center !important;
+        text-align: center !important;
+    }
+
+    #dashboard .dashboard-steps li {
+        grid-template-columns: 40px minmax(0, 1fr) !important;
+    }
+
+    #dashboard .dashboard-steps button {
+        grid-column: 2 !important;
+        width: fit-content !important;
+    }
+}
+
 /* Clean reference style: dark cards without inner blobs, only moving neon border */
 @keyframes cleanNeonTop {
     from { left: -38%; }

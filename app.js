@@ -5007,7 +5007,38 @@ function renderDashboard(workspace) {
     const gradeProgress = average ? average * 10 : 0;
     const xpProgress = Math.min(100, ((workspace.xp || 0) % 250) / 2.5);
     const xpCurrent = (workspace.xp || 0) % 1000;
-    const recentItems = (workspace.recent || []).slice(0, 3);
+    const recentItems = (workspace.recent || []).slice(0, 4);
+    const activityItems = recentItems.length ? recentItems.map(item => ({
+        type: 'Ahora',
+        text: item.text,
+        meta: item.time || 'Reciente',
+        icon: 'activity'
+    })) : [
+        ...workspace.subjects.slice(-2).map(subject => ({
+            type: 'Materia',
+            text: `Creaste ${subject.name}.`,
+            meta: subject.createdAt || 'Reciente',
+            icon: 'subjects'
+        })),
+        ...workspace.tasks.slice(-2).map(task => ({
+            type: 'Tarea',
+            text: `${task.status === 'completed' ? 'Completaste' : 'Agregaste'} ${task.title}.`,
+            meta: task.due || 'Sin fecha',
+            icon: 'tasks'
+        })),
+        ...workspace.resources.slice(-2).map(resource => ({
+            type: 'Apunte',
+            text: `Subiste ${resource.title}.`,
+            meta: resource.subject || 'Mochila Digital',
+            icon: 'resources'
+        })),
+        ...workspace.events.slice(-2).map(event => ({
+            type: 'Evento',
+            text: `Agendaste ${event.title}.`,
+            meta: event.day || event.date || 'Calendario',
+            icon: 'calendar'
+        }))
+    ].slice(0, 4);
     const today = new Date();
     const todayISO = today.toISOString().slice(0, 10);
     const readableDate = today.toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -5037,6 +5068,12 @@ function renderDashboard(workspace) {
                     <span>${escapeHTML(readableDate)}</span>
                     <span>Un avance pequeno tambien cuenta.</span>
                 </div>
+                <div class="quick-actions-bar dashboard-hero-actions">
+                    <button type="button" onclick="navigateTo('subjects')">+ Nueva materia</button>
+                    <button type="button" onclick="navigateTo('tasks')">+ Nueva tarea</button>
+                    <button type="button" onclick="navigateTo('calendar')">+ Nuevo evento</button>
+                    <button type="button" onclick="navigateTo('backpack')">+ Subir apunte</button>
+                </div>
             </div>
             <div class="dashboard-hero-widget">
                 <span class="hero-widget-icon stat-icon stat-icon-assistant" aria-hidden="true"></span>
@@ -5048,13 +5085,6 @@ function renderDashboard(workspace) {
             </div>
         </div>
 
-        <div class="quick-actions-bar">
-            <button type="button" onclick="navigateTo('subjects')">+ Nueva materia</button>
-            <button type="button" onclick="navigateTo('tasks')">+ Nueva tarea</button>
-            <button type="button" onclick="navigateTo('calendar')">+ Nuevo evento</button>
-            <button type="button" onclick="navigateTo('backpack')">+ Subir apunte</button>
-        </div>
-
         <div class="dashboard-grid">
             ${dashboardCard('subjects', 'Materias activas', workspace.subjects.length, workspace.subjects.length ? 'Materias creadas por ti' : 'Crea tu primera materia', workspace.subjects.length ? 100 : 0)}
             ${dashboardCard('tasks', 'Tareas pendientes', pending, workspace.tasks.length ? `${taskCounts.upcoming} proximas - ${taskCounts.overdue} vencidas - ${completed} completadas` : 'Agrega tu primer pendiente', taskProgress)}
@@ -5063,8 +5093,61 @@ function renderDashboard(workspace) {
         </div>
 
         <div class="dashboard-layout dashboard-clean-layout">
-            <div class="dashboard-column dashboard-column-main">
-                <div class="card dashboard-panel-card dashboard-day-card">
+            <div class="card dashboard-panel-card dashboard-progress-card">
+                <div class="panel-title">
+                    <span class="panel-icon panel-icon-chart"></span>
+                    <div>
+                        <h3>Mi progreso</h3>
+                        <p>Nivel ${level} - ${xpCurrent}/1000 XP</p>
+                    </div>
+                </div>
+                <div class="dashboard-progress-body">
+                    <div class="dashboard-xp-ring" style="--xp:${xpProgress}%">
+                        <span>${Math.round(xpProgress)}%</span>
+                        <small>avance</small>
+                    </div>
+                    <div class="dashboard-progress-details">
+                        <strong>${workspace.xp || 0} XP acumulado</strong>
+                        <span>${1000 - xpCurrent} XP para completar el ciclo actual.</span>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${xpProgress}%"></div></div>
+                        <div class="dashboard-achievements">
+                            <span>${workspace.subjects.length ? 'Materia creada' : 'Primera materia pendiente'}</span>
+                            <span>${completed ? 'Tarea completada' : 'Completa tu primera tarea'}</span>
+                            <span>${workspace.resources.length ? 'Apunte subido' : 'Sube un apunte'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card dashboard-panel-card activity-card">
+                <div class="panel-title">
+                    <span class="panel-icon panel-icon-activity"></span>
+                    <div>
+                        <h3>Actividades recientes</h3>
+                        <p>Ultimos movimientos de tu espacio academico.</p>
+                    </div>
+                </div>
+                ${activityItems.length ? `
+                    <ul class="dashboard-activity">
+                        ${activityItems.map(item => `
+                            <li class="activity-${escapeHTML(item.icon)}">
+                                <span class="activity-dot"></span>
+                                <div class="activity-text">
+                                    <small>${escapeHTML(item.type)} - ${escapeHTML(item.meta)}</small>
+                                    <strong>${escapeHTML(item.text)}</strong>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                ` : `
+                    <div class="dashboard-empty-note compact">
+                        <strong>Tu actividad aparecera aqui.</strong>
+                        <span>Crea materias, tareas o apuntes para ver tu historial.</span>
+                    </div>
+                `}
+            </div>
+
+            <div class="card dashboard-panel-card dashboard-day-card">
                     <div class="panel-title">
                         <span class="panel-icon panel-icon-day"></span>
                         <div>
@@ -5090,9 +5173,9 @@ function renderDashboard(workspace) {
                             <span>Buen momento para adelantar una materia o preguntarle algo a Tutor.</span>
                         </div>
                     `}
-                </div>
+            </div>
 
-                <div class="card starter-card dashboard-panel-card">
+            <div class="card starter-card dashboard-panel-card">
                     <div class="panel-title">
                         <span class="panel-icon panel-icon-steps"></span>
                         <div>
@@ -5112,31 +5195,9 @@ function renderDashboard(workspace) {
                             </li>
                         `).join('')}
                     </ol>
-                </div>
             </div>
 
-            <div class="dashboard-column dashboard-column-middle">
-                <div class="card dashboard-panel-card dashboard-progress-card">
-                    <div class="panel-title">
-                        <span class="panel-icon panel-icon-chart"></span>
-                        <div>
-                            <h3>Tu progreso</h3>
-                            <p>Nivel ${level} - ${xpCurrent}/1000 XP</p>
-                        </div>
-                    </div>
-                    <div class="dashboard-xp-ring" style="--xp:${xpProgress}%">
-                        <span>${Math.round(xpProgress)}%</span>
-                        <small>avance</small>
-                    </div>
-                    <div class="progress-bar"><div class="progress-fill" style="width:${xpProgress}%"></div></div>
-                    <div class="dashboard-achievements">
-                        <span>${workspace.subjects.length ? 'Materia creada' : 'Primera materia pendiente'}</span>
-                        <span>${completed ? 'Tarea completada' : 'Completa tu primera tarea'}</span>
-                        <span>${workspace.resources.length ? 'Apunte subido' : 'Sube un apunte'}</span>
-                    </div>
-                </div>
-
-                <div class="card weekly-progress-card dashboard-panel-card">
+            <div class="card weekly-progress-card dashboard-panel-card">
                     <div class="panel-title">
                         <span class="panel-icon panel-icon-chart"></span>
                         <div>
@@ -5148,9 +5209,7 @@ function renderDashboard(workspace) {
                         ${[15, 20, 25, 30, 35, 40, Math.min(95, 20 + completed * 12)].map(value => `<span class="week-day" style="height:${value}%"></span>`).join('')}
                     </div>
                     <p class="chart-caption">${completed ? `Has completado ${completed} tarea(s).` : 'Tu grafico crecera cuando completes actividades.'}</p>
-                </div>
             </div>
-
         </div>
     `;
 }
