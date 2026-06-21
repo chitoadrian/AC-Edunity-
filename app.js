@@ -5007,38 +5007,6 @@ function renderDashboard(workspace) {
     const gradeProgress = average ? average * 10 : 0;
     const xpProgress = Math.min(100, ((workspace.xp || 0) % 250) / 2.5);
     const xpCurrent = (workspace.xp || 0) % 1000;
-    const recentItems = (workspace.recent || []).slice(0, 4);
-    const activityItems = recentItems.length ? recentItems.map(item => ({
-        type: 'Ahora',
-        text: item.text,
-        meta: item.time || 'Reciente',
-        icon: 'activity'
-    })) : [
-        ...workspace.subjects.slice(-2).map(subject => ({
-            type: 'Materia',
-            text: `Creaste ${subject.name}.`,
-            meta: subject.createdAt || 'Reciente',
-            icon: 'subjects'
-        })),
-        ...workspace.tasks.slice(-2).map(task => ({
-            type: 'Tarea',
-            text: `${task.status === 'completed' ? 'Completaste' : 'Agregaste'} ${task.title}.`,
-            meta: task.due || 'Sin fecha',
-            icon: 'tasks'
-        })),
-        ...workspace.resources.slice(-2).map(resource => ({
-            type: 'Apunte',
-            text: `Subiste ${resource.title}.`,
-            meta: resource.subject || 'Mochila Digital',
-            icon: 'resources'
-        })),
-        ...workspace.events.slice(-2).map(event => ({
-            type: 'Evento',
-            text: `Agendaste ${event.title}.`,
-            meta: event.day || event.date || 'Calendario',
-            icon: 'calendar'
-        }))
-    ].slice(0, 4);
     const today = new Date();
     const todayISO = today.toISOString().slice(0, 10);
     const readableDate = today.toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -5117,34 +5085,6 @@ function renderDashboard(workspace) {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="card dashboard-panel-card activity-card">
-                <div class="panel-title">
-                    <span class="panel-icon panel-icon-activity"></span>
-                    <div>
-                        <h3>Actividades recientes</h3>
-                        <p>Ultimos movimientos de tu espacio academico.</p>
-                    </div>
-                </div>
-                ${activityItems.length ? `
-                    <ul class="dashboard-activity">
-                        ${activityItems.map(item => `
-                            <li class="activity-${escapeHTML(item.icon)}">
-                                <span class="activity-dot"></span>
-                                <div class="activity-text">
-                                    <small>${escapeHTML(item.type)} - ${escapeHTML(item.meta)}</small>
-                                    <strong>${escapeHTML(item.text)}</strong>
-                                </div>
-                            </li>
-                        `).join('')}
-                    </ul>
-                ` : `
-                    <div class="dashboard-empty-note compact">
-                        <strong>Tu actividad aparecera aqui.</strong>
-                        <span>Crea materias, tareas o apuntes para ver tu historial.</span>
-                    </div>
-                `}
             </div>
 
             <div class="card dashboard-panel-card dashboard-day-card">
