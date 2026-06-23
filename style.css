@@ -17423,15 +17423,35 @@ body.light-theme .subject-detail-columns p {
 }
 
 /* FINAL OVERRIDE: dashboard exacto y sin huecos */
+#dashboard .dashboard-student-hero {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 420px !important;
+    gap: 32px !important;
+    align-items: center !important;
+    overflow: hidden !important;
+}
+
+#dashboard .dashboard-hero-copy {
+    min-width: 0 !important;
+}
+
+#dashboard .dashboard-hero-widget {
+    width: 100% !important;
+    max-width: 420px !important;
+    justify-self: end !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
 #dashboard .dashboard-hero-actions {
     display: grid !important;
-    grid-template-columns: repeat(4, minmax(150px, 1fr)) !important;
+    grid-template-columns: repeat(2, minmax(190px, 1fr)) !important;
     gap: 16px !important;
     align-items: center !important;
     justify-content: stretch !important;
-    width: 100% !important;
-    max-width: 900px !important;
-    margin: 0 !important;
+    width: min(100%, 620px) !important;
+    max-width: 620px !important;
+    margin: 28px 0 0 !important;
 }
 
 #dashboard .dashboard-hero-actions button {
@@ -17534,10 +17554,19 @@ body.light-theme .subject-detail-columns p {
     min-height: 190px !important;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1100px) {
+    #dashboard .dashboard-student-hero {
+        grid-template-columns: 1fr !important;
+    }
+
+    #dashboard .dashboard-hero-widget {
+        max-width: none !important;
+        justify-self: stretch !important;
+    }
+
     #dashboard .dashboard-hero-actions {
-        grid-template-columns: repeat(2, minmax(170px, 1fr)) !important;
-        max-width: 520px !important;
+        width: 100% !important;
+        max-width: none !important;
     }
 }
 
