@@ -17422,6 +17422,79 @@ body.light-theme .subject-detail-columns p {
     color: #475467 !important;
 }
 
+.forgot-password-link {
+    justify-self: end;
+    margin: -2px 0 18px;
+    border: 0;
+    background: transparent;
+    color: var(--color-cyan);
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: right;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.forgot-password-link:hover {
+    color: var(--color-pink);
+    transform: translateY(-1px);
+}
+
+.password-modal-card {
+    width: min(520px, 100%);
+    padding-bottom: 0;
+    border-color: rgba(73, 204, 249, 0.24);
+    background:
+        radial-gradient(circle at 12% 8%, rgba(73, 204, 249, 0.18), transparent 34%),
+        radial-gradient(circle at 92% 12%, rgba(253, 113, 175, 0.16), transparent 32%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04)),
+        var(--bg-secondary);
+}
+
+.password-modal-card h3 {
+    margin-right: 44px;
+}
+
+.password-modal-text {
+    margin: -6px 0 18px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+
+.password-modal-actions {
+    gap: 12px;
+}
+
+.password-modal-actions .btn-secondary,
+.password-modal-actions .btn-primary {
+    min-width: 150px;
+}
+
+body.light-theme .forgot-password-link {
+    color: #0ea5e9;
+}
+
+body.light-theme .password-modal-card {
+    border-color: rgba(14, 165, 233, 0.22);
+    background:
+        radial-gradient(circle at 12% 8%, rgba(14, 165, 233, 0.14), transparent 34%),
+        radial-gradient(circle at 92% 12%, rgba(253, 113, 175, 0.12), transparent 32%),
+        #ffffff;
+}
+
+@media (max-width: 560px) {
+    .password-modal-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .password-modal-actions .btn-secondary,
+    .password-modal-actions .btn-primary {
+        width: 100%;
+    }
+}
+
 /* FINAL OVERRIDE: dashboard exacto y sin huecos */
 #dashboard .dashboard-student-hero {
     display: grid !important;

@@ -73,6 +73,10 @@ function notify(message, type = 'info') {
     }, 3200);
 }
 
+function showToast(message, type = 'info') {
+    notify(message, type);
+}
+
 function setAuthMessage(pageId, message, type = 'error', action = null) {
     const page = document.getElementById(`${pageId}-page`);
     const card = page ? page.querySelector('.auth-card') : null;
@@ -6435,6 +6439,179 @@ function getSupabaseClient() {
     return supabaseClient;
 }
 
+function closePasswordResetModal() {
+    document.getElementById('password-reset-modal')?.remove();
+}
+
+function closePasswordUpdateModal() {
+    document.getElementById('password-update-modal')?.remove();
+}
+
+function openPasswordResetModal(prefillEmail = '') {
+    const existingModal = document.querySelector('.quick-modal');
+    if (existingModal) existingModal.remove();
+
+    const loginEmail = document.getElementById('login-email')?.value?.trim() || '';
+    const emailValue = prefillEmail || loginEmail;
+    const modal = document.createElement('div');
+    modal.id = 'password-reset-modal';
+    modal.className = 'quick-modal password-modal';
+    modal.innerHTML = `
+        <div class="quick-modal-card password-modal-card" role="dialog" aria-modal="true" aria-label="Restablecer contrasena">
+            <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
+            <h3>Restablecer contrasena</h3>
+            <p class="password-modal-text">Ingresa tu correo y te enviaremos un enlace para cambiar tu contrasena.</p>
+            <form class="quick-modal-form password-reset-form">
+                <label>
+                    <span>Correo electronico</span>
+                    <input type="email" name="email" placeholder="tu@email.com" value="${escapeHTML(emailValue)}" required>
+                </label>
+                <div class="quick-modal-actions password-modal-actions">
+                    <button class="btn-secondary btn-small" type="button" data-cancel>Cancelar</button>
+                    <button class="btn-primary btn-small" type="submit">Enviar enlace</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    modal.addEventListener('click', event => {
+        if (event.target === modal || event.target.classList.contains('quick-modal-close') || event.target.matches('[data-cancel]')) {
+            closePasswordResetModal();
+        }
+    });
+
+    modal.querySelector('form').addEventListener('submit', event => {
+        event.preventDefault();
+        const email = new FormData(event.currentTarget).get('email');
+        handlePasswordReset(email);
+    });
+
+    document.body.appendChild(modal);
+    modal.querySelector('input')?.focus();
+}
+
+function openPasswordUpdateModal() {
+    const existingModal = document.querySelector('.quick-modal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'password-update-modal';
+    modal.className = 'quick-modal password-modal';
+    modal.innerHTML = `
+        <div class="quick-modal-card password-modal-card" role="dialog" aria-modal="true" aria-label="Actualizar contrasena">
+            <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
+            <h3>Actualizar contrasena</h3>
+            <p class="password-modal-text">Escribe tu nueva contrasena para volver a entrar a AC Edunity.</p>
+            <form class="quick-modal-form password-update-form">
+                <label>
+                    <span>Nueva contrasena</span>
+                    <input type="password" name="newPassword" placeholder="Minimo 6 caracteres" required>
+                </label>
+                <label>
+                    <span>Confirmar contrasena</span>
+                    <input type="password" name="confirmPassword" placeholder="Repite la contrasena" required>
+                </label>
+                <div class="quick-modal-actions password-modal-actions">
+                    <button class="btn-secondary btn-small" type="button" data-cancel>Cancelar</button>
+                    <button class="btn-primary btn-small" type="submit">Actualizar contrasena</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    modal.addEventListener('click', event => {
+        if (event.target === modal || event.target.classList.contains('quick-modal-close') || event.target.matches('[data-cancel]')) {
+            closePasswordUpdateModal();
+        }
+    });
+
+    modal.querySelector('form').addEventListener('submit', event => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        handleUpdatePassword(formData.get('newPassword'), formData.get('confirmPassword'));
+    });
+
+    document.body.appendChild(modal);
+    modal.querySelector('input')?.focus();
+}
+
+async function handlePasswordReset(email) {
+    const cleanEmail = String(email || '').trim();
+    if (!cleanEmail) {
+        showToast("Ingresa tu correo.", "error");
+        return;
+    }
+
+    try {
+        const sb = getSupabaseClient();
+        console.log("[PASSWORD RESET] Enviando correo a:", cleanEmail);
+
+        const { error } = await sb.auth.resetPasswordForEmail(cleanEmail, {
+            redirectTo: window.location.origin + window.location.pathname
+        });
+
+        if (error) {
+            console.error("[PASSWORD RESET ERROR]", error);
+            logSupabaseError('auth resetPasswordForEmail', error);
+            showToast("No se pudo enviar el correo. Revisa el email.", "error");
+            return;
+        }
+
+        showToast("Te enviamos un enlace para restablecer tu contrasena.", "success");
+        closePasswordResetModal();
+    } catch (error) {
+        console.error("[PASSWORD RESET ERROR]", error);
+        showToast("No se pudo enviar el correo. Revisa el email.", "error");
+    }
+}
+
+async function handleUpdatePassword(newPassword, confirmPassword) {
+    if (!newPassword || String(newPassword).length < 6) {
+        showToast("La contrasena debe tener minimo 6 caracteres.", "error");
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        showToast("Las contrasenas no coinciden.", "error");
+        return;
+    }
+
+    try {
+        const sb = getSupabaseClient();
+        console.log("[PASSWORD UPDATE] Actualizando contrasena");
+
+        const { error } = await sb.auth.updateUser({
+            password: newPassword
+        });
+
+        if (error) {
+            console.error("[PASSWORD UPDATE ERROR]", error);
+            logSupabaseError('auth updateUser password', error);
+            showToast("No se pudo actualizar la contrasena.", "error");
+            return;
+        }
+
+        showToast("Contrasena actualizada correctamente. Ya puedes iniciar sesion.", "success");
+        closePasswordUpdateModal();
+        await sb.auth.signOut();
+        currentUser = null;
+        profileState = null;
+        workspaceState = mergeWorkspaceState();
+        sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+        showLanding();
+        window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
+    } catch (error) {
+        console.error("[PASSWORD UPDATE ERROR]", error);
+        showToast("No se pudo actualizar la contrasena.", "error");
+    }
+}
+
+function cameFromPasswordRecoveryUrl() {
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    return hash.includes('type=recovery') || search.includes('type=recovery') || hash.includes('access_token=');
+}
+
 function getWorkspaceExtrasKey() {
     return `acEdunityExtras:${currentUser?.id || currentUser?.email || 'guest'}`;
 }
@@ -7706,6 +7883,16 @@ async function initializeApp() {
 
         if (!authListenerReady) {
             sb.auth.onAuthStateChange(async (authEvent, session) => {
+                if (authEvent === 'PASSWORD_RECOVERY') {
+                    console.log('[PASSWORD UPDATE] Modo recuperacion detectado');
+                    currentUser = null;
+                    profileState = null;
+                    workspaceState = mergeWorkspaceState();
+                    showLanding();
+                    window.setTimeout(openPasswordUpdateModal, 100);
+                    return;
+                }
+
                 if (authEvent === 'SIGNED_OUT') {
                     currentUser = null;
                     profileState = null;
@@ -7722,6 +7909,10 @@ async function initializeApp() {
 
         const { error } = await sb.auth.getSession();
         if (error) throw error;
+        if (cameFromPasswordRecoveryUrl()) {
+            console.log('[PASSWORD UPDATE] Link de recuperacion detectado en URL');
+            window.setTimeout(openPasswordUpdateModal, 250);
+        }
         currentUser = null;
         profileState = null;
         workspaceState = mergeWorkspaceState();
@@ -7742,6 +7933,10 @@ async function initializeApp() {
 window.handleRegister = handleRegister;
 window.handleLogin = handleLogin;
 window.handleLogout = handleLogout;
+window.openPasswordResetModal = openPasswordResetModal;
+window.closePasswordResetModal = closePasswordResetModal;
+window.handlePasswordReset = handlePasswordReset;
+window.handleUpdatePassword = handleUpdatePassword;
 window.openSubjectForm = openSubjectForm;
 window.openTaskForm = openTaskForm;
 window.toggleTask = toggleTask;
