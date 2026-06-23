@@ -6382,6 +6382,7 @@ function initStudyPet() {
 
 const SUPABASE_URL = 'https://pskbdeqaajprfhrjortm.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_M3ABI_7yU49LkGO3Op-CLA_qsCDP7Lz';
+const RESET_REDIRECT_URL = 'https://chitoadrian.github.io/AC-Edunity-/';
 
 let supabaseClient = null;
 let workspaceState = null;
@@ -6498,9 +6499,9 @@ function openPasswordUpdateModal() {
     modal.id = 'password-update-modal';
     modal.className = 'quick-modal password-modal';
     modal.innerHTML = `
-        <div class="quick-modal-card password-modal-card" role="dialog" aria-modal="true" aria-label="Actualizar contrasena">
+        <div class="quick-modal-card password-modal-card" role="dialog" aria-modal="true" aria-label="Crear nueva contrasena">
             <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
-            <h3>Actualizar contrasena</h3>
+            <h3>Crear nueva contrasena</h3>
             <p class="password-modal-text">Escribe tu nueva contrasena para volver a entrar a AC Edunity.</p>
             <form class="quick-modal-form password-update-form">
                 <label>
@@ -6547,7 +6548,7 @@ async function handlePasswordReset(email) {
         console.log("[PASSWORD RESET] Enviando correo a:", cleanEmail);
 
         const { error } = await sb.auth.resetPasswordForEmail(cleanEmail, {
-            redirectTo: window.location.origin + window.location.pathname
+            redirectTo: RESET_REDIRECT_URL
         });
 
         if (error) {
@@ -6557,7 +6558,7 @@ async function handlePasswordReset(email) {
             return;
         }
 
-        showToast("Te enviamos un enlace para restablecer tu contrasena.", "success");
+        showToast("Te enviamos un enlace para restablecer tu contrasena. Revisa tu correo o spam.", "success");
         closePasswordResetModal();
     } catch (error) {
         console.error("[PASSWORD RESET ERROR]", error);
@@ -6599,17 +6600,17 @@ async function handleUpdatePassword(newPassword, confirmPassword) {
         workspaceState = mergeWorkspaceState();
         sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
         showLanding();
-        window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
+        window.history.replaceState({}, document.title, window.location.pathname);
     } catch (error) {
         console.error("[PASSWORD UPDATE ERROR]", error);
         showToast("No se pudo actualizar la contrasena.", "error");
     }
 }
 
-function cameFromPasswordRecoveryUrl() {
+function isPasswordRecoveryUrl() {
     const hash = window.location.hash || '';
     const search = window.location.search || '';
-    return hash.includes('type=recovery') || search.includes('type=recovery') || hash.includes('access_token=');
+    return hash.includes('type=recovery') || search.includes('type=recovery');
 }
 
 function getWorkspaceExtrasKey() {
@@ -7909,7 +7910,7 @@ async function initializeApp() {
 
         const { error } = await sb.auth.getSession();
         if (error) throw error;
-        if (cameFromPasswordRecoveryUrl()) {
+        if (isPasswordRecoveryUrl()) {
             console.log('[PASSWORD UPDATE] Link de recuperacion detectado en URL');
             window.setTimeout(openPasswordUpdateModal, 250);
         }
