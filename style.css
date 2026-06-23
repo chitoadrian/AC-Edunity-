@@ -17489,11 +17489,30 @@ body.light-theme .subject-detail-columns p {
 
 #dashboard .starter-card {
     grid-area: starter !important;
+    grid-column: 1 / -1 !important;
     width: 100% !important;
+    min-width: 0 !important;
     max-width: none !important;
     height: auto !important;
+    justify-self: stretch !important;
+    align-self: stretch !important;
     overflow: visible !important;
     padding: 28px !important;
+}
+
+#dashboard .dashboard-clean-layout > .starter-card.dashboard-panel-card {
+    grid-area: starter !important;
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+    box-sizing: border-box !important;
+}
+
+#dashboard .starter-card .panel-title {
+    width: 100% !important;
+    max-width: none !important;
 }
 
 #dashboard .weekly-progress-card {
@@ -17511,17 +17530,28 @@ body.light-theme .subject-detail-columns p {
     grid-template-columns: 1fr !important;
     gap: 14px !important;
     width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
 }
 
 #dashboard .starter-card .dashboard-steps li {
     min-height: 76px !important;
     width: 100% !important;
+    max-width: none !important;
     padding: 14px 18px !important;
     display: grid !important;
     grid-template-columns: 56px minmax(0, 1fr) 100px !important;
     align-items: center !important;
     gap: 18px !important;
     border-radius: 18px !important;
+    box-sizing: border-box !important;
+}
+
+#dashboard .starter-card .dashboard-steps li > div {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
 }
 
 #dashboard .starter-card .dashboard-steps li *,
