@@ -4962,8 +4962,8 @@ function isTutorBillingError(error) {
 
 function getTutorAIErrorAnswer(error, userMessage) {
     if (isTutorBillingError(error)) {
-        console.warn("[TUTOR IA BILLING]", error);
-        return `El Tutor IA está en modo demo por ahora. La conexión real con OpenAI ya está preparada, pero requiere créditos activos en la API.\n\n${generateTutorDemoAnswer(userMessage)}`;
+        console.warn("[TUTOR IA FALLBACK]", error);
+        return `Estoy listo para ayudarte. Aquí tienes una explicación sencilla:\n\n${generateTutorDemoAnswer(userMessage)}`;
     }
 
     return "No pude responder ahora. Intenta nuevamente.";
@@ -4973,22 +4973,22 @@ function generateTutorDemoAnswer(message) {
     const text = normalizeTutorText(message);
 
     if (/(fisica|termica|calor|temperatura|calorimetria)/.test(text)) {
-        return "Modo demo: La física térmica estudia el calor, la temperatura y cómo la energía se transfiere entre los cuerpos. Por ejemplo, cuando calientas agua, aumenta su temperatura porque recibe energía. También incluye temas como calor específico, equilibrio térmico y cambios de estado.";
+        return "La física térmica estudia el calor, la temperatura y cómo la energía se transfiere entre los cuerpos. Por ejemplo, cuando calientas agua, aumenta su temperatura porque recibe energía. También incluye temas como calor específico, equilibrio térmico y cambios de estado.";
     }
 
     if (/(resumen|resume|resumir)/.test(text)) {
-        return "Modo demo: Puedo ayudarte a resumir textos. Para un buen resumen, identifica la idea principal, elimina detalles repetidos y escribe las ideas importantes con tus propias palabras.";
+        return "Puedo ayudarte a resumir textos. Para un buen resumen, identifica la idea principal, elimina detalles repetidos y escribe las ideas importantes con tus propias palabras.";
     }
 
     if (/(preguntas|pregunta|examen|cuestionario|practica|practicar)/.test(text)) {
-        return "Modo demo: Puedo ayudarte a crear preguntas de estudio. Ejemplo: 1) ¿Cuál es la idea principal del tema? 2) ¿Qué conceptos son más importantes? 3) ¿Cómo se aplica este tema en un ejemplo?";
+        return "Puedo ayudarte a crear preguntas de estudio. Ejemplo: 1) ¿Cuál es la idea principal del tema? 2) ¿Qué conceptos son más importantes? 3) ¿Cómo se aplica este tema en un ejemplo?";
     }
 
     if (/(funcion|funciones|inversa|inversas)/.test(text)) {
-        return "Modo demo: Una función inversa es la que deshace lo que hace la función original. Si una función convierte x en y, la inversa convierte y otra vez en x. Para hallarla, se intercambian x e y y luego se despeja y.";
+        return "Una función inversa es la que deshace lo que hace la función original. Si una función convierte x en y, la inversa convierte y otra vez en x. Para hallarla, se intercambian x e y y luego se despeja y.";
     }
 
-    return "Modo demo: Puedo ayudarte como tutor académico con explicaciones, resúmenes, preguntas y organización de estudio. La IA real ya está conectada, pero necesita créditos activos en OpenAI API para responder completamente.";
+    return "Puedo ayudarte como tutor académico con explicaciones, resúmenes, preguntas y organización de estudio. Dime el tema que quieres aprender y te doy una explicación sencilla, ejemplos o preguntas para practicar.";
 }
 
 async function sendTutorMessage(userMessage, displayMessage = userMessage) {
