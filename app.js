@@ -4130,6 +4130,7 @@ let lastSubtopic = getTutorStorageValue('acStudyTutorSubtopic') || '';
 let lastIntent = '';
 let chatHistory = tutorState.history;
 let lastTutorResponse = getTutorStorageValue('acStudyLastTutorResponse') || '';
+let tutorRequestInProgress = false;
 
 function getTutorStorageValue(key) {
     try {
@@ -4257,7 +4258,7 @@ function showTutorThinking() {
 
     const thinking = document.createElement('div');
     thinking.className = 'tutor-message tutor-bot tutor-thinking';
-    thinking.innerHTML = '<strong>Tutor</strong><p>Tutor esta pensando...</p>';
+    thinking.innerHTML = '<strong>Tutor</strong><p>Pensando...</p>';
     messages.appendChild(thinking);
     messages.scrollTop = messages.scrollHeight;
     return thinking;
@@ -4874,7 +4875,76 @@ function checkTutorPracticeAnswer(answer) {
     return `Aun falta un poco. Tu respuesta no menciona claramente la idea principal de ${pending.topic}.\n\nRespuesta esperada:\n${pending.expected}\n\nIntenta responder otra vez usando una definicion y un ejemplo corto.`;
 }
 
-function generateTutorAnswer() {
+function getTutorWorkspaceContext() {
+    const state = workspaceState || loadWorkspace();
+    return {
+        subjects: Array.isArray(state.subjects) ? state.subjects : [],
+        tasks: Array.isArray(state.tasks) ? state.tasks : [],
+        resources: Array.isArray(state.resources) ? state.resources : []
+    };
+}
+
+async function requestTutorAI(userMessage) {
+    const sb = getSupabaseClient();
+    const { data, error } = await sb.functions.invoke("tutor-ai", {
+        body: {
+            message: userMessage,
+            context: getTutorWorkspaceContext()
+        }
+    });
+
+    if (error || !data?.ok) {
+        if (error) console.error("[Tutor IA] No se pudo obtener respuesta.");
+        return {
+            ok: false,
+            answer: "No pude responder ahora. Intenta nuevamente."
+        };
+    }
+
+    return {
+        ok: true,
+        answer: String(data.answer || "").trim() || "No pude responder ahora. Intenta nuevamente."
+    };
+}
+
+async function sendTutorMessage(userMessage, displayMessage = userMessage) {
+    const cleanMessage = String(userMessage || '').trim();
+    const visibleMessage = String(displayMessage || cleanMessage).trim();
+
+    if (!cleanMessage) {
+        notify('Escribe una pregunta o sube un PDF simulado.', 'error');
+        return;
+    }
+
+    if (tutorRequestInProgress) return;
+    tutorRequestInProgress = true;
+
+    const input = document.getElementById('ai-topic');
+    appendTutorMessage('user', visibleMessage);
+    addTutorHistory('user', visibleMessage);
+    if (input) input.value = '';
+
+    const thinking = showTutorThinking();
+
+    try {
+        const result = await requestTutorAI(cleanMessage);
+        if (thinking) thinking.remove();
+
+        appendTutorMessage('bot', result.answer, 'Tutor');
+        if (result.ok) {
+            addTutorHistory('assistant', result.answer);
+        }
+    } catch (error) {
+        if (thinking) thinking.remove();
+        console.error("[Tutor IA] Error al llamar la Edge Function.");
+        appendTutorMessage('bot', 'No pude responder ahora. Intenta nuevamente.', 'Tutor');
+    } finally {
+        tutorRequestInProgress = false;
+        if (input) input.focus();
+    }
+}
+
+async function generateTutorAnswer() {
     const input = document.getElementById('ai-topic');
     const topic = getAIInput();
     if (!topic) {
@@ -4882,18 +4952,7 @@ function generateTutorAnswer() {
         return;
     }
 
-    appendTutorMessage('user', topic);
-    addTutorHistory('user', topic);
-    if (input) input.value = '';
-
-    const thinking = showTutorThinking();
-    setTimeout(() => {
-        const answer = getTutorResponse(topic);
-        if (thinking) thinking.remove();
-        appendTutorMessage('bot', answer, 'Tutor');
-        addTutorHistory('assistant', answer);
-        if (input) input.focus();
-    }, 450);
+    await sendTutorMessage(topic);
 }
 
 function buildAIResponse(type, topic) {
@@ -4909,64 +4968,49 @@ function buildAIResponse(type, topic) {
     return getTutorResponse(`resumen de ${topic || tutorState.topic}`);
 }
 
-function generateSummary() {
+async function generateSummary() {
     const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || currentTutorPdf?.name || '';
     if (!topic) {
         notify('Ingresa un tema o sube un PDF para resumir.', 'error');
         return;
     }
-    appendTutorMessage('user', `Resumen de ${topic}`);
-    const answer = getTutorResponse(`resumen de ${topic}`);
-    appendTutorMessage('bot', answer, 'Tutor');
-    addTutorHistory('assistant', answer);
+    await sendTutorMessage(`Hazme un resumen de ${topic}`, `Resumen de ${topic}`);
 }
 
-function generateQuestions() {
+async function generateQuestions() {
     const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || '';
     if (!topic) {
         notify('Ingresa un tema para practicar.', 'error');
         return;
     }
-    appendTutorMessage('user', `Preguntas sobre ${topic}`);
-    const answer = getTutorResponse(`hazme preguntas sobre ${topic}`);
-    appendTutorMessage('bot', answer, 'Tutor');
-    addTutorHistory('assistant', answer);
+    await sendTutorMessage(`Hazme preguntas sobre ${topic}`, `Preguntas sobre ${topic}`);
 }
 
-function generateFlashcards() {
+async function generateFlashcards() {
     const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || '';
     if (!topic) {
         notify('Ingresa un tema para crear flashcards.', 'error');
         return;
     }
-    appendTutorMessage('user', `Flashcards de ${topic}`);
-    const answer = getTutorResponse(`flashcards de ${topic}`);
-    appendTutorMessage('bot', answer, 'Tutor');
-    addTutorHistory('assistant', answer);
+    await sendTutorMessage(`Crea flashcards sobre ${topic}`, `Flashcards de ${topic}`);
 }
 
-function generateSimpleExplanation() {
+async function generateSimpleExplanation() {
     const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || '';
     if (!topic) {
         notify('Ingresa un tema para explicar.', 'error');
         return;
     }
-    appendTutorMessage('user', `Explicame ${topic}`);
-    const answer = getTutorResponse(`explicame ${topic}`);
-    appendTutorMessage('bot', answer, 'Tutor');
-    addTutorHistory('assistant', answer);
+    await sendTutorMessage(`Explicame ${topic}`, `Explicame ${topic}`);
 }
 
-function generatePracticeCards() {
+async function generatePracticeCards() {
     const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || '';
     if (!topic) {
         notify('Escribe un tema o sube un PDF para practicar.', 'error');
         return;
     }
-    appendTutorMessage('user', `Practicar ${topic}`);
-    const answer = getTutorResponse(`preguntas para practicar ${topic}`);
-    appendTutorMessage('bot', answer, 'Tutor');
-    addTutorHistory('assistant', answer);
+    await sendTutorMessage(`Genera preguntas de practica sobre ${topic}`, `Practicar ${topic}`);
 }
 
 // ============================================
