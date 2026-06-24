@@ -3873,8 +3873,10 @@ function loadTutorPDF(event) {
         topic: file.name.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ')
     };
     setTutorTopic(currentTutorPdf.topic);
+    tutorState.uploadedDemoText = currentTutorPdf.topic;
 
     appendTutorFileMessage(file);
+    appendTutorMessage('bot', 'Por ahora, pega el texto del PDF aqui y te ayudo a resumirlo, crear preguntas o estudiar.', 'Tutor');
     if (topic) topic.focus();
 
     notify(`PDF "${file.name}" agregado al chat.`, 'success');
@@ -3883,7 +3885,7 @@ function loadTutorPDF(event) {
 function generateTutorAnswer() {
     const topic = getAIInput();
     if (!topic) {
-        notify('Escribe una pregunta o sube un PDF simulado.', 'error');
+        notify('Escribe una pregunta o pega un texto.', 'error');
         return;
     }
 
@@ -3992,11 +3994,11 @@ function getTutorExplanation(topic, originalPrompt) {
     if (/interes compuesto|interes|compuesto/.test(plainTopic)) {
         setTutorTopic('interes compuesto');
         if (/ejercicio|ejercicios|practica|practicar|respuesta|respuestas|comprobar|resolver/.test(prompt)) {
-            return `Claro. Aqui tienes 5 ejercicios de interes compuesto para resolver. Primero intenta hacerlos tu, y al final te dejo las respuestas para comprobar.\n\nFormula:\nA = P(1 + r)^t\n\nDonde:\nA = monto final\nP = capital inicial\nr = tasa de interes en decimal\nt = tiempo o numero de periodos\n\nEjercicios:\n\n1. Una persona deposita 100 dolares al 10% anual durante 2 anos. Cuanto dinero tendra al final?\n\n2. Si inviertes 250 dolares al 8% anual durante 3 anos, cual sera el monto final?\n\n3. Un estudiante ahorra 500 dolares en una cuenta que paga 5% anual durante 4 anos. Cuanto tendra despues de ese tiempo?\n\n4. Una deuda de 300 dolares crece con interes compuesto del 12% anual durante 2 anos. Cuanto se debera pagar al final?\n\n5. Si una inversion de 1000 dolares crece al 6% anual durante 5 anos, cual sera el monto final aproximado?\n\nRespuestas para comprobar:\n\n1. A = 100(1 + 0.10)^2 = 121.00 dolares.\n\n2. A = 250(1 + 0.08)^3 = 314.93 dolares aproximadamente.\n\n3. A = 500(1 + 0.05)^4 = 607.75 dolares aproximadamente.\n\n4. A = 300(1 + 0.12)^2 = 376.32 dolares.\n\n5. A = 1000(1 + 0.06)^5 = 1338.23 dolares aproximadamente.\n\nComo comprobarlos:\nConvierte el porcentaje a decimal, suma 1, eleva al tiempo y multiplica por el capital inicial.`;
+            return `Claro. Aqui tienes 5 ejercicios de interes compuesto para resolver. Primero intenta hacerlos tu, y al final te dejo las respuestas para comprobar.\n\nFormula:\nA = P(1 + r)^t\n\nDonde:\nA = monto final\nP = capital inicial\nr = tasa de interes en decimal\nt = tiempo o numero de periodos\n\nEjercicios:\n\n1. Una persona deposita 100 dolares al 10% anual durante 2 anos. Cuanto dinero tendra al final?\n\n2. Si inviertes 250 dolares al 8% anual durante 3 anos, cual sera el monto final?\n\n3. Un estudiante ahorra 500 dolares en una cuenta que genera 5% anual durante 4 anos. Cuanto tendra despues de ese tiempo?\n\n4. Una deuda de 300 dolares crece con interes compuesto del 12% anual durante 2 anos. Cual sera el monto final?\n\n5. Si una inversion de 1000 dolares crece al 6% anual durante 5 anos, cual sera el monto final aproximado?\n\nRespuestas para comprobar:\n\n1. A = 100(1 + 0.10)^2 = 121.00 dolares.\n\n2. A = 250(1 + 0.08)^3 = 314.93 dolares aproximadamente.\n\n3. A = 500(1 + 0.05)^4 = 607.75 dolares aproximadamente.\n\n4. A = 300(1 + 0.12)^2 = 376.32 dolares.\n\n5. A = 1000(1 + 0.06)^5 = 1338.23 dolares aproximadamente.\n\nComo comprobarlos:\nConvierte el porcentaje a decimal, suma 1, eleva al tiempo y multiplica por el capital inicial.`;
         }
 
         if (/vida cotidiana|ocasiones|utilizar|usar|sirve|aplicar|aplicarlo/.test(prompt)) {
-            return `El interes compuesto se usa en muchas situaciones de la vida cotidiana porque explica como crece una cantidad cuando se acumulan intereses sobre intereses.\n\nOcasiones donde se utiliza:\n1. Ahorros bancarios:\nSi guardas dinero en una cuenta que genera intereses, cada periodo el banco calcula intereses sobre el dinero inicial mas lo que ya ganaste.\n\n2. Inversiones:\nCuando inviertes en fondos, certificados o planes de ahorro, el dinero puede crecer con interes compuesto si las ganancias se reinvierten.\n\n3. Prestamos:\nAlgunos prestamos calculan intereses sobre saldos acumulados. Por eso, si no pagas a tiempo, la deuda puede aumentar mas rapido.\n\n4. Tarjetas de credito:\nSi dejas una deuda pendiente, los intereses pueden sumarse al saldo y luego generar mas intereses. Esto hace que la deuda crezca.\n\n5. Planes de retiro:\nMientras mas temprano empiezas a ahorrar, mas tiempo tiene el interes compuesto para hacer crecer el dinero.\n\nEjemplo de vida diaria:\nSi ahorras 100 dolares al 10% anual y no retiras las ganancias, despues del primer ano tienes 110. En el segundo ano ya no ganas interes sobre 100, sino sobre 110. Por eso crece mas rapido.\n\nConclusion:\nEl interes compuesto sirve para entender como crece el dinero con el tiempo, tanto para ganar mas en ahorros e inversiones como para evitar que una deuda aumente demasiado.`;
+            return `El interes compuesto se usa en muchas situaciones de la vida cotidiana porque explica como crece una cantidad cuando se acumulan intereses sobre intereses.\n\nOcasiones donde se utiliza:\n1. Ahorros bancarios:\nSi guardas dinero en una cuenta que genera intereses, cada periodo el banco calcula intereses sobre el dinero inicial mas lo que ya ganaste.\n\n2. Inversiones:\nCuando inviertes en fondos, certificados o planes de ahorro, el dinero puede crecer con interes compuesto si las ganancias se reinvierten.\n\n3. Prestamos:\nAlgunos prestamos calculan intereses sobre saldos acumulados. Por eso, si se deja una deuda sin abonar a tiempo, puede aumentar mas rapido.\n\n4. Tarjetas de credito:\nSi dejas una deuda pendiente, los intereses pueden sumarse al saldo y luego generar mas intereses. Esto hace que la deuda crezca.\n\n5. Planes de retiro:\nMientras mas temprano empiezas a ahorrar, mas tiempo tiene el interes compuesto para hacer crecer el dinero.\n\nEjemplo de vida diaria:\nSi ahorras 100 dolares al 10% anual y no retiras las ganancias, despues del primer ano tienes 110. En el segundo ano ya no ganas interes sobre 100, sino sobre 110. Por eso crece mas rapido.\n\nConclusion:\nEl interes compuesto sirve para entender como crece el dinero con el tiempo, tanto para ganar mas en ahorros e inversiones como para evitar que una deuda aumente demasiado.`;
         }
 
         return `Interes compuesto\n\nQue es:\nEl interes compuesto es una forma de calcular ganancias o deudas donde los intereses se suman al capital inicial y despues tambien generan nuevos intereses. Por eso se dice que es "interes sobre interes".\n\nFormula principal:\nMonto final = Capital inicial x (1 + tasa) ^ tiempo\n\nTambien se puede escribir asi:\nA = P(1 + r)^t\n\nDonde:\nP = capital inicial, es decir, el dinero con el que empiezas.\nr = tasa de interes por periodo, escrita en decimal. Por ejemplo, 10% = 0.10.\nt = numero de periodos.\nA = monto final despues de aplicar el interes compuesto.\n\nComo funciona:\nSi inviertes 100 dolares al 10% anual durante 3 anos:\nAno 1: 100 x 1.10 = 110\nAno 2: 110 x 1.10 = 121\nAno 3: 121 x 1.10 = 133.10\n\nResultado:\nAl final tendrias 133.10 dolares. La ganancia no fue solo 30, porque cada ano el interes se calculo sobre una cantidad mas grande.\n\nEn que se usa:\n1. Ahorros e inversiones.\n2. Prestamos y deudas.\n3. Tarjetas de credito.\n4. Cuentas bancarias.\n5. Crecimiento de dinero en el tiempo.\n\nDiferencia con interes simple:\nEn el interes simple, el interes siempre se calcula sobre el capital inicial.\nEn el interes compuesto, el interes se calcula sobre el capital inicial mas los intereses acumulados.\n\nEjemplo rapido:\nSi tienes 200 dolares al 5% durante 2 anos:\nA = 200(1 + 0.05)^2\nA = 200(1.05)^2\nA = 200 x 1.1025\nA = 220.50\n\nConclusion:\nEl interes compuesto es importante porque muestra como el dinero puede crecer mas rapido con el tiempo. Mientras mayor sea la tasa o mas largo sea el tiempo, mas grande sera el monto final.`;
@@ -4122,6 +4124,10 @@ function generateTrueFalse() {
 const tutorState = {
     mode: getTutorStorageValue('acStudyTutorMode') || 'explain',
     topic: getTutorStorageValue('acStudyTutorTopic') || '',
+    messages: [],
+    lastTopic: getTutorStorageValue('acStudyTutorTopic') || '',
+    lastIntent: '',
+    uploadedDemoText: '',
     history: getTutorHistory(),
     pendingQuestion: getTutorPendingQuestion()
 };
@@ -4188,6 +4194,7 @@ function rememberTutorTopic(topic) {
     const cleanTopic = String(topic || '').trim();
     if (!cleanTopic) return;
     tutorState.topic = cleanTopic;
+    tutorState.lastTopic = cleanTopic;
     lastTopic = cleanTopic;
     currentTutorTopic = cleanTopic;
     setTutorStorageValue('acStudyTutorTopic', cleanTopic);
@@ -4202,6 +4209,8 @@ function rememberTutorSubtopic(subtopic) {
 
 function setTutorMode(mode, button) {
     tutorState.mode = mode || 'explain';
+    tutorState.lastIntent = tutorState.mode;
+    lastIntent = tutorState.mode;
     setTutorStorageValue('acStudyTutorMode', tutorState.mode);
 
     document.querySelectorAll('.tutor-tabs button').forEach(tab => tab.classList.remove('active'));
@@ -4209,6 +4218,10 @@ function setTutorMode(mode, button) {
 
     const label = document.getElementById('tutor-mode-label');
     if (label) label.textContent = `Modo ${getTutorModeName(tutorState.mode)}`;
+
+    if (button && tutorState.mode !== 'explain') {
+        handleTutorModeAction(tutorState.mode);
+    }
 }
 
 function getTutorModeName(mode) {
@@ -4227,14 +4240,33 @@ function clearTutorChat() {
     if (!messages) return;
 
     tutorState.history = [];
+    tutorState.messages = [];
+    tutorState.lastTopic = '';
+    tutorState.lastIntent = '';
+    tutorState.uploadedDemoText = '';
+    tutorState.topic = '';
     tutorState.pendingQuestion = null;
+    lastTopic = '';
+    lastIntent = '';
+    lastSubtopic = '';
+    chatHistory = tutorState.history;
+    lastTutorResponse = '';
+    currentTutorTopic = '';
+    currentTutorPdf = null;
     saveTutorHistory();
     saveTutorPendingQuestion();
+    try {
+        localStorage.removeItem('acStudyTutorTopic');
+        localStorage.removeItem('acStudyTutorSubtopic');
+        localStorage.removeItem('acStudyLastTutorResponse');
+    } catch (error) {
+        // Limpieza opcional de memoria local del Tutor.
+    }
 
     messages.innerHTML = `
         <div class="tutor-message tutor-bot">
             <strong>Tutor</strong>
-            <p>Chat limpio. Escribe un tema o una pregunta y seguire el contexto de la conversacion.</p>
+            <p>Chat limpio. Escribe un tema o una pregunta y empezamos desde cero.</p>
         </div>
     `;
 }
@@ -4249,7 +4281,87 @@ function addTutorHistory(role, content) {
     });
     tutorState.history = tutorState.history.slice(-16);
     chatHistory = tutorState.history;
+    tutorState.messages.push({ role, content });
+    tutorState.messages = tutorState.messages.slice(-10);
     saveTutorHistory();
+}
+
+function detectTutorTopic(message) {
+    const text = normalizeTutorText(message);
+
+    if (/(fisica|termica|calor|temperatura|calorimetria)/.test(text)) return 'fisica termica';
+    if (/(funcion|funciones|inversa|inversas)/.test(text)) return 'funciones inversas';
+    if (/(multiplicacion|multiplicaciones|multiplicar)/.test(text)) return 'multiplicaciones';
+    if (/(matriz|matrices)/.test(text)) return 'matrices';
+    if (/(sql|base de datos|bases de datos)/.test(text)) return 'SQL y bases de datos';
+    if (/(resumen|resume|resumir)/.test(text)) return tutorState.lastTopic || tutorState.topic || 'resumen academico';
+    if (/(preguntas|pregunta|examen|ejercicios|practicar|practica)/.test(text)) return tutorState.lastTopic || tutorState.topic || 'practica academica';
+
+    return tutorState.lastTopic || tutorState.topic || '';
+}
+
+function isFollowUpQuestion(message) {
+    const text = normalizeTutorText(message);
+    return /(eso|esto|lo anterior|lo puedo usar|en que situaciones|vida cotidiana|dame ejemplos|otro ejemplo|explicame mejor|hazme ejercicios|dame ejercicios|sobre eso|de eso|como se usa|para que sirve|cuando se usa)/.test(text);
+}
+
+function updateTutorDemoContext(message) {
+    const detectedTopic = detectTutorTopic(message);
+    const followUp = isFollowUpQuestion(message);
+
+    if (detectedTopic && (!followUp || !tutorState.lastTopic)) {
+        rememberTutorTopic(detectedTopic);
+    }
+
+    const intent = detectTutorIntent(message);
+    tutorState.lastIntent = intent;
+    lastIntent = intent;
+    return {
+        topic: tutorState.lastTopic || tutorState.topic || detectedTopic,
+        intent,
+        isFollowUp: followUp
+    };
+}
+
+function buildTutorFlashcards(topic) {
+    const cleanTopic = topic || 'tu tema';
+    if (normalizeTutorText(cleanTopic).includes('multiplic')) {
+        return `Flashcards de multiplicaciones:\n\n1. Pregunta: Que significa multiplicar?\nRespuesta: Sumar varias veces el mismo numero.\n\n2. Pregunta: Cuanto es 6 x 4?\nRespuesta: 24.\n\n3. Pregunta: Que estrategia ayuda?\nRespuesta: Separar decenas y unidades para calcular mejor.`;
+    }
+    if (normalizeTutorText(cleanTopic).includes('fisica')) {
+        return `Flashcards de fisica termica:\n\n1. Pregunta: Que es calor?\nRespuesta: Energia que se transfiere por diferencia de temperatura.\n\n2. Pregunta: Que mide la temperatura?\nRespuesta: Que tan caliente o frio esta un cuerpo.\n\n3. Pregunta: Que es equilibrio termico?\nRespuesta: Cuando dos cuerpos alcanzan la misma temperatura.`;
+    }
+    return `Flashcards de ${cleanTopic}:\n\n1. Pregunta: Que es ${cleanTopic}?\nRespuesta: Es el concepto principal que debes comprender.\n\n2. Pregunta: Para que sirve?\nRespuesta: Para resolver actividades, explicar ideas y aplicar el tema en ejemplos.\n\n3. Pregunta: Como lo estudio?\nRespuesta: Lee la definicion, revisa un ejemplo y practica con preguntas.`;
+}
+
+function buildTutorExam(topic) {
+    const cleanTopic = topic || 'tu tema';
+    if (normalizeTutorText(cleanTopic).includes('multiplic')) {
+        return `Mini examen de multiplicaciones:\n\n1. Resuelve 12 x 4.\n2. Resuelve 25 x 3.\n3. Explica por que 5 x 6 es igual a 6 x 5.\n4. Resuelve 18 x 5.\n5. Escribe un problema cotidiano que use multiplicacion.`;
+    }
+    if (normalizeTutorText(cleanTopic).includes('fisica')) {
+        return `Mini examen de fisica termica:\n\n1. Cual es la diferencia entre calor y temperatura?\n2. Que significa equilibrio termico?\n3. Da un ejemplo de transferencia de calor en casa.\n4. Que pasa cuando el hielo recibe calor?\n5. Para que sirve estudiar los cambios de estado?`;
+    }
+    return `Mini examen de ${cleanTopic}:\n\n1. Define el tema con tus palabras.\n2. Menciona dos conceptos importantes.\n3. Da un ejemplo sencillo.\n4. Explica para que sirve.\n5. Crea una pregunta que podria salir en clase.`;
+}
+
+function handleTutorModeAction(mode) {
+    const topic = tutorState.lastTopic || tutorState.topic || '';
+    if (!topic) {
+        appendTutorMessage('bot', mode === 'practice'
+            ? 'Primero dime que tema quieres practicar.'
+            : `Primero dime que tema quieres ${getTutorModeName(mode)}.`, 'Tutor');
+        return;
+    }
+
+    const actions = {
+        practice: `Dame ejercicios de ${topic}`,
+        review: `Repasa ${topic}`,
+        flashcards: `Flashcards de ${topic}`,
+        exam: `Examen de ${topic}`
+    };
+
+    sendTutorMessage(actions[mode] || `Explicame ${topic}`, getTutorModeName(mode));
 }
 
 function showTutorThinking() {
@@ -4906,23 +5018,26 @@ async function requestTutorAI(userMessage) {
     console.log("[TUTOR IA RESPONSE]", { data, error });
 
     if (error) {
+        const isFallback = isTutorBillingError(error);
         const answer = getTutorAIErrorAnswer(error, userMessage);
-        if (!isTutorBillingError(error)) {
+        if (!isFallback) {
             console.error("[TUTOR IA INVOKE ERROR]", error);
         }
         return {
-            ok: false,
+            ok: isFallback,
             answer
         };
     }
 
     if (!data || data.ok === false) {
-        const answer = getTutorAIErrorAnswer(data?.error || data, userMessage);
-        if (!isTutorBillingError(data?.error || data)) {
+        const dataError = data?.error || data;
+        const isFallback = isTutorBillingError(dataError);
+        const answer = getTutorAIErrorAnswer(dataError, userMessage);
+        if (!isFallback) {
             console.error("[TUTOR IA DATA ERROR]", data);
         }
         return {
-            ok: false,
+            ok: isFallback,
             answer
         };
     }
@@ -4971,21 +5086,66 @@ function getTutorAIErrorAnswer(error, userMessage) {
 
 function generateTutorDemoAnswer(message) {
     const text = normalizeTutorText(message);
+    const context = updateTutorDemoContext(message);
+    const currentTopic = normalizeTutorText(context.topic || tutorState.lastTopic || tutorState.topic);
+    const wantsDailyUse = /(situaciones|vida cotidiana|usar|utilizar|aplicar|sirve|para que|como se usa|cuando se usa)/.test(text) || (context.isFollowUp && /(uso|usar|utilizar|aplicar|situacion|ejemplo)/.test(text));
+    const wantsExercises = /(ejercicios|practicar|practica|problemas|resolver)/.test(text) || context.intent === 'exercises' || context.intent === 'practice';
+    const wantsFlashcards = /(flashcards|tarjetas)/.test(text) || context.intent === 'flashcards';
+    const wantsExam = /(examen|cuestionario|evaluacion)/.test(text) || context.intent === 'exam';
+    const wantsReview = /(resumen|resume|resumir|repasar|repaso)/.test(text) || context.intent === 'review';
 
-    if (/(fisica|termica|calor|temperatura|calorimetria)/.test(text)) {
+    if (wantsFlashcards) {
+        return buildTutorFlashcards(context.topic || tutorState.lastTopic || tutorState.topic || 'tu tema');
+    }
+
+    if (wantsExam) {
+        return buildTutorExam(context.topic || tutorState.lastTopic || tutorState.topic || 'tu tema');
+    }
+
+    if (currentTopic === 'fisica termica') {
+        if (wantsDailyUse) {
+            return "La fisica termica se usa en muchas situaciones diarias. Por ejemplo, cuando hierves agua, cuando una cuchara metalica se calienta dentro de una sopa, cuando el hielo se derrite o cuando usas un termo para conservar una bebida caliente. En todos esos casos aparecen conceptos como calor, temperatura, transferencia de energia y equilibrio termico.";
+        }
+        if (wantsExercises) {
+            return "Aqui tienes ejercicios sencillos sobre fisica termica:\n\n1. Explica que diferencia hay entre calor y temperatura.\n2. Menciona 3 ejemplos de transferencia de calor en casa.\n3. Por que el hielo se derrite cuando lo dejamos fuera del congelador?\n4. Que pasa con la temperatura del agua cuando recibe calor?\n5. Explica que es el equilibrio termico con un ejemplo.";
+        }
         return "La física térmica estudia el calor, la temperatura y cómo la energía se transfiere entre los cuerpos. Por ejemplo, cuando calientas agua, aumenta su temperatura porque recibe energía. También incluye temas como calor específico, equilibrio térmico y cambios de estado.";
     }
 
-    if (/(resumen|resume|resumir)/.test(text)) {
+    if (currentTopic === 'multiplicaciones') {
+        if (wantsExercises || context.isFollowUp) {
+            return "Claro, aqui tienes ejercicios de multiplicaciones:\n\n1. 12 x 4 = ____\n2. 25 x 3 = ____\n3. 18 x 5 = ____\n4. 36 x 2 = ____\n5. 14 x 6 = ____\n\nConsejo: multiplica primero las unidades y luego las decenas.";
+        }
+        return "La multiplicacion es una suma repetida. Por ejemplo, 4 x 3 significa sumar 4 tres veces: 4 + 4 + 4 = 12.";
+    }
+
+    if (currentTopic === 'funciones inversas') {
+        if (wantsExercises || context.isFollowUp) {
+            return "Practiquemos funciones inversas:\n\n1. Si f(x) = x + 3, halla f^-1(x).\n2. Si f(x) = 2x, halla f^-1(x).\n3. Si f(x) = x - 5, halla f^-1(x).\n\nRecuerda: cambia f(x) por y, intercambia x con y y despeja y.";
+        }
+        return "Una funcion inversa deshace lo que hace la funcion original. Si una funcion convierte x en y, la inversa convierte y nuevamente en x.";
+    }
+
+    if (currentTopic === 'matrices') {
+        if (wantsExercises) {
+            return "Ejercicios de matrices:\n\n1. Escribe una matriz de 2 filas y 3 columnas.\n2. Suma dos matrices 2x2 con valores sencillos.\n3. Identifica la posicion del elemento a23.\n4. Explica para que sirve una matriz en organizacion de datos.\n5. Crea una matriz con notas de 3 estudiantes.";
+        }
+        return "Una matriz es una tabla de numeros organizada en filas y columnas. Sirve para ordenar datos, resolver sistemas de ecuaciones y representar informacion de forma compacta.";
+    }
+
+    if (currentTopic === 'sql y bases de datos') {
+        if (wantsExercises) {
+            return "Practica de SQL y bases de datos:\n\n1. Que es una tabla?\n2. Para que sirve una clave primaria?\n3. Escribe una consulta SELECT sencilla.\n4. Explica la diferencia entre fila y columna.\n5. Que dato guardarias en una tabla de estudiantes?";
+        }
+        return "SQL es un lenguaje para consultar y administrar bases de datos. Una base de datos organiza informacion en tablas, filas y columnas para guardar, buscar y relacionar datos.";
+    }
+
+    if (wantsReview) {
         return "Puedo ayudarte a resumir textos. Para un buen resumen, identifica la idea principal, elimina detalles repetidos y escribe las ideas importantes con tus propias palabras.";
     }
 
-    if (/(preguntas|pregunta|examen|cuestionario|practica|practicar)/.test(text)) {
+    if (wantsExercises || /(preguntas|pregunta)/.test(text)) {
         return "Puedo ayudarte a crear preguntas de estudio. Ejemplo: 1) ¿Cuál es la idea principal del tema? 2) ¿Qué conceptos son más importantes? 3) ¿Cómo se aplica este tema en un ejemplo?";
-    }
-
-    if (/(funcion|funciones|inversa|inversas)/.test(text)) {
-        return "Una función inversa es la que deshace lo que hace la función original. Si una función convierte x en y, la inversa convierte y otra vez en x. Para hallarla, se intercambian x e y y luego se despeja y.";
     }
 
     return "Puedo ayudarte como tutor académico con explicaciones, resúmenes, preguntas y organización de estudio. Dime el tema que quieres aprender y te doy una explicación sencilla, ejemplos o preguntas para practicar.";
@@ -4996,7 +5156,7 @@ async function sendTutorMessage(userMessage, displayMessage = userMessage) {
     const visibleMessage = String(displayMessage || cleanMessage).trim();
 
     if (!cleanMessage) {
-        notify('Escribe una pregunta o sube un PDF simulado.', 'error');
+        notify('Escribe una pregunta o pega un texto.', 'error');
         return;
     }
 
@@ -5025,6 +5185,7 @@ async function sendTutorMessage(userMessage, displayMessage = userMessage) {
             console.error("[TUTOR IA UNEXPECTED ERROR]", error);
         }
         appendTutorMessage('bot', answer, 'Tutor');
+        addTutorHistory('assistant', answer);
     } finally {
         tutorRequestInProgress = false;
         if (input) input.focus();
@@ -5035,7 +5196,7 @@ async function generateTutorAnswer() {
     const input = document.getElementById('ai-topic');
     const topic = getAIInput();
     if (!topic) {
-        notify('Escribe una pregunta o sube un PDF simulado.', 'error');
+        notify('Escribe una pregunta o pega un texto.', 'error');
         return;
     }
 
@@ -5056,34 +5217,34 @@ function buildAIResponse(type, topic) {
 }
 
 async function generateSummary() {
-    const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || currentTutorPdf?.name || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || currentTutorPdf?.name || '';
     if (!topic) {
-        notify('Ingresa un tema o sube un PDF para resumir.', 'error');
+        notify('Primero dime que tema quieres repasar.', 'error');
         return;
     }
     await sendTutorMessage(`Hazme un resumen de ${topic}`, `Resumen de ${topic}`);
 }
 
 async function generateQuestions() {
-    const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || '';
     if (!topic) {
-        notify('Ingresa un tema para practicar.', 'error');
+        notify('Primero dime que tema quieres practicar.', 'error');
         return;
     }
     await sendTutorMessage(`Hazme preguntas sobre ${topic}`, `Preguntas sobre ${topic}`);
 }
 
 async function generateFlashcards() {
-    const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || '';
     if (!topic) {
-        notify('Ingresa un tema para crear flashcards.', 'error');
+        notify('Primero dime que tema quieres usar para flashcards.', 'error');
         return;
     }
     await sendTutorMessage(`Crea flashcards sobre ${topic}`, `Flashcards de ${topic}`);
 }
 
 async function generateSimpleExplanation() {
-    const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || '';
     if (!topic) {
         notify('Ingresa un tema para explicar.', 'error');
         return;
@@ -5092,9 +5253,9 @@ async function generateSimpleExplanation() {
 }
 
 async function generatePracticeCards() {
-    const topic = getAIInput() || tutorState.topic || currentTutorPdf?.topic || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || '';
     if (!topic) {
-        notify('Escribe un tema o sube un PDF para practicar.', 'error');
+        notify('Primero dime que tema quieres practicar.', 'error');
         return;
     }
     await sendTutorMessage(`Genera preguntas de practica sobre ${topic}`, `Practicar ${topic}`);
