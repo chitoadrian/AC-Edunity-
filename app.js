@@ -4834,7 +4834,7 @@ function shouldUseLastSubtopic(intent, message) {
     const text = normalizeTutorText(message);
     if (findKnowledgeTopic(text)) return false;
     if (/concepto|conceptos|ideas clave|puntos clave/.test(text)) return false;
-    return ['example', 'practice', 'exercises', 'flashcards', 'review', 'definition', 'explain', 'steps'].includes(intent);
+    return ['example', 'practice', 'exercises', 'flashcards', 'review', 'definition', 'explain', 'steps', 'formula', 'formulas'].includes(intent);
 }
 
 function buildSubtopicReply(profile, subtopic, intent) {
@@ -4986,7 +4986,7 @@ function buildTutorSimulatedReply(message) {
     if (intent === 'example') {
         return `${pdfIntro}ejemplo de ${profile.title}:\n\n${profile.example}\n\nUso en la vida cotidiana:\n${profile.uses}`;
     }
-    if (intent === 'formula') {
+    if (intent === 'formula' || intent === 'formulas') {
         return `${pdfIntro}formula o regla de ${profile.title}:\n\n${profile.formula}\n\nComo interpretarla:\n${profile.explanation}\n\nEjemplo:\n${profile.example}`;
     }
     if (intent === 'steps') {
@@ -5360,6 +5360,293 @@ function buildAlternativeTutorAnswer(topic, intent, message) {
     }
 
     return `Lo vemos de otra forma sobre ${cleanTopic}:\n\nEn vez de memorizar, intenta responder tres cosas:\n\n1. Que significa ${cleanTopic}?\n2. Para que se usa?\n3. Como se aplicaria en un ejemplo?\n\nSi puedes responder esas tres, ya tienes una base fuerte. Ahora dime si quieres ejercicios o ejemplos mas concretos.`;
+}
+
+// Capa final del Tutor demo: distingue operaciones, formulas y teoria escolar.
+function detectTutorIntent(message) {
+    const text = normalizeTutorText(message);
+
+    if (tutorState.pendingQuestion && !/(otra pregunta|hazme preguntas|preguntas|cuestionario|examen|flashcards|resumen|explica|ejercicio|calcula|resolver)/.test(text)) {
+        return 'answer-check';
+    }
+    if (/(resolver|resuelve|calcula|calcular|resultado|hallar|halla)/.test(text)) return 'solve';
+    if (/(ejercicio|ejercicios|practicar|practica|operaciones|problema|problemas)/.test(text)) return 'practice';
+    if (/(formula|formulas|ecuacion|regla)/.test(text)) return 'formulas';
+    if (/(resumen|resume|resumir|repasar|repaso)/.test(text)) return 'summary';
+    if (/(ejemplo|ejemplos)/.test(text)) return 'examples';
+    if (/(pregunta|preguntas|examen|cuestionario|evaluacion|prueba)/.test(text)) return 'quiz';
+    if (/(flashcard|flashcards|tarjeta|tarjetas)/.test(text)) return 'flashcards';
+    if (/(que es|que son|explica|explicame|concepto|definicion|define|no entiendo|ayuda)/.test(text)) return 'explain';
+    if (/(vida cotidiana|situaciones|sirve|usar|utilizar|aplica|aplicar|uso|usos|para que|cuando se usa|como se usa)/.test(text)) return 'uses';
+
+    if (tutorState.mode === 'practice') return 'practice';
+    if (tutorState.mode === 'review') return 'summary';
+    if (tutorState.mode === 'flashcards') return 'flashcards';
+    if (tutorState.mode === 'exam') return 'quiz';
+    return 'general';
+}
+
+function normalizeTutorTopic(topic) {
+    const text = normalizeTutorText(topic);
+
+    if (/(fisica termica|termica|termodinamica|calor|temperatura|calorimetria)/.test(text)) return 'fisica';
+    if (/multiplic/.test(text)) return 'multiplicaciones';
+    if (/divisi/.test(text)) return 'divisiones';
+    if (/(suma|sumas)/.test(text)) return 'sumas';
+    if (/(resta|restas)/.test(text)) return 'restas';
+    if (/(fraccion|fracciones)/.test(text)) return 'fracciones';
+    if (/(ecuacion|ecuaciones)/.test(text)) return 'ecuaciones';
+    if (/funci/.test(text) && /inversa/.test(text)) return 'funciones inversas';
+    if (/(funciones geometricas|funcion geometrica|geometria con funciones)/.test(text)) return 'funciones geometricas';
+    if (/(funciones cuadraticas|funcion cuadratica|parabola)/.test(text)) return 'funciones cuadraticas';
+    if (/(sql|base de datos|bases de datos)/.test(text)) return 'SQL';
+    if (/quim/.test(text)) return 'quimica';
+    if (/bio/.test(text)) return 'biologia';
+    if (/program/.test(text)) return 'programacion';
+    if (/historia/.test(text)) return 'historia';
+    if (/emprendimiento/.test(text)) return 'emprendimiento';
+    if (/contabilidad/.test(text)) return 'contabilidad';
+    if (/(lengua|literatura)/.test(text)) return 'lengua y literatura';
+    if (/operaciones/.test(text)) return 'operaciones';
+    if (/porcentaje/.test(text)) return 'porcentajes';
+
+    return text.trim();
+}
+
+function detectTutorTopic(message) {
+    const text = normalizeTutorText(message);
+    const directTopics = [
+        'fisica termica', 'fisica', 'calor', 'temperatura',
+        'multiplicaciones', 'multiplicacion', 'divisiones', 'division',
+        'sumas', 'suma', 'restas', 'resta', 'operaciones',
+        'fracciones', 'fraccion', 'ecuaciones', 'ecuacion',
+        'funciones inversas', 'funcion inversa', 'funciones geometricas',
+        'matrices', 'sql', 'base de datos', 'quimica', 'biologia',
+        'historia', 'emprendimiento', 'contabilidad', 'lengua',
+        'literatura', 'programacion', 'porcentajes'
+    ];
+
+    const direct = directTopics.find(topic => text.includes(normalizeTutorText(topic)));
+    if (direct) return normalizeTutorTopic(direct);
+
+    const patterns = [
+        /resumen de (.+)/i,
+        /ejercicios de (.+)/i,
+        /operaciones de (.+)/i,
+        /preguntas de (.+)/i,
+        /explicame (.+)/i,
+        /que es (.+)/i,
+        /formulas de (.+)/i,
+        /concepto de (.+)/i,
+        /calcula (.+)/i,
+        /resolver (.+)/i
+    ];
+
+    for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+            return normalizeTutorTopic(match[1].replace(/[?.!]/g, '').trim());
+        }
+    }
+
+    return '';
+}
+
+function detectSubjectType(message, topic = '') {
+    const text = normalizeTutorText(`${message} ${topic}`);
+    const numericKeywords = [
+        'numero', 'numeros', 'operacion', 'operaciones', 'suma', 'sumas',
+        'resta', 'restas', 'multiplicacion', 'multiplicaciones', 'division',
+        'divisiones', 'fraccion', 'fracciones', 'decimal', 'decimales',
+        'porcentaje', 'porcentajes', 'ecuacion', 'ecuaciones', 'calcular',
+        'calculo', 'matematica', 'algebra'
+    ];
+    const formulaKeywords = [
+        'fisica', 'quimica', 'calor', 'temperatura', 'velocidad',
+        'fuerza', 'energia', 'densidad', 'presion', 'movimiento',
+        'formula', 'formulas'
+    ];
+    const theoryKeywords = [
+        'historia', 'biologia', 'lengua', 'literatura', 'emprendimiento',
+        'religion', 'ciudadania', 'derecho', 'teoria', 'concepto',
+        'definicion', 'resumen', 'contabilidad'
+    ];
+
+    if (numericKeywords.some(keyword => text.includes(keyword))) return 'numeric';
+    if (formulaKeywords.some(keyword => text.includes(keyword))) return 'formula';
+    if (theoryKeywords.some(keyword => text.includes(keyword))) return 'theory';
+    return 'general';
+}
+
+function isTutorFollowUp(message) {
+    const text = normalizeTutorText(message);
+    return /(eso|ese tema|este tema|lo puedo|en que|dame mas|otro|otra|tambien|sobre eso|de eso|ahora dame|hazme|practicar|continua|sigue|mas ejemplos|mas ejercicios)/.test(text);
+}
+
+function generateTutorDemoAnswer(message) {
+    const intent = detectTutorIntent(message);
+    if (intent === 'answer-check') {
+        return checkTutorPracticeAnswer(message);
+    }
+
+    const detectedTopic = detectTutorTopic(message);
+    const followUp = isTutorFollowUp(message);
+    let topic = detectedTopic || '';
+
+    if (!topic && followUp && tutorState.lastTopic) {
+        topic = tutorState.lastTopic;
+    }
+    if (!topic && tutorState.lastTopic && intent !== 'general') {
+        topic = tutorState.lastTopic;
+    }
+    if (!topic) {
+        topic = 'el tema que estas estudiando';
+    }
+
+    topic = normalizeTutorTopic(topic);
+    if (detectedTopic) {
+        rememberTutorTopic(topic);
+    } else if (!tutorState.lastTopic && topic !== 'el tema que estas estudiando') {
+        rememberTutorTopic(topic);
+    }
+
+    const subjectType = detectSubjectType(message, topic);
+    let answer = buildSmartTutorAnswer(topic, intent, subjectType, message);
+
+    if (tutorState.lastAnswer && similarityScore(tutorState.lastAnswer, answer) > 0.82) {
+        answer = buildAlternativeTutorAnswer(topic, intent, subjectType);
+    }
+
+    tutorState.lastIntent = intent;
+    tutorState.lastAnswer = answer;
+    tutorState.lastUserMessage = String(message || '').trim();
+    tutorState.turnCount = (tutorState.turnCount || 0) + 1;
+    lastIntent = intent;
+    lastTutorResponse = answer;
+    setTutorStorageValue('acStudyLastTutorResponse', answer);
+    return answer;
+}
+
+function buildSmartTutorAnswer(topic, intent, subjectType, message) {
+    const known = getKnownTopicAnswer(topic, intent, subjectType);
+    if (known) return known;
+    if (intent === 'flashcards') return buildSubjectFlashcards(topic, subjectType);
+    if (subjectType === 'numeric') return buildNumericAnswer(topic, intent);
+    if (subjectType === 'formula') return buildFormulaAnswer(topic, intent);
+    if (subjectType === 'theory') return buildTheoryAnswer(topic, intent);
+    return buildGeneralAcademicAnswer(topic, intent);
+}
+
+function buildSubjectFlashcards(topic, subjectType) {
+    if (subjectType === 'numeric') {
+        return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Que debo hacer primero?\nRespuesta: Identificar la operacion y ordenar los numeros.\n\nTarjeta 2\nPregunta: Como reviso el resultado?\nRespuesta: Compruebo si tiene sentido y repito el calculo si hay duda.\n\nTarjeta 3\nPregunta: Como practico mejor?\nRespuesta: Resuelvo ejercicios cortos y luego aumento la dificultad.`;
+    }
+
+    if (subjectType === 'formula') {
+        return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Que debo identificar antes de usar una formula?\nRespuesta: Los datos, las unidades y la magnitud que se busca.\n\nTarjeta 2\nPregunta: Que formula comun puedo recordar?\nRespuesta: v = d / t para velocidad, F = m * a para fuerza o Q = m * c * DeltaT para calor.\n\nTarjeta 3\nPregunta: Como evito errores?\nRespuesta: Revisando unidades y reemplazando datos paso a paso.`;
+    }
+
+    return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Que es ${topic}?\nRespuesta: Es el concepto central que debes explicar con tus palabras.\n\nTarjeta 2\nPregunta: Que debo recordar?\nRespuesta: Su definicion, caracteristicas y ejemplos principales.\n\nTarjeta 3\nPregunta: Como lo estudio?\nRespuesta: Leo el resumen, subrayo ideas clave y respondo preguntas de practica.`;
+}
+
+function buildNumericAnswer(topic, intent) {
+    if (intent === 'solve') {
+        return `Para resolver ${topic}, escribe la operacion exacta con sus numeros y la trabajamos paso a paso. Mientras tanto, practica asi:\n\n1. Identifica la operacion.\n2. Ordena los numeros.\n3. Resuelve con cuidado.\n4. Comprueba si el resultado tiene sentido.`;
+    }
+
+    if (intent === 'practice' || intent === 'quiz' || intent === 'general') {
+        if (topic === 'multiplicaciones') {
+            return "Practiquemos multiplicaciones:\n\n1. 12 x 4 = ____\n2. 25 x 3 = ____\n3. 18 x 5 = ____\n4. 36 x 2 = ____\n5. 14 x 6 = ____\n\nConsejo: multiplica primero las unidades y luego las decenas.";
+        }
+        if (topic === 'divisiones') {
+            return "Practiquemos divisiones:\n\n1. 24 / 3 = ____\n2. 45 / 5 = ____\n3. 81 / 9 = ____\n4. 64 / 8 = ____\n5. 100 / 4 = ____";
+        }
+        if (topic === 'sumas') {
+            return "Practiquemos sumas:\n\n1. 245 + 136 = ____\n2. 89 + 74 = ____\n3. 320 + 458 = ____\n4. 999 + 101 = ____\n5. 56 + 278 = ____";
+        }
+        if (topic === 'restas') {
+            return "Practiquemos restas:\n\n1. 500 - 275 = ____\n2. 84 - 39 = ____\n3. 1000 - 456 = ____\n4. 73 - 28 = ____\n5. 640 - 125 = ____";
+        }
+        if (topic === 'fracciones') {
+            return "Practiquemos fracciones:\n\n1. 1/2 + 1/4 = ____\n2. 3/4 - 1/4 = ____\n3. 2/3 + 1/3 = ____\n4. 1/5 + 2/5 = ____\n5. 4/6 simplificado = ____";
+        }
+        return "Practiquemos operaciones:\n\n1. 15 + 28 = ____\n2. 64 - 19 = ____\n3. 8 x 7 = ____\n4. 72 / 9 = ____\n5. 3/5 + 1/5 = ____";
+    }
+
+    if (intent === 'explain' || intent === 'summary') {
+        return `${topic} se aprende mejor practicando paso a paso. Primero identifica que operacion debes hacer, luego ordena los numeros, resuelve con cuidado y finalmente revisa si el resultado tiene sentido.`;
+    }
+
+    return `Para trabajar ${topic}, lo ideal es practicar con operaciones numericas y revisar el procedimiento paso a paso.`;
+}
+
+function buildFormulaAnswer(topic, intent) {
+    if (intent === 'formulas') {
+        return `Formulas utiles para ${topic}:\n\n1. Calor sensible: Q = m * c * DeltaT\n2. Densidad: d = m / V\n3. Velocidad: v = d / t\n4. Fuerza: F = m * a\n5. Energia cinetica: Ec = 1/2 * m * v^2\n\nRecuerda revisar las unidades antes de reemplazar datos.`;
+    }
+
+    if (intent === 'practice' || intent === 'quiz') {
+        return `Ejercicios de ${topic}:\n\n1. Calcula el calor necesario para calentar 2 kg de agua de 20 C a 40 C.\n2. Halla la densidad de un objeto de 500 g y volumen 250 cm3.\n3. Calcula la velocidad si un cuerpo recorre 100 m en 20 s.\n4. Halla la fuerza de un objeto de 4 kg con aceleracion de 3 m/s2.\n5. Explica que datos necesitas antes de usar una formula.`;
+    }
+
+    return `Resumen de ${topic}:\n\nConcepto: ${topic} estudia fenomenos que se pueden explicar con magnitudes, leyes y formulas.\n\nPuntos clave:\n- Identifica las magnitudes del problema.\n- Usa la formula correcta.\n- Reemplaza los datos con unidades.\n- Calcula y revisa el resultado.\n\nFormulas comunes:\n- Calor: Q = m * c * DeltaT\n- Densidad: d = m / V\n- Velocidad: v = d / t\n- Fuerza: F = m * a\n\nEjemplo: si conoces distancia y tiempo, puedes calcular velocidad con v = d / t.`;
+}
+
+function buildTheoryAnswer(topic, intent) {
+    if (intent === 'practice' || intent === 'quiz') {
+        return `Preguntas para practicar ${topic}:\n\n1. Que es ${topic}?\n2. Cuales son sus caracteristicas principales?\n3. Por que es importante?\n4. Escribe un ejemplo relacionado.\n5. Explica ${topic} con tus propias palabras.`;
+    }
+
+    if (intent === 'examples') {
+        return `Ejemplos sobre ${topic}:\n\n1. Un ejemplo relacionado con la vida diaria.\n2. Un ejemplo que podria aparecer en clase.\n3. Un ejemplo tipo pregunta de examen.\n\nLuego puedes escribir uno propio y te ayudo a mejorarlo.`;
+    }
+
+    return `Resumen de ${topic}:\n\nConcepto: ${topic} es un tema que se estudia para comprender sus ideas principales, causas, caracteristicas y ejemplos.\n\nPuntos clave:\n- Definicion del tema.\n- Caracteristicas principales.\n- Ejemplos importantes.\n- Importancia en la materia.\n- Posibles preguntas de examen.\n\nPara estudiarlo mejor, lee el concepto, subraya ideas clave y explicalo con tus propias palabras.`;
+}
+
+function buildGeneralAcademicAnswer(topic, intent) {
+    if (intent === 'practice') {
+        return `Practiquemos ${topic}:\n\n1. Explica que significa ${topic}.\n2. Escribe un ejemplo.\n3. Haz una pregunta sobre el tema.\n4. Responde con tus propias palabras.\n5. Resume el tema en 2 lineas.`;
+    }
+
+    if (intent === 'summary') {
+        return `Resumen de ${topic}:\n\nPara estudiar este tema, identifica el concepto principal, sus caracteristicas, ejemplos y posibles aplicaciones. Luego escribe una explicacion corta con tus propias palabras.`;
+    }
+
+    return `Puedo ayudarte con ${topic}. Dime si quieres una explicacion, resumen, formulas, ejemplos, ejercicios o preguntas para practicar.`;
+}
+
+function getKnownTopicAnswer(topic, intent, subjectType) {
+    if (topic === 'fisica') {
+        if (intent === 'practice' || intent === 'quiz') {
+            return "Ejercicios de fisica:\n\n1. Calcula la velocidad si un objeto recorre 80 m en 10 s.\n2. Calcula la fuerza si una masa de 5 kg acelera a 2 m/s2.\n3. Explica la diferencia entre calor y temperatura.\n4. Da un ejemplo de energia en la vida diaria.\n5. Escribe una situacion donde actue una fuerza.";
+        }
+        if (intent === 'formulas') {
+            return "Formulas de fisica:\n\n1. Velocidad: v = d / t\n2. Fuerza: F = m * a\n3. Calor: Q = m * c * DeltaT\n4. Densidad: d = m / V\n5. Energia cinetica: Ec = 1/2 * m * v^2";
+        }
+        return "Resumen de fisica:\n\nLa fisica estudia la materia, la energia, el movimiento, las fuerzas, el calor, la luz y otros fenomenos naturales.\n\nConceptos importantes:\n- Movimiento\n- Fuerza\n- Energia\n- Calor y temperatura\n- Electricidad\n\nFormulas comunes:\n- Velocidad: v = d / t\n- Fuerza: F = m * a\n- Calor: Q = m * c * DeltaT\n\nEjemplo: cuando un objeto cae, se puede estudiar su movimiento y la fuerza de gravedad.";
+    }
+
+    if (topic === 'multiplicaciones') {
+        if (intent === 'practice' || intent === 'quiz' || intent === 'general') {
+            return "Ejercicios de multiplicaciones:\n\n1. 8 x 7 = ____\n2. 12 x 6 = ____\n3. 15 x 4 = ____\n4. 23 x 3 = ____\n5. 31 x 5 = ____\n\nSi quieres, luego puedo darte las respuestas.";
+        }
+        return "La multiplicacion es una suma repetida. Por ejemplo, 4 x 3 significa 4 + 4 + 4 = 12. Sirve para calcular grupos iguales de forma mas rapida.";
+    }
+
+    return '';
+}
+
+function buildAlternativeTutorAnswer(topic, intent, subjectType) {
+    if (subjectType === 'numeric') {
+        return `Vamos con otra practica de ${topic}:\n\n1. 9 x 3 = ____\n2. 16 + 27 = ____\n3. 45 - 18 = ____\n4. 36 / 6 = ____\n5. 2/4 + 1/4 = ____\n\nSi quieres, tambien puedo darte respuestas paso a paso.`;
+    }
+
+    if (subjectType === 'formula') {
+        return `Veamos ${topic} de otra forma:\n\n1. Concepto: entiende que fenomeno estudia.\n2. Formula: identifica que ecuacion se usa.\n3. Datos: reemplaza valores con unidades.\n4. Resultado: calcula y revisa.\n\nEjemplo general: primero anotas datos, luego formula y al final reemplazas.`;
+    }
+
+    return `Lo vemos de otra manera: para estudiar ${topic}, separa el tema en concepto, caracteristicas, ejemplos y una pregunta de practica. Asi no solo memorizas, sino que entiendes mejor.`;
 }
 
 async function sendTutorMessage(userMessage, displayMessage = userMessage) {
