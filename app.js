@@ -4906,25 +4906,89 @@ async function requestTutorAI(userMessage) {
     console.log("[TUTOR IA RESPONSE]", { data, error });
 
     if (error) {
-        console.error("[TUTOR IA INVOKE ERROR]", error);
+        const answer = getTutorAIErrorAnswer(error, userMessage);
+        if (!isTutorBillingError(error)) {
+            console.error("[TUTOR IA INVOKE ERROR]", error);
+        }
         return {
             ok: false,
-            answer: `No pude responder ahora. Error: ${error.message || "Error de conexion con tutor-ai"}`
+            answer
         };
     }
 
     if (!data || data.ok === false) {
-        console.error("[TUTOR IA DATA ERROR]", data);
+        const answer = getTutorAIErrorAnswer(data?.error || data, userMessage);
+        if (!isTutorBillingError(data?.error || data)) {
+            console.error("[TUTOR IA DATA ERROR]", data);
+        }
         return {
             ok: false,
-            answer: `No pude responder ahora. Error: ${data?.error || "Respuesta invalida de tutor-ai"}`
+            answer
         };
     }
 
     return {
         ok: true,
-        answer: String(data.answer || "").trim() || "No pude responder ahora. Error: tutor-ai no envio una respuesta."
+        answer: String(data.answer || "").trim() || getTutorAIErrorAnswer(null, userMessage)
     };
+}
+
+function stringifyTutorAIError(error) {
+    if (!error) return '';
+    if (typeof error === 'string') return error;
+
+    const parts = [
+        error.message,
+        error.error,
+        error.code,
+        error.status,
+        error.details,
+        error.hint
+    ].filter(Boolean);
+
+    try {
+        parts.push(JSON.stringify(error));
+    } catch (_) {
+        parts.push(String(error));
+    }
+
+    return parts.join(' ');
+}
+
+function isTutorBillingError(error) {
+    const text = normalizeTutorText(stringifyTutorAIError(error));
+    return /(saldo|credito|creditos|quota|insufficient_quota|limite|limit)/.test(text);
+}
+
+function getTutorAIErrorAnswer(error, userMessage) {
+    if (isTutorBillingError(error)) {
+        console.warn("[TUTOR IA BILLING]", error);
+        return `El Tutor IA está en modo demo por ahora. La conexión real con OpenAI ya está preparada, pero requiere créditos activos en la API.\n\n${generateTutorDemoAnswer(userMessage)}`;
+    }
+
+    return "No pude responder ahora. Intenta nuevamente.";
+}
+
+function generateTutorDemoAnswer(message) {
+    const text = normalizeTutorText(message);
+
+    if (/(fisica|termica|calor|temperatura|calorimetria)/.test(text)) {
+        return "Modo demo: La física térmica estudia el calor, la temperatura y cómo la energía se transfiere entre los cuerpos. Por ejemplo, cuando calientas agua, aumenta su temperatura porque recibe energía. También incluye temas como calor específico, equilibrio térmico y cambios de estado.";
+    }
+
+    if (/(resumen|resume|resumir)/.test(text)) {
+        return "Modo demo: Puedo ayudarte a resumir textos. Para un buen resumen, identifica la idea principal, elimina detalles repetidos y escribe las ideas importantes con tus propias palabras.";
+    }
+
+    if (/(preguntas|pregunta|examen|cuestionario|practica|practicar)/.test(text)) {
+        return "Modo demo: Puedo ayudarte a crear preguntas de estudio. Ejemplo: 1) ¿Cuál es la idea principal del tema? 2) ¿Qué conceptos son más importantes? 3) ¿Cómo se aplica este tema en un ejemplo?";
+    }
+
+    if (/(funcion|funciones|inversa|inversas)/.test(text)) {
+        return "Modo demo: Una función inversa es la que deshace lo que hace la función original. Si una función convierte x en y, la inversa convierte y otra vez en x. Para hallarla, se intercambian x e y y luego se despeja y.";
+    }
+
+    return "Modo demo: Puedo ayudarte como tutor académico con explicaciones, resúmenes, preguntas y organización de estudio. La IA real ya está conectada, pero necesita créditos activos en OpenAI API para responder completamente.";
 }
 
 async function sendTutorMessage(userMessage, displayMessage = userMessage) {
@@ -4956,8 +5020,11 @@ async function sendTutorMessage(userMessage, displayMessage = userMessage) {
         }
     } catch (error) {
         if (thinking) thinking.remove();
-        console.error("[TUTOR IA UNEXPECTED ERROR]", error);
-        appendTutorMessage('bot', `No pude responder ahora. Error: ${error.message || "Error inesperado al llamar tutor-ai"}`, 'Tutor');
+        const answer = getTutorAIErrorAnswer(error, cleanMessage);
+        if (!isTutorBillingError(error)) {
+            console.error("[TUTOR IA UNEXPECTED ERROR]", error);
+        }
+        appendTutorMessage('bot', answer, 'Tutor');
     } finally {
         tutorRequestInProgress = false;
         if (input) input.focus();
