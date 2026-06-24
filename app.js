@@ -3876,7 +3876,7 @@ function loadTutorPDF(event) {
     tutorState.uploadedDemoText = currentTutorPdf.topic;
 
     appendTutorFileMessage(file);
-    appendTutorMessage('bot', 'Por ahora, pega el texto del PDF aqui y te ayudo a resumirlo, crear preguntas o estudiar.', 'Tutor');
+    appendTutorMessage('bot', 'Por ahora pega el texto del PDF en el chat y te ayudo a resumirlo, hacer preguntas o practicar.', 'Tutor');
     if (topic) topic.focus();
 
     notify(`PDF "${file.name}" agregado al chat.`, 'success');
@@ -4127,6 +4127,9 @@ const tutorState = {
     messages: [],
     lastTopic: getTutorStorageValue('acStudyTutorTopic') || '',
     lastIntent: '',
+    lastAnswer: '',
+    lastUserMessage: '',
+    turnCount: 0,
     uploadedDemoText: '',
     history: getTutorHistory(),
     pendingQuestion: getTutorPendingQuestion()
@@ -4239,10 +4242,24 @@ function clearTutorChat() {
     const messages = document.getElementById('tutor-messages');
     if (!messages) return;
 
+    resetTutorState();
+
+    messages.innerHTML = `
+        <div class="tutor-message tutor-bot">
+            <strong>Tutor</strong>
+            <p>Chat limpio. Escribe un tema o una pregunta y empezamos desde cero.</p>
+        </div>
+    `;
+}
+
+function resetTutorState() {
     tutorState.history = [];
     tutorState.messages = [];
     tutorState.lastTopic = '';
     tutorState.lastIntent = '';
+    tutorState.lastAnswer = '';
+    tutorState.lastUserMessage = '';
+    tutorState.turnCount = 0;
     tutorState.uploadedDemoText = '';
     tutorState.topic = '';
     tutorState.pendingQuestion = null;
@@ -4262,13 +4279,6 @@ function clearTutorChat() {
     } catch (error) {
         // Limpieza opcional de memoria local del Tutor.
     }
-
-    messages.innerHTML = `
-        <div class="tutor-message tutor-bot">
-            <strong>Tutor</strong>
-            <p>Chat limpio. Escribe un tema o una pregunta y empezamos desde cero.</p>
-        </div>
-    `;
 }
 
 function addTutorHistory(role, content) {
@@ -4282,27 +4292,73 @@ function addTutorHistory(role, content) {
     tutorState.history = tutorState.history.slice(-16);
     chatHistory = tutorState.history;
     tutorState.messages.push({ role, content });
-    tutorState.messages = tutorState.messages.slice(-10);
+    tutorState.messages = tutorState.messages.slice(-12);
+    if (role === 'user') {
+        tutorState.lastUserMessage = content;
+    }
+    if (role === 'assistant') {
+        tutorState.lastAnswer = content;
+    }
     saveTutorHistory();
+}
+
+function normalizeTutorTopic(topic) {
+    const text = normalizeTutorText(topic);
+    const mappedTopics = [
+        { pattern: /(calor especifico)/, topic: 'calor especifico' },
+        { pattern: /(calor latente)/, topic: 'calor latente' },
+        { pattern: /(fisica termica|termica|termodinamica|calor y temperatura|calor|temperatura|calorimetria)/, topic: 'fisica termica' },
+        { pattern: /(funciones geometricas|funcion geometrica|geometria con funciones)/, topic: 'funciones geometricas' },
+        { pattern: /(funciones cuadraticas|funcion cuadratica|parabola|parabolas)/, topic: 'funciones cuadraticas' },
+        { pattern: /(funciones lineales|funcion lineal|recta|rectas)/, topic: 'funciones lineales' },
+        { pattern: /(funciones inversas|funcion inversa|inversa|inversas)/, topic: 'funciones inversas' },
+        { pattern: /(interes compuesto|interes compuestos)/, topic: 'interes compuesto' },
+        { pattern: /(multiplicacion|multiplicaciones|multiplicar|tabla de multiplicar)/, topic: 'multiplicaciones' },
+        { pattern: /(matriz|matrices)/, topic: 'matrices' },
+        { pattern: /(base de datos|bases de datos|sql)/, topic: 'SQL y bases de datos' },
+        { pattern: /\bhtml\b/, topic: 'HTML' },
+        { pattern: /\bcss\b/, topic: 'CSS' },
+        { pattern: /(javascript|java script|\bjs\b)/, topic: 'JavaScript' },
+        { pattern: /(porcentaje|porcentajes)/, topic: 'porcentajes' },
+        { pattern: /(movimiento rectilineo|mru|movimiento)/, topic: 'movimiento rectilineo' },
+        { pattern: /(energia|energia mecanica|energia cinetica|energia potencial)/, topic: 'energia' },
+        { pattern: /(fuerza|leyes de newton)/, topic: 'fuerza' },
+        { pattern: /(redes|red informatica|internet)/, topic: 'redes' }
+    ];
+    const match = mappedTopics.find(item => item.pattern.test(text));
+    return match ? match.topic : text.trim();
 }
 
 function detectTutorTopic(message) {
     const text = normalizeTutorText(message);
+    const knownTopic = normalizeTutorTopic(text);
+    const isOnlyAction = /^(dame|hazme|quiero|necesito|puedes|ahora|otra|otro|explica|explicame)?\s*(ejemplos?|ejercicios?|preguntas?|resumen|repaso|flashcards|tarjetas|cuestionario|examen|conceptos?|usos?|aplicaciones?)\b/.test(text);
 
-    if (/(fisica|termica|calor|temperatura|calorimetria)/.test(text)) return 'fisica termica';
-    if (/(funcion|funciones|inversa|inversas)/.test(text)) return 'funciones inversas';
-    if (/(multiplicacion|multiplicaciones|multiplicar)/.test(text)) return 'multiplicaciones';
-    if (/(matriz|matrices)/.test(text)) return 'matrices';
-    if (/(sql|base de datos|bases de datos)/.test(text)) return 'SQL y bases de datos';
-    if (/(resumen|resume|resumir)/.test(text)) return tutorState.lastTopic || tutorState.topic || 'resumen academico';
-    if (/(preguntas|pregunta|examen|ejercicios|practicar|practica)/.test(text)) return tutorState.lastTopic || tutorState.topic || 'practica academica';
+    if (isTutorFollowUp(message) || isOnlyAction) {
+        return tutorState.lastTopic || tutorState.topic || currentTutorTopic || '';
+    }
 
+    if (knownTopic && knownTopic !== text) return knownTopic;
+
+    const extracted = text
+        .replace(/ayudame|por favor|porfa|explicame|explica|dime|hazme|hacer|dame|quiero|necesito|puedes|me puedes/g, ' ')
+        .replace(/que es|que son|definicion|define|resumen|resumir|ejemplos|ejemplo|ejercicios|ejercicio|preguntas|pregunta|flashcards|cuestionario|conceptos|concepto|tema|del tema|debo aprender|pasos|paso a paso|para estudiar|para examen/g, ' ')
+        .replace(/\b(el|la|los|las|un|una|unos|unas|de|del|en|para|con|sobre|acerca|mi|este|esta|esto|eso)\b/g, ' ')
+        .replace(/[?.,;:!]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (extracted.length >= 3) return normalizeTutorTopic(extracted);
     return tutorState.lastTopic || tutorState.topic || '';
 }
 
-function isFollowUpQuestion(message) {
+function isTutorFollowUp(message) {
     const text = normalizeTutorText(message);
-    return /(eso|esto|lo anterior|lo puedo usar|en que situaciones|vida cotidiana|dame ejemplos|otro ejemplo|explicame mejor|hazme ejercicios|dame ejercicios|sobre eso|de eso|como se usa|para que sirve|cuando se usa)/.test(text);
+    return /(eso|esto|lo anterior|sobre eso|de eso|ese tema|este tema|lo que dijiste|lo puedo usar|en que situaciones|vida cotidiana|dame ejemplos|otro ejemplo|explicame mejor|hazme ejercicios|dame ejercicios|como se usa|para que sirve|cuando se usa|aplicaciones|usos|y ejemplos|ahora dame|tambien dame|continua|sigue)/.test(text);
+}
+
+function isFollowUpQuestion(message) {
+    return isTutorFollowUp(message);
 }
 
 function updateTutorDemoContext(message) {
@@ -4348,9 +4404,7 @@ function buildTutorExam(topic) {
 function handleTutorModeAction(mode) {
     const topic = tutorState.lastTopic || tutorState.topic || '';
     if (!topic) {
-        appendTutorMessage('bot', mode === 'practice'
-            ? 'Primero dime que tema quieres practicar.'
-            : `Primero dime que tema quieres ${getTutorModeName(mode)}.`, 'Tutor');
+        appendTutorMessage('bot', 'Primero dime que tema quieres estudiar.', 'Tutor');
         return;
     }
 
@@ -5149,6 +5203,163 @@ function generateTutorDemoAnswer(message) {
     }
 
     return "Puedo ayudarte como tutor académico con explicaciones, resúmenes, preguntas y organización de estudio. Dime el tema que quieres aprender y te doy una explicación sencilla, ejemplos o preguntas para practicar.";
+}
+
+// Version final del fallback local: mantiene tema, intencion y evita repetir respuestas.
+function getTutorAIErrorAnswer(error, userMessage) {
+    if (isTutorBillingError(error)) {
+        console.warn("[TUTOR IA FALLBACK]", error);
+        return `Estoy listo para ayudarte. Aqui tienes una explicacion sencilla:\n\n${generateTutorDemoAnswer(userMessage)}`;
+    }
+
+    return "No pude responder ahora. Intenta nuevamente.";
+}
+
+function generateTutorDemoAnswer(message) {
+    const topicFromMessage = detectTutorTopic(message);
+    const followUp = isTutorFollowUp(message);
+    const intent = normalizeTutorDemoIntent(detectTutorIntent(message), message);
+    const topic = normalizeTutorTopic(topicFromMessage || (followUp ? tutorState.lastTopic : '') || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || 'tu tema');
+
+    if (topic && topic !== 'tu tema') {
+        rememberTutorTopic(topic);
+    }
+
+    tutorState.lastIntent = intent;
+    tutorState.lastUserMessage = String(message || '').trim();
+    tutorState.turnCount += 1;
+    lastIntent = intent;
+
+    let answer = buildTutorAnswerByIntent(topic || 'tu tema', intent, message);
+
+    if (tutorState.lastAnswer && similarityScore(tutorState.lastAnswer, answer) > 0.82) {
+        answer = buildAlternativeTutorAnswer(topic || 'tu tema', intent, message);
+    }
+
+    tutorState.lastAnswer = answer;
+    lastTutorResponse = answer;
+    setTutorStorageValue('acStudyLastTutorResponse', answer);
+    return answer;
+}
+
+function normalizeTutorDemoIntent(intent, message) {
+    const text = normalizeTutorText(message);
+
+    if (/flashcard|tarjeta|tarjetas/.test(text) || intent === 'flashcards') return 'flashcards';
+    if (/cuestionario|examen|evaluacion|prueba/.test(text) || intent === 'exam') return 'quiz';
+    if (/pregunta|preguntas/.test(text) || intent === 'practice') return 'practice';
+    if (/ejercicio|ejercicios|resolver|problema|problemas|practicar|practica/.test(text) || intent === 'exercises') return 'practice';
+    if (/resumen|resume|resumir|repasar|repaso/.test(text) || intent === 'review') return 'summary';
+    if (/ejemplo|ejemplos/.test(text) || intent === 'example') return 'examples';
+    if (/vida cotidiana|utilizar|usar|aplicar|sirve|uso|para que|cuando se usa|como se usa|situaciones|casos/.test(text)) return 'uses';
+    if (/formula|formulas|ecuacion|regla/.test(text) || intent === 'formula') return 'formula';
+    if (/paso|pasos|procedimiento|como se resuelve/.test(text) || intent === 'steps') return 'clarify';
+    if (/concepto|conceptos|ideas clave|puntos clave|debo aprender/.test(text) || intent === 'concepts') return 'summary';
+    if (/que es|que son|definicion|define|explicame|explica|no entiendo|ayuda/.test(text) || intent === 'definition' || intent === 'explain') return 'explain';
+    return 'general';
+}
+
+function buildTutorAnswerByIntent(topic, intent, message) {
+    const knownAnswer = getKnownTopicAnswer(topic, intent, message);
+    if (knownAnswer) return knownAnswer;
+
+    if (intent === 'practice' || intent === 'quiz') {
+        return `Practiquemos ${topic} sin mostrar respuestas todavia:\n\n1. Explica que significa ${topic} con tus palabras.\n2. Menciona dos ideas importantes del tema.\n3. Escribe un ejemplo donde se pueda aplicar.\n4. Que duda te queda sobre ${topic}?\n5. Como lo explicarias en una exposicion corta?\n\nResponde la pregunta 1 y te ayudo a revisarla.`;
+    }
+
+    if (intent === 'flashcards') {
+        return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Que es ${topic}?\nRespuesta: Es la idea principal que debes comprender para explicar el tema.\n\nTarjeta 2\nPregunta: Para que sirve ${topic}?\nRespuesta: Sirve para resolver actividades, interpretar situaciones y conectar teoria con ejemplos.\n\nTarjeta 3\nPregunta: Como se practica ${topic}?\nRespuesta: Con una definicion propia, un ejemplo y una pregunta de comprobacion.`;
+    }
+
+    if (intent === 'summary') {
+        return `Resumen de ${topic}:\n\n${buildProbableDefinition(topic)}\n\nIdeas clave:\n1. Identifica que significa.\n2. Reconoce sus partes o variables.\n3. Mira un ejemplo concreto.\n4. Practica explicandolo con tus palabras.\n\nEn una frase: ${topic} se entiende mejor cuando lo conectas con una situacion real.`;
+    }
+
+    if (intent === 'examples' || intent === 'uses') {
+        return `${topic} en situaciones reales:\n\n${buildProbableDefinition(topic)}\n\nEjemplo sencillo:\nImagina que debes resolver una actividad de clase relacionada con ${topic}. Primero identificas el dato principal, luego revisas que significa y finalmente explicas como se aplica para obtener una respuesta.\n\nPara que sirve:\nSirve para entender mejor el contenido, resolver tareas, preparar examenes y explicar el tema con ejemplos propios.`;
+    }
+
+    if (intent === 'formula') {
+        return `${topic} puede tener reglas, pasos o formulas segun la materia.\n\nComo estudiarlo:\n1. Identifica que representa cada dato.\n2. Escribe la regla o formula que dio el profesor.\n3. Reemplaza valores con orden.\n4. Comprueba si el resultado tiene sentido.\n\nSi me escribes la formula exacta, te ayudo a aplicarla paso a paso.`;
+    }
+
+    return `${topic}:\n\n${buildProbableDefinition(topic)}\n\nExplicacion sencilla:\nPara entender ${topic}, empieza por identificar que representa, donde aparece y como se usa. Luego conecta la definicion con un ejemplo concreto para que no se quede solo como teoria.\n\nEjemplo:\nSi el tema aparece en una tarea, busca los datos principales, explica que significan y relaciona cada parte con la pregunta que debes responder.\n\nPuedes pedirme ejemplos, ejercicios, resumen o flashcards sobre ${topic}.`;
+}
+
+function getKnownTopicAnswer(topic, intent, message) {
+    const profile = getTopicProfile(topic);
+    if (!profile || profile.unknown) {
+        return '';
+    }
+
+    const title = profile.title || topic;
+    const intro = currentTutorPdf ? `Segun el recurso "${currentTutorPdf.name}", podemos trabajar ${title} asi:\n\n` : '';
+    const exercises = Array.isArray(profile.exercises) && profile.exercises.length
+        ? profile.exercises
+        : [`Explica ${title} con tus palabras.`, `Da un ejemplo sencillo de ${title}.`, `Para que sirve ${title}?`];
+    const concepts = Array.isArray(profile.concepts) && profile.concepts.length
+        ? profile.concepts
+        : ['definicion', 'uso', 'ejemplo', 'practica'];
+    const characteristics = Array.isArray(profile.characteristics) && profile.characteristics.length
+        ? profile.characteristics
+        : ['Tiene una idea principal', 'Se puede explicar con ejemplos', 'Se aplica en actividades de clase'];
+
+    if (intent === 'practice') {
+        return `${intro}Preguntas para practicar ${title}:\n\n${exercises.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nResponde la pregunta 1 y te doy retroalimentacion. No te muestro respuestas todavia para que puedas practicar.`;
+    }
+
+    if (intent === 'quiz') {
+        return `${intro}Cuestionario de ${title}:\n\n1. Define ${title} con tus palabras.\n2. Menciona tres conceptos importantes.\n3. Explica un ejemplo sencillo.\n4. Para que sirve este tema?\n5. Resuelve o analiza: ${exercises[0] || `un caso relacionado con ${title}`}.\n\nCuando termines, escribe tus respuestas y las revisamos.`;
+    }
+
+    if (intent === 'flashcards') {
+        const cards = profile.flashcards || [
+            [`Que es ${title}?`, profile.definition],
+            ['Cuales son ideas clave?', concepts.slice(0, 4).join(', ')],
+            ['Donde se usa?', profile.uses]
+        ];
+        return `${intro}Flashcards de ${title}:\n\n${cards.map((card, index) => `Tarjeta ${index + 1}\nPregunta: ${card[0]}\nRespuesta: ${card[1]}`).join('\n\n')}`;
+    }
+
+    if (intent === 'summary') {
+        return `${intro}Resumen de ${title}:\n\n${profile.definition}\n\nIdeas principales:\n${concepts.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nEjemplo:\n${profile.example}`;
+    }
+
+    if (intent === 'examples') {
+        return `${intro}Ejemplos de ${title}:\n\n${profile.example}\n\nOtro modo de verlo:\n${profile.uses}`;
+    }
+
+    if (intent === 'uses') {
+        return `${intro}${title} se usa para:\n\n${profile.uses}\n\nEjemplo sencillo:\n${profile.example}`;
+    }
+
+    if (intent === 'formula') {
+        return `${intro}Formula o regla de ${title}:\n\n${profile.formula}\n\nComo interpretarla:\n${profile.explanation}\n\nEjemplo:\n${profile.example}`;
+    }
+
+    if (intent === 'clarify') {
+        return `${intro}Te lo explico paso a paso sobre ${title}:\n\n1. Idea central: ${profile.definition}\n2. Como funciona: ${profile.explanation}\n3. Que debes recordar: ${concepts.slice(0, 4).join(', ')}.\n4. Ejemplo: ${profile.example}`;
+    }
+
+    return `${intro}${title}:\n\nDefinicion:\n${profile.definition}\n\nExplicacion clara:\n${profile.explanation}\n\nCaracteristicas:\n${characteristics.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nEjemplo:\n${profile.example}\n\nPuedes seguir preguntando: "dame ejemplos", "hazme preguntas" o "dame flashcards".`;
+}
+
+function buildAlternativeTutorAnswer(topic, intent, message) {
+    const cleanTopic = topic || tutorState.lastTopic || 'tu tema';
+
+    if (intent === 'practice' || intent === 'quiz') {
+        return `Vamos con una practica diferente sobre ${cleanTopic}:\n\n1. Escribe una definicion corta de ${cleanTopic}.\n2. Crea un ejemplo de la vida real.\n3. Menciona un error comun al estudiar este tema.\n4. Haz una pregunta que podria salir en una prueba.\n5. Explica el tema en menos de cuatro lineas.\n\nEmpieza por la primera y te la reviso.`;
+    }
+
+    if (intent === 'examples' || intent === 'uses') {
+        return `Otra forma de entender ${cleanTopic}:\n\nPiensa en una situacion de clase donde necesitas usar el tema para tomar una decision o resolver una pregunta. Lo importante es reconocer que dato cambia, que dato se mantiene y que conclusion puedes obtener.\n\nEjemplo rapido:\nSi ${cleanTopic} aparece en un ejercicio, primero escribe los datos, luego identifica la regla del tema y por ultimo explica el resultado con palabras simples.`;
+    }
+
+    if (intent === 'flashcards') {
+        return `Flashcards nuevas de ${cleanTopic}:\n\nTarjeta 1\nPregunta: Cual es la idea principal de ${cleanTopic}?\nRespuesta: Entender que representa y como se aplica.\n\nTarjeta 2\nPregunta: Que ejemplo puedo usar?\nRespuesta: Un caso sencillo de clase o de la vida diaria.\n\nTarjeta 3\nPregunta: Como se comprueba que lo entendi?\nRespuesta: Explicandolo con tus palabras y resolviendo una pregunta corta.`;
+    }
+
+    return `Lo vemos de otra forma sobre ${cleanTopic}:\n\nEn vez de memorizar, intenta responder tres cosas:\n\n1. Que significa ${cleanTopic}?\n2. Para que se usa?\n3. Como se aplicaria en un ejemplo?\n\nSi puedes responder esas tres, ya tienes una base fuerte. Ahora dime si quieres ejercicios o ejemplos mas concretos.`;
 }
 
 async function sendTutorMessage(userMessage, displayMessage = userMessage) {
