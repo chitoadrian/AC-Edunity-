@@ -17866,8 +17866,8 @@ body.light-theme #subjects .card-actions .btn-primary,
 body.light-theme #tasks .task-actions .btn-primary,
 body.light-theme #backpack .resource-actions .btn-primary,
 body.light-theme .btn-primary,
-body.light-theme .complete-btn,
-body.light-theme [class*="complete"] {
+body.light-theme button.complete-btn,
+body.light-theme button[class*="complete"] {
     color: #ffffff !important;
 }
 
@@ -17899,4 +17899,272 @@ body.light-theme textarea::placeholder {
 body.light-theme option {
     background: #ffffff !important;
     color: #0f172a !important;
+}
+
+/* FINAL OVERRIDE: cobertura completa de contraste en modo claro sin tocar modo oscuro */
+body.light-theme {
+    --text-main: #0f172a;
+    --text-normal: #1e293b;
+    --text-muted: #475569;
+    --text-soft: #64748b;
+    --light-card-bg: rgba(255, 255, 255, 0.92);
+    --light-card-border: rgba(15, 23, 42, 0.12);
+    color: var(--text-main) !important;
+}
+
+body.light-theme h1,
+body.light-theme h2,
+body.light-theme h3,
+body.light-theme h4,
+body.light-theme h5,
+body.light-theme h6,
+body.light-theme .section-header h2,
+body.light-theme .page-title,
+body.light-theme .card-title {
+    color: var(--text-main) !important;
+    text-shadow: none !important;
+}
+
+body.light-theme .section-header p,
+body.light-theme .page-subtitle,
+body.light-theme .card-subtitle,
+body.light-theme .muted-text,
+body.light-theme .description {
+    color: var(--text-muted) !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+}
+
+body.light-theme #subjects .subject-space-card,
+body.light-theme #subjects .subject-card,
+body.light-theme #tasks .task-card-modern,
+body.light-theme #tasks .task-card,
+body.light-theme #backpack .library-resource-card,
+body.light-theme #backpack .resource-card,
+body.light-theme .subject-detail-card {
+    background: linear-gradient(145deg, #ffffff, #f8fafc) !important;
+    color: var(--text-main) !important;
+    border-color: var(--light-card-border) !important;
+}
+
+body.light-theme #subjects .subject-space-card p,
+body.light-theme #subjects .subject-space-card span,
+body.light-theme #subjects .subject-card p,
+body.light-theme #subjects .subject-card span,
+body.light-theme #tasks .task-card-modern p,
+body.light-theme #tasks .task-card-modern span,
+body.light-theme #tasks .task-card p,
+body.light-theme #tasks .task-card span,
+body.light-theme #backpack .library-resource-card p,
+body.light-theme #backpack .library-resource-card span,
+body.light-theme #backpack .resource-card p,
+body.light-theme #backpack .resource-card span,
+body.light-theme .subject-detail-card p,
+body.light-theme .subject-detail-card span {
+    color: var(--text-normal) !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+}
+
+body.light-theme #subjects .subject-title h3,
+body.light-theme #subjects .subject-card h3,
+body.light-theme #subjects .subject-metric-grid strong,
+body.light-theme #subjects .subject-card-footer strong,
+body.light-theme #tasks .task-title-row h4,
+body.light-theme #tasks .task-meta-grid strong,
+body.light-theme #tasks .task-summary-strip strong,
+body.light-theme #backpack .library-resource-card h4,
+body.light-theme #backpack .resource-card h4,
+body.light-theme .subject-detail-hero h3,
+body.light-theme .subject-detail-stats strong,
+body.light-theme .subject-detail-columns h4,
+body.light-theme .subject-detail-columns p strong {
+    color: var(--text-main) !important;
+    opacity: 1 !important;
+}
+
+body.light-theme #subjects .subject-title p,
+body.light-theme #subjects .subject-progress-block span,
+body.light-theme #subjects .subject-metric-grid span,
+body.light-theme #subjects .subject-card-footer p,
+body.light-theme #tasks .task-description,
+body.light-theme #tasks .task-meta-grid span,
+body.light-theme #tasks .task-summary-strip span,
+body.light-theme #backpack .resource-type,
+body.light-theme #backpack .resource-description,
+body.light-theme #backpack .resource-data span,
+body.light-theme .subject-detail-hero p,
+body.light-theme .subject-detail-stats span,
+body.light-theme .subject-detail-columns p,
+body.light-theme .subject-detail-columns p span {
+    color: var(--text-muted) !important;
+    opacity: 1 !important;
+}
+
+body.light-theme #subjects .subject-metric-grid div,
+body.light-theme #subjects .subject-card-footer,
+body.light-theme #tasks .task-meta-grid span,
+body.light-theme #tasks .task-summary-strip div,
+body.light-theme #tasks .task-reminder-alert,
+body.light-theme #backpack .resource-data span,
+body.light-theme #backpack .resource-status,
+body.light-theme .subject-detail-stats div,
+body.light-theme .subject-detail-columns section,
+body.light-theme .subject-info,
+body.light-theme .activity-info,
+body.light-theme .next-info {
+    background: var(--light-card-bg) !important;
+    border: 1px solid var(--light-card-border) !important;
+    color: var(--text-normal) !important;
+    opacity: 1 !important;
+}
+
+body.light-theme #subjects .subject-chip,
+body.light-theme #subjects .subject-badge,
+body.light-theme #subjects .subject-color-badge,
+body.light-theme #tasks .task-status,
+body.light-theme #tasks .task-priority,
+body.light-theme #backpack .resource-subject-chip,
+body.light-theme #backpack .resource-status,
+body.light-theme .chip,
+body.light-theme .badge,
+body.light-theme .tag,
+body.light-theme .pill,
+body.light-theme .task-chip,
+body.light-theme .resource-chip,
+body.light-theme .priority-badge,
+body.light-theme .status-badge {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: var(--text-main) !important;
+    border: 1px solid rgba(15, 23, 42, 0.14) !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+}
+
+body.light-theme #tasks .task-priority.high,
+body.light-theme #tasks .task-card-modern.priority-high .task-priority,
+body.light-theme #tasks .task-status.status-overdue,
+body.light-theme .priority-high {
+    color: #b91c1c !important;
+    background: rgba(254, 226, 226, 0.95) !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+body.light-theme #tasks .task-priority.medium,
+body.light-theme #tasks .task-card-modern.priority-medium .task-priority,
+body.light-theme #tasks .task-status.status-upcoming,
+body.light-theme .priority-medium {
+    color: #92400e !important;
+    background: rgba(254, 243, 199, 0.95) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+body.light-theme #tasks .task-priority.low,
+body.light-theme #tasks .task-card-modern.priority-low .task-priority,
+body.light-theme #tasks .task-status.status-completed,
+body.light-theme #backpack .resource-status.used,
+body.light-theme .priority-low {
+    color: #047857 !important;
+    background: rgba(209, 250, 229, 0.95) !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+body.light-theme #tasks .task-priority.normal,
+body.light-theme #tasks .task-card-modern.priority-normal .task-priority,
+body.light-theme #tasks .task-status.status-pending,
+body.light-theme #backpack .resource-status.new,
+body.light-theme #backpack .resource-status.pending {
+    color: #0369a1 !important;
+    background: rgba(224, 242, 254, 0.95) !important;
+    border-color: rgba(14, 165, 233, 0.35) !important;
+}
+
+body.light-theme #progress .student-path,
+body.light-theme #progress .progress-path {
+    color: var(--text-main) !important;
+}
+
+body.light-theme #progress .path-step,
+body.light-theme .level-card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid var(--light-card-border) !important;
+    color: var(--text-main) !important;
+}
+
+body.light-theme #progress .path-step *,
+body.light-theme .level-card * {
+    color: var(--text-main) !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+}
+
+body.light-theme #progress .path-step span,
+body.light-theme .level-number {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #6366f1, #38bdf8) !important;
+}
+
+body.light-theme #progress .path-step small,
+body.light-theme .level-label,
+body.light-theme .level-card p {
+    color: var(--text-muted) !important;
+}
+
+body.light-theme .btn-secondary,
+body.light-theme .edit-btn,
+body.light-theme .calendar-btn,
+body.light-theme .view-btn,
+body.light-theme .ask-tutor-btn,
+body.light-theme #subjects .card-actions .btn-secondary,
+body.light-theme #tasks .task-actions .btn-secondary,
+body.light-theme #backpack .resource-actions .btn-secondary,
+body.light-theme #calendar .google-calendar-btn {
+    color: var(--text-normal) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    border: 1px solid rgba(14, 165, 233, 0.35) !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+}
+
+body.light-theme .btn-secondary:hover,
+body.light-theme .edit-btn:hover,
+body.light-theme .calendar-btn:hover,
+body.light-theme .view-btn:hover,
+body.light-theme .ask-tutor-btn:hover,
+body.light-theme #calendar .google-calendar-btn:hover {
+    color: var(--text-main) !important;
+    background: #ffffff !important;
+}
+
+body.light-theme .btn-danger,
+body.light-theme .delete-btn,
+body.light-theme .danger-btn,
+body.light-theme #subjects .card-actions .btn-danger,
+body.light-theme #tasks .task-actions .btn-danger,
+body.light-theme #backpack .resource-actions .btn-danger {
+    color: #be185d !important;
+    background: rgba(252, 231, 243, 0.94) !important;
+    border: 1px solid rgba(236, 72, 153, 0.38) !important;
+    text-shadow: none !important;
+}
+
+body.light-theme button.btn-primary,
+body.light-theme button.primary-btn,
+body.light-theme button.complete-btn,
+body.light-theme button[class*="complete"] {
+    color: #ffffff !important;
+}
+
+body.light-theme input,
+body.light-theme select,
+body.light-theme textarea {
+    background: #ffffff !important;
+    color: var(--text-main) !important;
+    border: 1px solid rgba(15, 23, 42, 0.16) !important;
+}
+
+body.light-theme input::placeholder,
+body.light-theme textarea::placeholder {
+    color: var(--text-soft) !important;
+    opacity: 1 !important;
 }
