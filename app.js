@@ -4886,6 +4886,16 @@ function getTutorWorkspaceContext() {
 
 async function requestTutorAI(userMessage) {
     const sb = getSupabaseClient();
+    const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+
+    if (sessionError || !sessionData?.session) {
+        console.error("[TUTOR IA SESSION ERROR]", sessionError || "Sin sesion activa");
+        return {
+            ok: false,
+            answer: "Debes iniciar sesión para usar el Tutor IA."
+        };
+    }
+
     const { data, error } = await sb.functions.invoke("tutor-ai", {
         body: {
             message: userMessage,
@@ -4893,17 +4903,27 @@ async function requestTutorAI(userMessage) {
         }
     });
 
-    if (error || !data?.ok) {
-        if (error) console.error("[Tutor IA] No se pudo obtener respuesta.");
+    console.log("[TUTOR IA RESPONSE]", { data, error });
+
+    if (error) {
+        console.error("[TUTOR IA INVOKE ERROR]", error);
         return {
             ok: false,
-            answer: "No pude responder ahora. Intenta nuevamente."
+            answer: `No pude responder ahora. Error: ${error.message || "Error de conexion con tutor-ai"}`
+        };
+    }
+
+    if (!data || data.ok === false) {
+        console.error("[TUTOR IA DATA ERROR]", data);
+        return {
+            ok: false,
+            answer: `No pude responder ahora. Error: ${data?.error || "Respuesta invalida de tutor-ai"}`
         };
     }
 
     return {
         ok: true,
-        answer: String(data.answer || "").trim() || "No pude responder ahora. Intenta nuevamente."
+        answer: String(data.answer || "").trim() || "No pude responder ahora. Error: tutor-ai no envio una respuesta."
     };
 }
 
@@ -4936,8 +4956,8 @@ async function sendTutorMessage(userMessage, displayMessage = userMessage) {
         }
     } catch (error) {
         if (thinking) thinking.remove();
-        console.error("[Tutor IA] Error al llamar la Edge Function.");
-        appendTutorMessage('bot', 'No pude responder ahora. Intenta nuevamente.', 'Tutor');
+        console.error("[TUTOR IA UNEXPECTED ERROR]", error);
+        appendTutorMessage('bot', `No pude responder ahora. Error: ${error.message || "Error inesperado al llamar tutor-ai"}`, 'Tutor');
     } finally {
         tutorRequestInProgress = false;
         if (input) input.focus();
