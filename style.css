@@ -18278,3 +18278,61 @@ body.light-theme #dashboard .dashboard-achievements span,
     text-shadow: none !important;
     opacity: 1 !important;
 }
+
+/* Fix: centro del circulo de progreso en modo claro */
+body.light-mode .progress-ring,
+body.light-theme .progress-ring,
+[data-theme="light"] .progress-ring {
+    background: rgba(255, 255, 255, 0.92) !important;
+    box-shadow: inset 0 0 0 10px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.light-mode .progress-ring::before,
+body.light-theme .progress-ring::before,
+[data-theme="light"] .progress-ring::before {
+    background: rgba(255, 255, 255, 0.96) !important;
+}
+
+body.light-mode #dashboard .dashboard-xp-ring,
+body.light-theme #dashboard .dashboard-xp-ring,
+[data-theme="light"] #dashboard .dashboard-xp-ring {
+    background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.96) 0 55%, transparent 56%),
+        conic-gradient(var(--dash-blue) var(--xp, 0%), rgba(15, 23, 42, 0.08) 0) !important;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08), 0 16px 34px rgba(56, 189, 248, 0.14) !important;
+}
+
+body.light-mode .progress-center,
+body.light-mode .progress-donut-center,
+body.light-mode .progress-circle-center,
+body.light-theme .progress-center,
+body.light-theme .progress-donut-center,
+body.light-theme .progress-circle-center,
+[data-theme="light"] .progress-center,
+[data-theme="light"] .progress-donut-center,
+[data-theme="light"] .progress-circle-center {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+
+body.light-mode .progress-percent,
+body.light-theme .progress-percent,
+[data-theme="light"] .progress-percent,
+body.light-mode #dashboard .dashboard-xp-ring span,
+body.light-theme #dashboard .dashboard-xp-ring span,
+[data-theme="light"] #dashboard .dashboard-xp-ring span {
+    color: #0f172a !important;
+    fill: #0f172a !important;
+    text-shadow: none !important;
+}
+
+body.light-mode .progress-label,
+body.light-theme .progress-label,
+[data-theme="light"] .progress-label,
+body.light-mode #dashboard .dashboard-xp-ring small,
+body.light-theme #dashboard .dashboard-xp-ring small,
+[data-theme="light"] #dashboard .dashboard-xp-ring small {
+    color: #2563eb !important;
+    fill: #2563eb !important;
+    text-shadow: none !important;
+}
