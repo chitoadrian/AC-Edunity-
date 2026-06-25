@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AC Edunity - Gestion Educativa Inteligente Personalizada</title>
-    <link rel="stylesheet" href="style.css?v=20260625-auth-tech-bg">
+    <link rel="stylesheet" href="style.css?v=20260625-auth-visual-layout">
 </head>
 <body>
     <!-- LANDING PAGE -->
@@ -225,22 +225,38 @@
                 <span class="auth-floating-card float-books"></span>
                 <span class="auth-floating-card float-ai"></span>
             </div>
-            <div class="auth-card">
-                <h2>Inicia sesion</h2>
-                <form id="login-form">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="login-email" placeholder="tu@email.com" required>
+            <div class="auth-layout">
+                <div class="auth-visual" aria-hidden="true">
+                    <div class="tech-window">
+                        <div class="window-top">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div class="profile-card-mini"></div>
+                        <div class="writing-line"></div>
+                        <div class="chart-line"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Contrasena</label>
-                        <input type="password" id="login-password" placeholder="********" required>
-                    </div>
-                    <button type="button" class="forgot-password-link" onclick="openPasswordResetModal()">Olvidaste tu contrasena?</button>
-                    <button type="submit" class="btn-primary btn-block">Inicia sesion</button>
-                </form>
-                <p class="auth-link">No tienes cuenta? <a href="#" onclick="showRegister()">Registrate aqui</a></p>
-                <button class="btn-secondary btn-block" onclick="showLanding()"><- Volver</button>
+                    <div class="floating-chat chat-one"></div>
+                    <div class="floating-chat chat-two"></div>
+                    <div class="gear"></div>
+                    <div class="pencil"></div>
+                </div>
+                <div class="auth-card">
+                    <h2>Inicia sesion</h2>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="login-email" placeholder="tu@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Contrasena</label>
+                            <input type="password" id="login-password" placeholder="********" required>
+                        </div>
+                        <button type="button" class="forgot-password-link" onclick="openPasswordResetModal()">Olvidaste tu contrasena?</button>
+                        <button type="submit" class="btn-primary btn-block">Inicia sesion</button>
+                    </form>
+                    <p class="auth-link">No tienes cuenta? <a href="#" onclick="showRegister()">Registrate aqui</a></p>
+                    <button class="btn-secondary btn-block" onclick="showLanding()"><- Volver</button>
+                </div>
             </div>
         </div>
     </div>
@@ -257,25 +273,41 @@
                 <span class="auth-floating-card float-books"></span>
                 <span class="auth-floating-card float-ai"></span>
             </div>
-            <div class="auth-card">
-                <h2>Crear cuenta</h2>
-                <form id="register-form">
-                    <div class="form-group">
-                        <label>Nombre completo</label>
-                        <input type="text" id="register-name" placeholder="Adrian Lopez" required>
+            <div class="auth-layout">
+                <div class="auth-visual" aria-hidden="true">
+                    <div class="tech-window">
+                        <div class="window-top">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div class="profile-card-mini"></div>
+                        <div class="writing-line"></div>
+                        <div class="chart-line"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="register-email" placeholder="tu@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Contrasena</label>
-                        <input type="password" id="register-password" placeholder="********" required>
-                    </div>
-                    <button type="submit" class="btn-primary btn-block">Crear cuenta</button>
-                </form>
-                <p class="auth-link">Ya tienes cuenta? <a href="#" onclick="showLogin()">Inicia sesion aqui</a></p>
-                <button class="btn-secondary btn-block" onclick="showLanding()"><- Volver</button>
+                    <div class="floating-chat chat-one"></div>
+                    <div class="floating-chat chat-two"></div>
+                    <div class="gear"></div>
+                    <div class="pencil"></div>
+                </div>
+                <div class="auth-card">
+                    <h2>Crear cuenta</h2>
+                    <form id="register-form">
+                        <div class="form-group">
+                            <label>Nombre completo</label>
+                            <input type="text" id="register-name" placeholder="Adrian Lopez" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="register-email" placeholder="tu@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Contrasena</label>
+                            <input type="password" id="register-password" placeholder="********" required>
+                        </div>
+                        <button type="submit" class="btn-primary btn-block">Crear cuenta</button>
+                    </form>
+                    <p class="auth-link">Ya tienes cuenta? <a href="#" onclick="showLogin()">Inicia sesion aqui</a></p>
+                    <button class="btn-secondary btn-block" onclick="showLanding()"><- Volver</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1237,6 +1269,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=20260625-auth-tech-bg"></script>
+    <script src="app.js?v=20260625-auth-visual-layout"></script>
 </body>
 </html>
