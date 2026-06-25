@@ -2788,7 +2788,7 @@ function renderTasks(workspace) {
                                 ${reminder ? `<div class="task-reminder-alert">${escapeHTML(reminder)}</div>` : ''}
                             </div>
                         </div>
-                        <div class="card-actions task-actions ${actionLayoutClass}">
+                        <div class="task-card-actions ${actionLayoutClass}">
                             <button class="btn-secondary btn-small" data-task-edit="${escapeHTML(task.id)}">Editar</button>
                             ${task.status !== 'completed' ? `<button class="btn-primary btn-small" data-task-complete="${escapeHTML(task.id)}">Completar</button>` : ''}
                             <button class="btn-secondary btn-small" data-task-calendar="${escapeHTML(task.id)}">Google Calendar</button>
