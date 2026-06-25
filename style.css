@@ -18168,3 +18168,113 @@ body.light-theme textarea::placeholder {
     color: var(--text-soft) !important;
     opacity: 1 !important;
 }
+
+/* Fix: contraste de la tarjeta Mi progreso en modo claro */
+body.light-mode .progress-card,
+body.light-theme .progress-card,
+[data-theme="light"] .progress-card,
+body.light-mode #dashboard .dashboard-progress-card,
+body.light-theme #dashboard .dashboard-progress-card,
+[data-theme="light"] #dashboard .dashboard-progress-card {
+    color: #0f172a !important;
+}
+
+body.light-mode .progress-card h2,
+body.light-mode .progress-card h3,
+body.light-mode .progress-card p,
+body.light-mode .progress-card span,
+body.light-theme .progress-card h2,
+body.light-theme .progress-card h3,
+body.light-theme .progress-card p,
+body.light-theme .progress-card span,
+[data-theme="light"] .progress-card h2,
+[data-theme="light"] .progress-card h3,
+[data-theme="light"] .progress-card p,
+[data-theme="light"] .progress-card span,
+body.light-mode #dashboard .dashboard-progress-card h2,
+body.light-mode #dashboard .dashboard-progress-card h3,
+body.light-mode #dashboard .dashboard-progress-card p,
+body.light-mode #dashboard .dashboard-progress-card span,
+body.light-theme #dashboard .dashboard-progress-card h2,
+body.light-theme #dashboard .dashboard-progress-card h3,
+body.light-theme #dashboard .dashboard-progress-card p,
+body.light-theme #dashboard .dashboard-progress-card span,
+[data-theme="light"] #dashboard .dashboard-progress-card h2,
+[data-theme="light"] #dashboard .dashboard-progress-card h3,
+[data-theme="light"] #dashboard .dashboard-progress-card p,
+[data-theme="light"] #dashboard .dashboard-progress-card span {
+    color: #0f172a !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+}
+
+body.light-mode .progress-ring,
+body.light-mode .progress-circle,
+body.light-mode .progress-percent,
+body.light-mode .progress-label,
+body.light-theme .progress-ring,
+body.light-theme .progress-circle,
+body.light-theme .progress-percent,
+body.light-theme .progress-label,
+[data-theme="light"] .progress-ring,
+[data-theme="light"] .progress-circle,
+[data-theme="light"] .progress-percent,
+[data-theme="light"] .progress-label,
+body.light-mode #dashboard .dashboard-xp-ring,
+body.light-mode #dashboard .dashboard-xp-ring span,
+body.light-mode #dashboard .dashboard-xp-ring small,
+body.light-theme #dashboard .dashboard-xp-ring,
+body.light-theme #dashboard .dashboard-xp-ring span,
+body.light-theme #dashboard .dashboard-xp-ring small,
+[data-theme="light"] #dashboard .dashboard-xp-ring,
+[data-theme="light"] #dashboard .dashboard-xp-ring span,
+[data-theme="light"] #dashboard .dashboard-xp-ring small {
+    color: #0f172a !important;
+    fill: #0f172a !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+}
+
+body.light-mode #dashboard .dashboard-progress-details strong,
+body.light-theme #dashboard .dashboard-progress-details strong,
+[data-theme="light"] #dashboard .dashboard-progress-details strong {
+    color: #0f172a !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+}
+
+body.light-mode #dashboard .dashboard-progress-details > span,
+body.light-theme #dashboard .dashboard-progress-details > span,
+[data-theme="light"] #dashboard .dashboard-progress-details > span {
+    color: #334155 !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+}
+
+body.light-mode .progress-card .badge,
+body.light-mode .progress-card .chip,
+body.light-mode .progress-card .achievement-badge,
+body.light-theme .progress-card .badge,
+body.light-theme .progress-card .chip,
+body.light-theme .progress-card .achievement-badge,
+[data-theme="light"] .progress-card .badge,
+[data-theme="light"] .progress-card .chip,
+[data-theme="light"] .progress-card .achievement-badge,
+body.light-mode #dashboard .dashboard-progress-card .badge,
+body.light-mode #dashboard .dashboard-progress-card .chip,
+body.light-mode #dashboard .dashboard-progress-card .achievement-badge,
+body.light-mode #dashboard .dashboard-achievements span,
+body.light-theme #dashboard .dashboard-progress-card .badge,
+body.light-theme #dashboard .dashboard-progress-card .chip,
+body.light-theme #dashboard .dashboard-progress-card .achievement-badge,
+body.light-theme #dashboard .dashboard-achievements span,
+[data-theme="light"] #dashboard .dashboard-progress-card .badge,
+[data-theme="light"] #dashboard .dashboard-progress-card .chip,
+[data-theme="light"] #dashboard .dashboard-progress-card .achievement-badge,
+[data-theme="light"] #dashboard .dashboard-achievements span {
+    color: #065f46 !important;
+    background: rgba(209, 250, 229, 0.95) !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+}
