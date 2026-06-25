@@ -870,6 +870,71 @@ function escapeHTML(value) {
         .replaceAll("'", '&#039;');
 }
 
+function appIconSvg(name) {
+    const icons = {
+        book: '<svg viewBox="0 0 24 24"><path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H20v17H8.5A3.5 3.5 0 0 0 5 22V5.5Z"></path><path d="M5 5.5A3.5 3.5 0 0 1 8.5 9H20"></path><path d="M9 5h6"></path></svg>',
+        check: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="m8 12 3 3 5-6"></path></svg>',
+        calendar: '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"></rect><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M4 10h16"></path><path d="M8 14h3"></path><path d="M14 14h2"></path></svg>',
+        chart: '<svg viewBox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-4"></path><path d="M6 9h2"></path><path d="M11 5h2"></path><path d="M16 12h2"></path></svg>',
+        trend: '<svg viewBox="0 0 24 24"><path d="M4 18 10 12l4 4 6-8"></path><path d="M14 8h6v6"></path><path d="M4 21h16"></path></svg>',
+        bot: '<svg viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="11" rx="4"></rect><path d="M12 7V4"></path><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><path d="M9.5 15h5"></path><path d="M3 11v3"></path><path d="M21 11v3"></path></svg>',
+        folder: '<svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H10l2 2h5.5A2.5 2.5 0 0 1 20 9.5v7A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z"></path><path d="M4 10h16"></path></svg>',
+        file: '<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M14 3v5h5"></path><path d="M9 13h6"></path><path d="M9 17h4"></path></svg>',
+        list: '<svg viewBox="0 0 24 24"><path d="M8 6h12"></path><path d="M8 12h12"></path><path d="M8 18h12"></path><path d="M4 6h.01"></path><path d="M4 12h.01"></path><path d="M4 18h.01"></path></svg>',
+        clock: '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"></rect><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M4 10h16"></path><circle cx="12" cy="15" r="3"></circle><path d="M12 13.5V15l1.2.8"></path></svg>',
+        user: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg>',
+        flask: '<svg viewBox="0 0 24 24"><path d="M9 3h6"></path><path d="M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"></path><path d="M8 15h8"></path></svg>',
+        code: '<svg viewBox="0 0 24 24"><path d="m8 9-4 3 4 3"></path><path d="m16 9 4 3-4 3"></path><path d="m14 5-4 14"></path></svg>',
+        globe: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a14 14 0 0 1 0 18"></path><path d="M12 3a14 14 0 0 0 0 18"></path></svg>',
+        palette: '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18h1.5a2 2 0 0 0 1.4-3.4 1.8 1.8 0 0 1 1.2-3.1H18a6 6 0 0 0 0-12h-6Z"></path><circle cx="7.5" cy="10" r=".7"></circle><circle cx="10" cy="7.5" r=".7"></circle><circle cx="14" cy="7.5" r=".7"></circle></svg>'
+    };
+    return icons[name] || icons.book;
+}
+
+function appIconHTML(name, className = 'app-icon') {
+    return `<span class="${className}" aria-hidden="true">${appIconSvg(name)}</span>`;
+}
+
+function getDashboardIconName(icon) {
+    const map = {
+        subjects: 'book',
+        tasks: 'check',
+        calendar: 'calendar',
+        grades: 'chart',
+        xp: 'trend',
+        streak: 'trend',
+        assistant: 'bot',
+        level: 'trend'
+    };
+    return map[icon] || 'chart';
+}
+
+function getSubjectVisualIconName(icon) {
+    const map = {
+        math: 'chart',
+        chemistry: 'flask',
+        history: 'globe',
+        programming: 'code',
+        robotics: 'bot',
+        literature: 'book',
+        sports: 'trend',
+        art: 'palette',
+        biology: 'globe',
+        'book-blue': 'book'
+    };
+    return map[normalizeSubjectIcon(icon)] || 'book';
+}
+
+function getProfileStatIconName(label, icon) {
+    const key = normalizeTutorText(`${label || ''} ${icon || ''}`);
+    if (key.includes('materia')) return 'book';
+    if (key.includes('tarea')) return 'check';
+    if (key.includes('pdf')) return 'file';
+    if (key.includes('xp') || key.includes('nivel')) return 'trend';
+    if (key.includes('racha') || key.includes('logro')) return 'chart';
+    return 'chart';
+}
+
 function openSubject(subjectName) {
     notify(`Abriendo ${subjectName}. En la siguiente version tendra su panel propio.`, 'info');
 }
@@ -1480,7 +1545,7 @@ function renderDashboard(workspace) {
 function dashboardCard(icon, label, value, subtext, progress) {
     return `
         <div class="stat-card">
-            <div class="stat-header"><span class="stat-icon">${icon}</span><span class="stat-label">${escapeHTML(label)}</span></div>
+            <div class="stat-header">${appIconHTML(getDashboardIconName(icon), `stat-icon stat-icon-${escapeHTML(icon)} dashboard-icon`)}<span class="stat-label">${escapeHTML(label)}</span></div>
             <div class="stat-value">${escapeHTML(value)}</div>
             <div class="stat-subtext">${escapeHTML(subtext)}</div>
             <div class="progress-bar"><div class="progress-fill" style="width:${Math.max(0, Math.min(100, progress))}%"></div></div>
@@ -2187,7 +2252,7 @@ function renderBackpack(workspace) {
 
     container.innerHTML = workspace.resources.length ? workspace.resources.map(resource => `
         <div class="resource-card">
-            <div class="resource-icon resource-pdf-icon pdf-icon"><span>PDF</span></div>
+            ${appIconHTML('file', 'resource-icon resource-pdf-icon pdf-icon material-icon')}
             <h4>${escapeHTML(resource.title)}</h4>
             <p class="resource-type">${escapeHTML(resource.subject)}  Apunte simulado</p>
             <p class="resource-date">${escapeHTML(resource.content).slice(0, 120)}${resource.content.length > 120 ? '...' : ''}</p>
@@ -3658,7 +3723,7 @@ function renderBackpack(workspace) {
 
     container.innerHTML = workspace.resources.length ? workspace.resources.map(resource => `
         <div class="resource-card">
-            <div class="resource-icon resource-pdf-icon pdf-icon"><span>PDF</span></div>
+            ${appIconHTML('file', 'resource-icon resource-pdf-icon pdf-icon material-icon')}
             <h4>${escapeHTML(resource.title)}</h4>
             <p class="resource-type">${escapeHTML(resource.subject)}  ${escapeHTML(resource.fileName || 'PDF simulado')}</p>
             <p class="resource-date">${escapeHTML(resource.description || resource.content || 'Sin descripcion').slice(0, 130)}${(resource.description || resource.content || '').length > 130 ? '...' : ''}</p>
@@ -5792,7 +5857,7 @@ function renderDashboard(workspace) {
                 </div>
             </div>
             <div class="dashboard-hero-widget">
-                <span class="hero-widget-icon stat-icon stat-icon-assistant" aria-hidden="true"></span>
+                ${appIconHTML('bot', 'hero-widget-icon stat-icon stat-icon-assistant dashboard-icon')}
                 <div>
                     <strong>Tutor IA</strong>
                     <p>Pregunta, resume apuntes o prepara un examen.</p>
@@ -5811,7 +5876,7 @@ function renderDashboard(workspace) {
         <div class="dashboard-layout dashboard-clean-layout">
             <div class="card dashboard-panel-card dashboard-progress-card">
                 <div class="panel-title">
-                    <span class="panel-icon panel-icon-chart"></span>
+                    ${appIconHTML('chart', 'panel-icon panel-icon-chart dashboard-icon')}
                     <div>
                         <h3>Mi progreso</h3>
                         <p>Nivel ${level} - ${xpCurrent}/1000 XP</p>
@@ -5837,7 +5902,7 @@ function renderDashboard(workspace) {
 
             <div class="card dashboard-panel-card dashboard-day-card">
                     <div class="panel-title">
-                        <span class="panel-icon panel-icon-day"></span>
+                        ${appIconHTML('clock', 'panel-icon panel-icon-day dashboard-icon')}
                         <div>
                             <h3>Mi dia</h3>
                             <p>Tareas, eventos y recordatorios importantes.</p>
@@ -5865,7 +5930,7 @@ function renderDashboard(workspace) {
 
             <div class="card starter-card dashboard-panel-card">
                     <div class="panel-title">
-                        <span class="panel-icon panel-icon-steps"></span>
+                        ${appIconHTML('list', 'panel-icon panel-icon-steps dashboard-icon')}
                         <div>
                             <h3>${isEmpty ? 'Empieza configurando tu espacio academico' : 'Centro del estudiante'}</h3>
                             <p>${isEmpty ? 'Sigue estos pasos para construir tu plataforma desde cero.' : 'Completa estos pasos para mantener tu espacio al dia.'}</p>
@@ -5887,7 +5952,7 @@ function renderDashboard(workspace) {
 
             <div class="card weekly-progress-card dashboard-panel-card">
                     <div class="panel-title">
-                        <span class="panel-icon panel-icon-chart"></span>
+                        ${appIconHTML('chart', 'panel-icon panel-icon-chart dashboard-icon')}
                         <div>
                             <h3>Progreso semanal</h3>
                             <p>Vista simulada de tu avance durante la semana.</p>
@@ -5906,7 +5971,7 @@ function dashboardCard(icon, label, value, subtext, progress) {
     return `
         <div class="stat-card dashboard-stat-card">
             <div class="stat-header">
-                <span class="stat-icon stat-icon-${escapeHTML(icon)}" aria-hidden="true"></span>
+                ${appIconHTML(getDashboardIconName(icon), `stat-icon stat-icon-${escapeHTML(icon)} dashboard-icon`)}
                 <span class="stat-label">${escapeHTML(label)}</span>
             </div>
             <div class="stat-value">${escapeHTML(value)}</div>
@@ -6026,11 +6091,9 @@ function getSubjectMetrics(workspace, subject) {
 
 function getSubjectIconMarkup(subject) {
     const storedIcon = String(subject.icon || '').trim();
-    const custom = String(subject.customIcon || (!isKnownSubjectIcon(storedIcon) ? storedIcon : '')).trim().slice(0, 4);
-    if (custom) {
-        return `<span class="subject-icon subject-custom-label" aria-hidden="true">${escapeHTML(custom.toUpperCase())}</span>`;
-    }
-    return `<span class="subject-icon subject-symbol subject-icon-${escapeHTML(normalizeSubjectIcon(subject.icon))}" aria-hidden="true"></span>`;
+    const iconValue = isKnownSubjectIcon(storedIcon) ? storedIcon : 'book-blue';
+    const iconName = getSubjectVisualIconName(iconValue);
+    return `<span class="subject-icon subject-symbol subject-icon-${escapeHTML(normalizeSubjectIcon(iconValue))}" aria-hidden="true">${appIconSvg(iconName)}</span>`;
 }
 
 function ensureSubjectsToolbar(grid) {
@@ -6212,7 +6275,7 @@ function renderBackpack(workspace) {
         return `
             <div class="resource-card">
                 <div class="resource-top">
-                    <div class="resource-icon resource-pdf-icon pdf-icon" aria-hidden="true"><span>PDF</span></div>
+                    ${appIconHTML('file', 'resource-icon resource-pdf-icon pdf-icon material-icon')}
                     <div class="resource-info">
                         <h4>${escapeHTML(resource.title)}</h4>
                         <p class="resource-type">${escapeHTML(resource.subject)} - ${escapeHTML(resource.fileName || 'PDF simulado')}</p>
@@ -6615,7 +6678,7 @@ function renderBackpack(workspace) {
             <article class="resource-card library-resource-card" style="${getAcademicCardStyle(color)}">
                 ${neonLinesHTML()}
                 <div class="resource-top">
-                    <div class="resource-icon resource-pdf-icon pdf-icon" aria-hidden="true"><span>PDF</span></div>
+                    ${appIconHTML('file', 'resource-icon resource-pdf-icon pdf-icon material-icon')}
                     <div class="resource-info">
                         <h4>${escapeHTML(resource.title)}</h4>
                         <p class="resource-type">${escapeHTML(resource.subject || 'General')} - ${escapeHTML(resource.fileName || 'PDF')}</p>
@@ -6960,7 +7023,7 @@ function renderProfile(workspace) {
             <div class="profile-badges-grid">
                 ${achievements.map(item => `
                     <article class="profile-badge ${item.unlocked ? 'unlocked' : 'locked'}">
-                        <span>${escapeHTML(item.icon)}</span>
+                        ${appIconHTML(getProfileStatIconName(item.name, ''), 'profile-badge-icon card-icon')}
                         <strong>${escapeHTML(item.name)}</strong>
                         <small>${item.unlocked ? 'Desbloqueado' : 'Bloqueado'}</small>
                     </article>
@@ -7006,7 +7069,7 @@ function renderProfile(workspace) {
 function profileStatCard(icon, label, value, detail) {
     return `
         <article class="profile-stat-card premium-profile-card">
-            <span class="profile-stat-icon">${escapeHTML(icon)}</span>
+            ${appIconHTML(getProfileStatIconName(label, icon), 'profile-stat-icon card-icon')}
             <div>
                 <small>${escapeHTML(label)}</small>
                 <strong>${escapeHTML(value)}</strong>

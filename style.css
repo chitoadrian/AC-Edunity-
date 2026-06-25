@@ -18977,3 +18977,160 @@ body.light-theme .sidebar .sidebar-icon {
     border-color: rgba(37, 99, 235, 0.16) !important;
     box-shadow: 0 8px 18px rgba(37, 99, 235, 0.20) !important;
 }
+
+/* Iconos profesionales centrados en tarjetas, materias, recursos y dashboard */
+.card-icon,
+.stat-icon,
+.summary-icon,
+.dashboard-icon,
+.subject-icon,
+.resource-icon,
+.material-icon,
+.panel-icon,
+.app-icon,
+.hero-widget-icon,
+.profile-stat-icon {
+    position: relative !important;
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    flex: 0 0 56px !important;
+    border-radius: 16px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    transform: none !important;
+    rotate: 0deg !important;
+    translate: 0 0 !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: 0 !important;
+    line-height: 1 !important;
+    background: linear-gradient(135deg, var(--card-accent, #2563eb), #38bdf8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 12px 26px color-mix(in srgb, var(--card-accent, #38bdf8), transparent 72%) !important;
+}
+
+.card-icon *,
+.stat-icon *,
+.summary-icon *,
+.dashboard-icon *,
+.subject-icon *,
+.resource-icon *,
+.material-icon *,
+.panel-icon *,
+.app-icon *,
+.hero-widget-icon *,
+.profile-stat-icon * {
+    transform: none !important;
+    rotate: 0deg !important;
+    translate: 0 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+.card-icon svg,
+.stat-icon svg,
+.summary-icon svg,
+.dashboard-icon svg,
+.subject-icon svg,
+.resource-icon svg,
+.material-icon svg,
+.panel-icon svg,
+.app-icon svg,
+.hero-widget-icon svg,
+.profile-stat-icon svg {
+    width: 26px !important;
+    height: 26px !important;
+    display: block !important;
+    margin: auto !important;
+    transform: none !important;
+    stroke: #ffffff !important;
+    stroke-width: 2.2 !important;
+    fill: none !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+}
+
+.card-icon::before,
+.card-icon::after,
+.stat-icon::before,
+.stat-icon::after,
+.summary-icon::before,
+.summary-icon::after,
+.dashboard-icon::before,
+.dashboard-icon::after,
+.subject-icon::before,
+.subject-icon::after,
+.resource-icon::before,
+.resource-icon::after,
+.material-icon::before,
+.material-icon::after,
+.panel-icon::before,
+.panel-icon::after,
+.app-icon::before,
+.app-icon::after,
+.hero-widget-icon::before,
+.hero-widget-icon::after,
+.profile-stat-icon::before,
+.profile-stat-icon::after {
+    content: none !important;
+    display: none !important;
+}
+
+#subjects .subject-icon,
+#subjects .subject-symbol,
+.subject-detail-card .subject-icon,
+.subject-detail-hero .subject-icon,
+.subject-detail-hero .subject-symbol {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+}
+
+#backpack .resource-icon,
+#backpack .pdf-icon,
+#backpack .resource-icon.resource-pdf-icon,
+#backpack .library-resource-card .resource-icon.resource-pdf-icon {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.sidebar .sidebar-icon {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    flex: 0 0 34px !important;
+    border-radius: 12px !important;
+}
+
+.sidebar .sidebar-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+#dashboard .stat-icon::before,
+#dashboard .stat-icon::after,
+#dashboard .panel-icon::before,
+#dashboard .panel-icon::after,
+#subjects .subject-icon::before,
+#subjects .subject-icon::after,
+.subject-detail-card .subject-icon::before,
+.subject-detail-card .subject-icon::after,
+.subject-detail-hero .subject-icon::before,
+.subject-detail-hero .subject-icon::after,
+#backpack .resource-icon.resource-pdf-icon::before,
+#backpack .resource-icon.resource-pdf-icon::after,
+#backpack .library-resource-card .resource-icon.resource-pdf-icon::before,
+#backpack .library-resource-card .resource-icon.resource-pdf-icon::after,
+.sidebar .nav-icon::before,
+.sidebar .nav-icon::after {
+    content: none !important;
+    display: none !important;
+}
