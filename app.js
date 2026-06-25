@@ -613,8 +613,10 @@ function toggleTheme() {
 }
 
 function updateThemeIcon(icon) {
+    const sunIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>';
+    const moonIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A7.5 7.5 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"></path></svg>';
     document.querySelectorAll('.theme-toggle').forEach(btn => {
-        btn.textContent = '';
+        btn.innerHTML = isDarkTheme ? moonIcon : sunIcon;
         btn.setAttribute('aria-label', isDarkTheme ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
         btn.classList.toggle('is-light', !isDarkTheme);
     });
@@ -2252,13 +2254,10 @@ function buildAIResponse(type, topic) {
 }
 
 function generateSummary() {
-    const topic = getAIInput() || (currentTutorPdf?.name ? `resumen del pdf ${currentTutorPdf.name}` : '');
+    const topic = getAIInput();
     if (!topic) {
-        notify('Ingresa un tema o sube un PDF para resumir.', 'error');
+        notify('Ingresa un tema o pega un texto corto para resumir.', 'error');
         return;
-    }
-    if (currentTutorPdf && !getAIInput()) {
-        appendTutorMessage('user', `Hazme un resumen del PDF ${currentTutorPdf.name}`);
     }
     showAIResult('Resumen generado', buildAIResponse('summary', topic));
 }
@@ -3843,46 +3842,6 @@ function appendTutorPracticeCards(topic) {
     return true;
 }
 
-function appendTutorFileMessage(file) {
-    const messages = document.getElementById('tutor-messages');
-    if (!messages || !file) return false;
-
-    const card = document.createElement('div');
-    card.className = 'tutor-file-card tutor-user';
-    card.innerHTML = `
-        <span class="tutor-file-icon" aria-hidden="true">PDF</span>
-        <div>
-            <strong>${escapeHTML(file.name)}</strong>
-            <small>PDF agregado al chat - ${(file.size / 1024).toFixed(1)} KB</small>
-        </div>
-    `;
-
-    messages.appendChild(card);
-    messages.scrollTop = messages.scrollHeight;
-    return true;
-}
-
-function loadTutorPDF(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const topic = document.getElementById('ai-topic');
-    currentTutorPdf = {
-        name: file.name,
-        size: file.size,
-        loadedAt: new Date().toISOString(),
-        topic: file.name.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ')
-    };
-    setTutorTopic(currentTutorPdf.topic);
-    tutorState.uploadedDemoText = currentTutorPdf.topic;
-
-    appendTutorFileMessage(file);
-    appendTutorMessage('bot', 'Por ahora pega el texto del PDF en el chat y te ayudo a resumirlo, hacer preguntas o practicar.', 'Tutor');
-    if (topic) topic.focus();
-
-    notify(`PDF "${file.name}" agregado al chat.`, 'success');
-}
-
 function generateTutorAnswer() {
     const topic = getAIInput();
     if (!topic) {
@@ -4071,7 +4030,7 @@ function buildAIResponse(type, topic) {
 function generateQuiz() {
     const topic = getAIInput();
     if (!topic) {
-        notify('Ingresa un tema o carga un PDF desde la mochila digital.', 'error');
+        notify('Ingresa un tema o pega un texto corto.', 'error');
         return;
     }
     showAIResult('Cuestionario generado', buildAIResponse('quiz', topic));
@@ -4080,13 +4039,10 @@ function generateQuiz() {
 function generatePracticeCards() {
     const input = document.getElementById('ai-topic');
     const typedTopic = getAIInput();
-    const pdfTopic = currentTutorPdf?.name
-        ? currentTutorPdf.name.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ')
-        : '';
-    const topic = typedTopic || pdfTopic;
+    const topic = typedTopic || tutorState.lastTopic || tutorState.topic || '';
 
     if (!topic) {
-        notify('Escribe un tema o sube un PDF para practicar.', 'error');
+        notify('Escribe un tema o pega un texto corto para practicar.', 'error');
         return;
     }
 
@@ -4102,7 +4058,7 @@ function generatePracticeCards() {
 function generateOpenQuestions() {
     const topic = getAIInput();
     if (!topic) {
-        notify('Ingresa un tema o carga un PDF desde la mochila digital.', 'error');
+        notify('Ingresa un tema o pega un texto corto.', 'error');
         return;
     }
     showAIResult('Preguntas abiertas', buildAIResponse('open', topic));
@@ -4111,7 +4067,7 @@ function generateOpenQuestions() {
 function generateTrueFalse() {
     const topic = getAIInput();
     if (!topic) {
-        notify('Ingresa un tema o carga un PDF desde la mochila digital.', 'error');
+        notify('Ingresa un tema o pega un texto corto.', 'error');
         return;
     }
     showAIResult('Verdadero/Falso', buildAIResponse('truefalse', topic));
@@ -4131,7 +4087,6 @@ const tutorState = {
     lastAnswer: '',
     lastUserMessage: '',
     turnCount: 0,
-    uploadedDemoText: '',
     history: getTutorHistory(),
     pendingQuestion: getTutorPendingQuestion()
 };
@@ -4261,7 +4216,6 @@ function resetTutorState() {
     tutorState.lastAnswer = '';
     tutorState.lastUserMessage = '';
     tutorState.turnCount = 0;
-    tutorState.uploadedDemoText = '';
     tutorState.topic = '';
     tutorState.pendingQuestion = null;
     lastTopic = '';
@@ -4270,7 +4224,6 @@ function resetTutorState() {
     chatHistory = tutorState.history;
     lastTutorResponse = '';
     currentTutorTopic = '';
-    currentTutorPdf = null;
     saveTutorHistory();
     saveTutorPendingQuestion();
     try {
@@ -4955,14 +4908,14 @@ function buildTutorSimulatedReply(message) {
         return checkTutorPracticeAnswer(message);
     }
 
-    const activeTopic = topic || tutorState.topic || lastTopic || currentTutorPdf?.topic || '';
-    if (!activeTopic && !currentTutorPdf) {
+    const activeTopic = topic || tutorState.topic || lastTopic || '';
+    if (!activeTopic) {
         return fallbackInteligente(message, intent);
     }
 
     if (activeTopic) rememberTutorTopic(activeTopic);
-    const profile = getTopicProfile(activeTopic || currentTutorPdf?.topic || 'tu apunte');
-    const pdfIntro = currentTutorPdf ? `Segun tu PDF "${currentTutorPdf.name}", ` : '';
+    const profile = getTopicProfile(activeTopic || 'tu tema');
+    const pdfIntro = '';
     const directSubtopic = findTutorSubtopic(message, profile);
     const activeSubtopic = directSubtopic || (shouldUseLastSubtopic(intent, message) ? lastSubtopic : '');
 
@@ -5220,7 +5173,7 @@ function generateTutorDemoAnswer(message) {
     const topicFromMessage = detectTutorTopic(message);
     const followUp = isTutorFollowUp(message);
     const intent = normalizeTutorDemoIntent(detectTutorIntent(message), message);
-    const topic = normalizeTutorTopic(topicFromMessage || (followUp ? tutorState.lastTopic : '') || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || 'tu tema');
+    const topic = normalizeTutorTopic(topicFromMessage || (followUp ? tutorState.lastTopic : '') || tutorState.lastTopic || tutorState.topic || 'tu tema');
 
     if (topic && topic !== 'tu tema') {
         rememberTutorTopic(topic);
@@ -5294,7 +5247,7 @@ function getKnownTopicAnswer(topic, intent, message) {
     }
 
     const title = profile.title || topic;
-    const intro = currentTutorPdf ? `Segun el recurso "${currentTutorPdf.name}", podemos trabajar ${title} asi:\n\n` : '';
+    const intro = '';
     const exercises = Array.isArray(profile.exercises) && profile.exercises.length
         ? profile.exercises
         : [`Explica ${title} con tus palabras.`, `Da un ejemplo sencillo de ${title}.`, `Para que sirve ${title}?`];
@@ -5716,7 +5669,7 @@ function buildAIResponse(type, topic) {
 }
 
 async function generateSummary() {
-    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || currentTutorPdf?.name || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || '';
     if (!topic) {
         notify('Primero dime que tema quieres repasar.', 'error');
         return;
@@ -5725,7 +5678,7 @@ async function generateSummary() {
 }
 
 async function generateQuestions() {
-    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || '';
     if (!topic) {
         notify('Primero dime que tema quieres practicar.', 'error');
         return;
@@ -5734,7 +5687,7 @@ async function generateQuestions() {
 }
 
 async function generateFlashcards() {
-    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || '';
     if (!topic) {
         notify('Primero dime que tema quieres usar para flashcards.', 'error');
         return;
@@ -5743,7 +5696,7 @@ async function generateFlashcards() {
 }
 
 async function generateSimpleExplanation() {
-    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || '';
     if (!topic) {
         notify('Ingresa un tema para explicar.', 'error');
         return;
@@ -5752,7 +5705,7 @@ async function generateSimpleExplanation() {
 }
 
 async function generatePracticeCards() {
-    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || currentTutorPdf?.topic || '';
+    const topic = getAIInput() || tutorState.lastTopic || tutorState.topic || '';
     if (!topic) {
         notify('Primero dime que tema quieres practicar.', 'error');
         return;
@@ -6774,11 +6727,11 @@ function askAIAboutResource(resourceId) {
     if (!resource) return;
 
     const updated = markResourceAIUsed(resourceId, `Preguntaste a Tutor sobre ${resource.title}.`) || resource;
-    // Futuro: enviar el archivo y su metadata a una API real de IA para leer el PDF completo.
+    // Futuro: enviar metadata y contenido extraido del recurso a una IA real.
     setAIContextFromResource(updated);
     navigateTo('ai-assistant');
-    appendTutorMessage('bot', `Vamos a estudiar tu PDF de ${updated.subject || 'General'}: ${updated.title}.\n\nPuedes pedirme un resumen, una explicacion sencilla, preguntas abiertas, verdadero/falso, flashcards o un cuestionario.`, 'Tutor');
-    notify('PDF cargado en Tutor.', 'success');
+    appendTutorMessage('bot', `Vamos a estudiar tu recurso de ${updated.subject || 'General'}: ${updated.title}.\n\nTrabajare con el titulo, la materia y la descripcion guardada. Puedes pedirme un resumen, una explicacion sencilla, preguntas abiertas, verdadero/falso, flashcards o un cuestionario.`, 'Tutor');
+    notify('Recurso abierto en Tutor.', 'success');
 }
 
 function practiceWithResource(resourceId) {
@@ -6788,8 +6741,8 @@ function practiceWithResource(resourceId) {
     const updated = markResourceAIUsed(resourceId, `Iniciaste practica con ${resource.title}.`) || resource;
     setAIContextFromResource(updated);
     navigateTo('ai-assistant');
-    appendTutorMessage('bot', `Vamos a practicar con tu PDF de ${updated.subject || 'General'}: ${updated.title}.\n\nElige que quieres generar:\n1. Resumen\n2. Preguntas abiertas\n3. Verdadero/falso\n4. Flashcards\n5. Cuestionario\n\nTambien puedes escribir tu propia duda sobre este PDF.`, 'Tutor');
-    notify('PDF listo para practicar con Tutor.', 'success');
+    appendTutorMessage('bot', `Vamos a practicar con tu recurso de ${updated.subject || 'General'}: ${updated.title}.\n\nElige que quieres generar:\n1. Resumen\n2. Preguntas abiertas\n3. Verdadero/falso\n4. Flashcards\n5. Cuestionario\n\nTambien puedes escribir tu propia duda sobre este material.`, 'Tutor');
+    notify('Recurso listo para practicar con Tutor.', 'success');
 }
 
 function getDisplayStreak(workspace) {

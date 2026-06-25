@@ -18871,3 +18871,109 @@ body.light-theme .sidebar .nav-icon {
 body.light-theme .sidebar .nav-item.active .nav-icon {
     box-shadow: 0 0 18px rgba(14, 165, 233, 0.38), 0 0 28px rgba(236, 72, 153, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
 }
+
+/* Sidebar profesional: iconos SVG monocromaticos y uniformes */
+.sidebar .sidebar-icon {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    flex: 0 0 34px !important;
+    border-radius: 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #2563eb, #06b6d4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25) !important;
+    overflow: hidden !important;
+    color: #ffffff !important;
+    font-size: 0 !important;
+}
+
+.sidebar .sidebar-icon::before,
+.sidebar .sidebar-icon::after {
+    content: none !important;
+    display: none !important;
+}
+
+.sidebar .sidebar-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+    stroke: #ffffff !important;
+    stroke-width: 2.2 !important;
+    fill: none !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    display: block !important;
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+.sidebar .sidebar-icon-subjects,
+.sidebar .sidebar-icon-calendar,
+.sidebar .sidebar-icon-backpack {
+    background: linear-gradient(135deg, #2563eb, #38bdf8) !important;
+}
+
+.sidebar .sidebar-icon-tasks,
+.sidebar .sidebar-icon-attendance {
+    background: linear-gradient(135deg, #0f766e, #22c55e) !important;
+}
+
+.sidebar .sidebar-icon-grades,
+.sidebar .sidebar-icon-progress {
+    background: linear-gradient(135deg, #7c3aed, #38bdf8) !important;
+}
+
+.sidebar .sidebar-icon-tutor,
+.sidebar .sidebar-icon-profile {
+    background: linear-gradient(135deg, #6d5dfc, #06b6d4) !important;
+}
+
+.sidebar .nav-item {
+    align-items: center !important;
+}
+
+.sidebar .nav-item.active .sidebar-icon,
+.sidebar .nav-item:hover .sidebar-icon {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 22px rgba(56, 189, 248, 0.34) !important;
+}
+
+.theme-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+
+.theme-toggle svg {
+    width: 19px !important;
+    height: 19px !important;
+    stroke: #ffffff !important;
+    stroke-width: 2.15 !important;
+    fill: none !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+.theme-toggle::before,
+.theme-toggle::after,
+.sidebar .theme-toggle::before,
+.sidebar-theme::before,
+.sidebar .theme-toggle::after,
+.sidebar-theme::after {
+    content: none !important;
+    display: none !important;
+}
+
+body.light-theme .theme-toggle svg {
+    stroke: #0f172a !important;
+}
+
+body.light-theme .sidebar .sidebar-icon {
+    border-color: rgba(37, 99, 235, 0.16) !important;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.20) !important;
+}
