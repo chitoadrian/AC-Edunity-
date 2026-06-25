@@ -19202,3 +19202,185 @@ body.light-theme .benefits-grid .benefit-icon {
     border-color: rgba(37, 99, 235, 0.18) !important;
     box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18) !important;
 }
+
+/* Fondo tecnologico limpio para login, registro y recuperacion */
+#login-page,
+#register-page {
+    position: relative !important;
+    min-height: 100vh !important;
+    overflow: hidden !important;
+    background:
+        radial-gradient(circle at 18% 24%, rgba(99, 102, 241, 0.25), transparent 32%),
+        radial-gradient(circle at 82% 18%, rgba(56, 189, 248, 0.22), transparent 30%),
+        radial-gradient(circle at 72% 86%, rgba(236, 72, 153, 0.16), transparent 34%),
+        linear-gradient(135deg, #120b3f 0%, #0f172a 48%, #0b3b91 100%) !important;
+}
+
+#login-page .auth-container,
+#register-page .auth-container {
+    position: relative !important;
+    isolation: isolate !important;
+    min-height: 100vh !important;
+    overflow: hidden !important;
+    background: transparent !important;
+}
+
+#login-page .auth-container::before,
+#register-page .auth-container::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    background-image:
+        linear-gradient(rgba(148, 163, 184, 0.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.10) 1px, transparent 1px) !important;
+    background-size: 90px 90px !important;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.22)) !important;
+    opacity: 0.72 !important;
+    animation: authGridMove 22s linear infinite !important;
+}
+
+#login-page .auth-container::after,
+#register-page .auth-container::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    background:
+        radial-gradient(circle, rgba(56, 189, 248, 0.55) 0 2px, transparent 3px) 10% 15% / 220px 220px,
+        radial-gradient(circle, rgba(236, 72, 153, 0.35) 0 2px, transparent 3px) 35% 60% / 260px 260px,
+        radial-gradient(circle, rgba(255, 255, 255, 0.35) 0 1px, transparent 2px) 70% 30% / 180px 180px,
+        linear-gradient(120deg, transparent 0 42%, rgba(56, 189, 248, 0.10) 43%, transparent 44% 66%, rgba(124, 58, 237, 0.10) 67%, transparent 68%) !important;
+    opacity: 0.42 !important;
+    animation: authParticlesFloat 18s ease-in-out infinite alternate !important;
+}
+
+#login-page .auth-bg-scene,
+#register-page .auth-bg-scene {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+#login-page .auth-bg-scene::before,
+#register-page .auth-bg-scene::before,
+#login-page .auth-bg-scene::after,
+#register-page .auth-bg-scene::after {
+    content: "" !important;
+    position: absolute !important;
+    pointer-events: none !important;
+    opacity: 0.42 !important;
+}
+
+#login-page .auth-bg-scene::before,
+#register-page .auth-bg-scene::before {
+    width: min(520px, 48vw) !important;
+    height: min(520px, 48vw) !important;
+    left: -140px !important;
+    bottom: -160px !important;
+    border-radius: 999px !important;
+    background:
+        radial-gradient(circle, rgba(56, 189, 248, 0.20), transparent 58%),
+        conic-gradient(from 110deg, transparent 0 20%, rgba(56, 189, 248, 0.18) 21% 27%, transparent 28% 56%, rgba(236, 72, 153, 0.12) 57% 62%, transparent 63%) !important;
+    filter: blur(1px) !important;
+    animation: authCircuitPulse 14s ease-in-out infinite alternate !important;
+}
+
+#login-page .auth-bg-scene::after,
+#register-page .auth-bg-scene::after {
+    width: min(440px, 42vw) !important;
+    height: min(440px, 42vw) !important;
+    right: -120px !important;
+    top: -130px !important;
+    border-radius: 999px !important;
+    background:
+        radial-gradient(circle, rgba(124, 58, 237, 0.20), transparent 60%),
+        conic-gradient(from 280deg, transparent 0 28%, rgba(56, 189, 248, 0.16) 29% 34%, transparent 35% 70%, rgba(236, 72, 153, 0.10) 71% 76%, transparent 77%) !important;
+    filter: blur(1px) !important;
+    animation: authCircuitPulse 16s ease-in-out infinite alternate-reverse !important;
+}
+
+#login-page .auth-star,
+#register-page .auth-star {
+    width: 4px !important;
+    height: 4px !important;
+    border-radius: 999px !important;
+    background: rgba(125, 211, 252, 0.78) !important;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.78) !important;
+    opacity: 0.58 !important;
+    transform: none !important;
+    animation: authPointBlink 4s ease-in-out infinite !important;
+}
+
+#login-page .auth-planet,
+#register-page .auth-planet,
+#login-page .auth-floating-card,
+#register-page .auth-floating-card {
+    display: none !important;
+}
+
+#login-page .auth-card,
+#register-page .auth-card,
+.password-modal-card {
+    position: relative !important;
+    z-index: 3 !important;
+}
+
+#login-page .auth-card::after,
+#register-page .auth-card::after {
+    display: none !important;
+    content: none !important;
+}
+
+body.light-theme #login-page,
+body.light-theme #register-page {
+    background:
+        radial-gradient(circle at 18% 24%, rgba(99, 102, 241, 0.16), transparent 32%),
+        radial-gradient(circle at 82% 18%, rgba(14, 165, 233, 0.16), transparent 30%),
+        radial-gradient(circle at 72% 86%, rgba(236, 72, 153, 0.10), transparent 34%),
+        linear-gradient(135deg, #eef2ff 0%, #e0f7ff 48%, #dbeafe 100%) !important;
+}
+
+body.light-theme #login-page .auth-container,
+body.light-theme #register-page .auth-container {
+    background: transparent !important;
+}
+
+@keyframes authGridMove {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 90px 90px, 90px 90px; }
+}
+
+@keyframes authParticlesFloat {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(14px, -18px, 0); }
+}
+
+@keyframes authCircuitPulse {
+    from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.32; }
+    to { transform: translate3d(18px, -12px, 0) scale(1.04); opacity: 0.52; }
+}
+
+@keyframes authPointBlink {
+    0%, 100% { opacity: 0.28; transform: scale(0.86); }
+    50% { opacity: 0.82; transform: scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #login-page .auth-container::before,
+    #register-page .auth-container::before,
+    #login-page .auth-container::after,
+    #register-page .auth-container::after,
+    #login-page .auth-bg-scene::before,
+    #register-page .auth-bg-scene::before,
+    #login-page .auth-bg-scene::after,
+    #register-page .auth-bg-scene::after,
+    #login-page .auth-star,
+    #register-page .auth-star {
+        animation: none !important;
+    }
+}
