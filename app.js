@@ -2185,11 +2185,11 @@ function renderBackpack(workspace) {
 
     container.innerHTML = workspace.resources.length ? workspace.resources.map(resource => `
         <div class="resource-card">
-            <div class="resource-icon resource-pdf-icon"></div>
+            <div class="resource-icon resource-pdf-icon pdf-icon"><span>PDF</span></div>
             <h4>${escapeHTML(resource.title)}</h4>
             <p class="resource-type">${escapeHTML(resource.subject)}  Apunte simulado</p>
             <p class="resource-date">${escapeHTML(resource.content).slice(0, 120)}${resource.content.length > 120 ? '...' : ''}</p>
-            <div class="resource-actions">
+            <div class="resource-actions resource-actions-grid">
                 <button class="btn-secondary btn-small" data-resource-view="${escapeHTML(resource.id)}">Ver</button>
                 <button class="btn-secondary btn-small" data-resource-ai="${escapeHTML(resource.id)}">Preguntar a la IA</button>
             </div>
@@ -3658,11 +3658,11 @@ function renderBackpack(workspace) {
 
     container.innerHTML = workspace.resources.length ? workspace.resources.map(resource => `
         <div class="resource-card">
-            <div class="resource-icon resource-pdf-icon"></div>
+            <div class="resource-icon resource-pdf-icon pdf-icon"><span>PDF</span></div>
             <h4>${escapeHTML(resource.title)}</h4>
             <p class="resource-type">${escapeHTML(resource.subject)}  ${escapeHTML(resource.fileName || 'PDF simulado')}</p>
             <p class="resource-date">${escapeHTML(resource.description || resource.content || 'Sin descripcion').slice(0, 130)}${(resource.description || resource.content || '').length > 130 ? '...' : ''}</p>
-            <div class="resource-actions">
+            <div class="resource-actions resource-actions-grid">
                 <button class="btn-secondary btn-small" data-resource-view="${escapeHTML(resource.id)}">Ver</button>
                 <button class="btn-secondary btn-small" data-resource-ai="${escapeHTML(resource.id)}">Preguntar a la IA</button>
                 <button class="btn-secondary btn-small" data-resource-practice="${escapeHTML(resource.id)}">Practicar con PDF</button>
@@ -6258,14 +6258,14 @@ function renderBackpack(workspace) {
         return `
             <div class="resource-card">
                 <div class="resource-top">
-                    <div class="resource-icon resource-pdf-icon" aria-hidden="true"></div>
+                    <div class="resource-icon resource-pdf-icon pdf-icon" aria-hidden="true"><span>PDF</span></div>
                     <div class="resource-info">
                         <h4>${escapeHTML(resource.title)}</h4>
                         <p class="resource-type">${escapeHTML(resource.subject)} - ${escapeHTML(resource.fileName || 'PDF simulado')}</p>
                     </div>
                 </div>
                 <p class="resource-date">${escapeHTML(shortDescription)}</p>
-                <div class="resource-actions">
+                <div class="resource-actions resource-actions-grid">
                     <button class="btn-secondary btn-small" data-resource-view="${escapeHTML(resource.id)}">Ver</button>
                     <button class="btn-secondary btn-small" data-resource-ai="${escapeHTML(resource.id)}">Preguntar a la IA</button>
                     <button class="btn-secondary btn-small" data-resource-practice="${escapeHTML(resource.id)}">Practicar con PDF</button>
@@ -6661,7 +6661,7 @@ function renderBackpack(workspace) {
             <article class="resource-card library-resource-card" style="${getAcademicCardStyle(color)}">
                 ${neonLinesHTML()}
                 <div class="resource-top">
-                    <div class="resource-icon resource-pdf-icon" aria-hidden="true"></div>
+                    <div class="resource-icon resource-pdf-icon pdf-icon" aria-hidden="true"><span>PDF</span></div>
                     <div class="resource-info">
                         <h4>${escapeHTML(resource.title)}</h4>
                         <p class="resource-type">${escapeHTML(resource.subject || 'General')} - ${escapeHTML(resource.fileName || 'PDF')}</p>
@@ -6677,7 +6677,7 @@ function renderBackpack(workspace) {
                     <span>Subido el: ${escapeHTML(formatResourceDate(uploadedAt))}</span>
                     <span>${escapeHTML(getRelativeResourceDate(uploadedAt))}</span>
                 </div>
-                <div class="resource-actions">
+                <div class="resource-actions resource-actions-grid">
                     <button class="btn-secondary btn-small" data-resource-view="${escapeHTML(resource.id)}">Ver</button>
                     <button class="btn-secondary btn-small" data-resource-ai="${escapeHTML(resource.id)}">Preguntar a Tutor</button>
                     <button class="btn-secondary btn-small" data-resource-edit="${escapeHTML(resource.id)}">Editar</button>
