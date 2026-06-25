@@ -2763,6 +2763,7 @@ function renderTasks(workspace) {
                 const priorityClass = getTaskPriorityClass(task.priority || 'media');
                 const taskSubject = workspace.subjects.find(subject => subject.id === task.subjectId || subject.name === task.subject);
                 const subjectColor = getAcademicColorValue(taskSubject?.color);
+                const actionLayoutClass = task.status !== 'completed' ? 'has-complete' : 'no-complete';
                 return `
                     <article class="task-item task-card-modern priority-${priorityClass}" style="${getAcademicCardStyle(subjectColor)}" data-status="${escapeHTML(visualStatus)}" data-id="${escapeHTML(task.id)}">
                         ${neonLinesHTML()}
@@ -2787,7 +2788,7 @@ function renderTasks(workspace) {
                                 ${reminder ? `<div class="task-reminder-alert">${escapeHTML(reminder)}</div>` : ''}
                             </div>
                         </div>
-                        <div class="card-actions task-actions">
+                        <div class="card-actions task-actions ${actionLayoutClass}">
                             <button class="btn-secondary btn-small" data-task-edit="${escapeHTML(task.id)}">Editar</button>
                             ${task.status !== 'completed' ? `<button class="btn-primary btn-small" data-task-complete="${escapeHTML(task.id)}">Completar</button>` : ''}
                             <button class="btn-secondary btn-small" data-task-calendar="${escapeHTML(task.id)}">Google Calendar</button>

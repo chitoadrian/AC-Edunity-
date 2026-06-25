@@ -18586,3 +18586,74 @@ body.light-theme #dashboard .dashboard-xp-ring small,
     content: none !important;
     display: none !important;
 }
+
+/* Fix: orden y ajuste de acciones en tarjetas de Tareas */
+#tasks .task-card-modern,
+#tasks .task-card,
+.task-card {
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#tasks .task-card-modern *,
+#tasks .task-card *,
+.task-card * {
+    box-sizing: border-box !important;
+}
+
+#tasks .task-card-modern > .task-actions,
+#tasks .task-card > .task-actions,
+#tasks .task-actions,
+.task-actions {
+    display: grid !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: auto !important;
+    padding: 14px 0 0 !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+}
+
+#tasks .task-actions.has-complete,
+.task-actions.has-complete {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+#tasks .task-actions.no-complete,
+.task-actions.no-complete {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+#tasks .task-actions button,
+.task-actions button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 44px !important;
+    height: auto !important;
+    flex: initial !important;
+    flex-basis: auto !important;
+    box-sizing: border-box !important;
+    padding: 12px 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 0.9rem !important;
+}
+
+#tasks .task-actions .delete-btn,
+#tasks .task-actions .danger-btn,
+#tasks .task-actions .btn-danger,
+#tasks .task-actions [data-task-delete],
+.task-actions .delete-btn,
+.task-actions .danger-btn,
+.task-actions .btn-danger,
+.task-actions [data-task-delete] {
+    grid-column: 1 / -1 !important;
+}
