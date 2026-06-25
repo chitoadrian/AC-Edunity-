@@ -18336,3 +18336,142 @@ body.light-theme #dashboard .dashboard-xp-ring small,
     fill: #2563eb !important;
     text-shadow: none !important;
 }
+
+/* Fix: Mochila Digital resource cards */
+#backpack .resource-card,
+#backpack .library-resource-card,
+.resource-card,
+.backpack-card,
+.file-card,
+.note-card {
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+#backpack .resource-card *,
+#backpack .library-resource-card *,
+.resource-card *,
+.backpack-card *,
+.file-card *,
+.note-card * {
+    box-sizing: border-box !important;
+}
+
+#backpack .resource-top,
+#backpack .library-resource-card .resource-top {
+    display: grid !important;
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+#backpack .resource-info {
+    min-width: 0 !important;
+}
+
+#backpack .resource-info h4,
+#backpack .resource-info p {
+    max-width: 100% !important;
+    overflow-wrap: anywhere !important;
+}
+
+#backpack .resource-icon,
+#backpack .file-icon,
+#backpack .pdf-icon,
+#backpack .backpack-icon,
+.resource-icon,
+.file-icon,
+.pdf-icon,
+.backpack-icon {
+    position: relative !important;
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    flex: 0 0 56px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+}
+
+#backpack .resource-icon img,
+#backpack .file-icon img,
+#backpack .pdf-icon img,
+#backpack .backpack-icon img,
+.resource-icon img,
+.file-icon img,
+.pdf-icon img,
+.backpack-icon img {
+    width: 34px !important;
+    height: 34px !important;
+    object-fit: contain !important;
+    display: block !important;
+}
+
+#backpack .resource-icon.resource-pdf-icon::before,
+#backpack .library-resource-card .resource-icon.resource-pdf-icon::before {
+    content: "PDF" !important;
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.04em !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+#backpack .resource-icon.resource-pdf-icon::after,
+#backpack .library-resource-card .resource-icon.resource-pdf-icon::after {
+    content: "" !important;
+    display: none !important;
+}
+
+#backpack .resource-actions,
+#backpack .library-resource-card .resource-actions,
+.resource-actions,
+.backpack-actions,
+.file-actions,
+.note-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: auto !important;
+    padding: 14px 0 0 !important;
+    overflow: hidden !important;
+}
+
+#backpack .resource-actions button,
+#backpack .library-resource-card .resource-actions button,
+.resource-actions button,
+.backpack-actions button,
+.file-actions button,
+.note-actions button {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 44px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    padding: 12px 10px !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
+}
