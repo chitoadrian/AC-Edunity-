@@ -20322,3 +20322,357 @@ body.light-theme .auth-chat-bubble::before {
         min-height: auto !important;
     }
 }
+
+/* Progreso: vista didactica compacta y moderna */
+#progress .progress-container {
+    display: grid !important;
+    gap: 20px !important;
+    max-width: 1180px !important;
+    margin: 0 auto !important;
+}
+
+#progress .premium-border::before {
+    opacity: 0.72 !important;
+}
+
+#progress .progress-hero {
+    grid-template-columns: minmax(0, 1fr) 190px !important;
+    min-height: 250px !important;
+    padding: 28px !important;
+    border-radius: 28px !important;
+    background:
+        linear-gradient(135deg, rgba(73, 204, 249, 0.12), rgba(253, 113, 175, 0.08) 48%, rgba(123, 104, 238, 0.12)),
+        rgba(25, 29, 43, 0.88) !important;
+    box-shadow: 0 24px 58px rgba(2, 8, 23, 0.24) !important;
+}
+
+#progress .progress-hero-copy {
+    min-width: 0 !important;
+}
+
+#progress .progress-eyebrow {
+    min-height: 28px !important;
+    padding: 5px 11px !important;
+    font-size: 11px !important;
+}
+
+#progress .progress-hero h2 {
+    margin: 14px 0 8px !important;
+    font-size: clamp(3rem, 5vw, 4.6rem) !important;
+    letter-spacing: 0 !important;
+}
+
+#progress .progress-hero p {
+    max-width: 560px !important;
+    font-size: 16px !important;
+    line-height: 1.55 !important;
+}
+
+#progress .progress-xp-meta {
+    margin: 18px 0 12px !important;
+    gap: 8px !important;
+}
+
+#progress .progress-xp-meta span,
+#progress .progress-hero small {
+    min-height: 30px !important;
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    background: rgba(255, 255, 255, 0.075) !important;
+}
+
+#progress .progress-xp-bar {
+    height: 12px !important;
+    max-width: 620px !important;
+    overflow: hidden !important;
+}
+
+#progress .progress-xp-bar .xp-fill {
+    animation: acBorderFlow 7s linear infinite, xpGlow 4s ease-in-out infinite !important;
+    transition: width 600ms ease !important;
+}
+
+#progress .progress-level-orb {
+    width: 170px !important;
+    height: 170px !important;
+    align-self: center !important;
+}
+
+#progress .progress-level-orb strong {
+    font-size: 4.3rem !important;
+}
+
+#progress .progress-level-orb span {
+    margin-top: -28px !important;
+    font-size: 10px !important;
+}
+
+#progress .progress-stat-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+}
+
+#progress .premium-progress-stat {
+    min-height: 92px !important;
+    padding: 14px !important;
+    grid-template-columns: 42px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    border-radius: 20px !important;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.03)),
+        rgba(31, 34, 46, 0.80) !important;
+}
+
+#progress .progress-stat-icon {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 12px 24px rgba(73, 204, 249, 0.14) !important;
+}
+
+#progress .progress-stat-icon::before {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+#progress .premium-progress-stat .stat-label {
+    font-size: 10px !important;
+    letter-spacing: 0.02em !important;
+}
+
+#progress .premium-progress-stat .stat-value {
+    margin: 2px 0 !important;
+    font-size: 22px !important;
+    line-height: 1.05 !important;
+}
+
+#progress .premium-progress-stat small {
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+}
+
+#progress .progress-path,
+#progress .progress-achievements,
+#progress .progress-empty-callout {
+    padding: 22px !important;
+    border-radius: 24px !important;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)),
+        rgba(31, 34, 46, 0.78) !important;
+}
+
+#progress .progress-section-title {
+    display: flex !important;
+    align-items: end !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    margin-bottom: 20px !important;
+}
+
+#progress .progress-section-title h3 {
+    font-size: 22px !important;
+}
+
+#progress .progress-section-title p {
+    max-width: 420px !important;
+    text-align: right !important;
+}
+
+#progress .student-path {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    padding: 16px 8px 4px !important;
+}
+
+#progress .student-path::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 8% !important;
+    right: 8% !important;
+    top: 48px !important;
+    height: 4px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(90deg, rgba(123, 104, 238, 0.85), rgba(73, 204, 249, 0.7), rgba(100, 116, 139, 0.36)) !important;
+}
+
+#progress .path-step {
+    min-height: 96px !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    z-index: 1 !important;
+    gap: 10px !important;
+}
+
+#progress .path-step span {
+    width: 48px !important;
+    height: 48px !important;
+    border: 2px solid rgba(148, 163, 184, 0.28) !important;
+    background: #222836 !important;
+    box-shadow: 0 10px 24px rgba(2, 8, 23, 0.20) !important;
+}
+
+#progress .path-step.active span {
+    border-color: rgba(73, 204, 249, 0.62) !important;
+    background: linear-gradient(135deg, #7b68ee, #49ccf9) !important;
+    box-shadow: 0 0 0 6px rgba(73, 204, 249, 0.10), 0 16px 34px rgba(73, 204, 249, 0.24) !important;
+}
+
+#progress .path-step.current span {
+    animation: xpGlow 3.8s ease-in-out infinite !important;
+}
+
+#progress .path-step small {
+    color: rgba(226, 232, 240, 0.72) !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+}
+
+#progress .premium-achievements-grid {
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)) !important;
+    gap: 12px !important;
+}
+
+#progress .premium-achievement {
+    min-height: 132px !important;
+    padding: 16px 12px !important;
+    border-radius: 20px !important;
+    gap: 8px !important;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.025)),
+        rgba(255, 255, 255, 0.035) !important;
+}
+
+#progress .premium-achievement .achievement-icon {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 15px !important;
+}
+
+#progress .premium-achievement p {
+    margin: 2px 0 0 !important;
+    font-size: 13px !important;
+    line-height: 1.18 !important;
+}
+
+#progress .premium-achievement small {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+}
+
+#progress .premium-achievement.locked::after {
+    right: 10px !important;
+    top: 10px !important;
+    width: 13px !important;
+    height: 11px !important;
+    border-width: 2px !important;
+}
+
+#progress .premium-progress-stat:hover,
+#progress .premium-achievement:hover,
+#progress .path-step:hover span {
+    transform: translateY(-4px) !important;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease !important;
+}
+
+#progress .progress-empty-callout {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+}
+
+body.light-theme #progress .progress-hero,
+body.light-theme #progress .premium-progress-stat,
+body.light-theme #progress .progress-path,
+body.light-theme #progress .progress-achievements,
+body.light-theme #progress .progress-empty-callout,
+body.light-theme #progress .premium-achievement {
+    background: #ffffff !important;
+    border-color: rgba(15, 23, 42, 0.10) !important;
+    box-shadow: 0 18px 44px rgba(37, 99, 235, 0.08) !important;
+}
+
+body.light-theme #progress .progress-xp-meta span,
+body.light-theme #progress .progress-hero small {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+}
+
+body.light-theme #progress .student-path::before {
+    background: linear-gradient(90deg, #6366f1, #38bdf8, #cbd5e1) !important;
+}
+
+body.light-theme #progress .path-step span {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+body.light-theme #progress .path-step.active span {
+    color: #ffffff !important;
+}
+
+body.light-theme #progress .path-step small,
+body.light-theme #progress .progress-section-title p {
+    color: #64748b !important;
+}
+
+@media (max-width: 1120px) {
+    #progress .progress-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    #progress .progress-hero {
+        grid-template-columns: 1fr 160px !important;
+    }
+
+    #progress .progress-level-orb {
+        width: 150px !important;
+        height: 150px !important;
+    }
+}
+
+@media (max-width: 760px) {
+    #progress .progress-hero {
+        grid-template-columns: 1fr !important;
+        padding: 22px !important;
+    }
+
+    #progress .progress-level-orb {
+        justify-self: start !important;
+    }
+
+    #progress .progress-stat-grid,
+    #progress .premium-achievements-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    #progress .progress-section-title {
+        display: grid !important;
+    }
+
+    #progress .progress-section-title p {
+        text-align: left !important;
+    }
+
+    #progress .student-path {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        padding: 0 !important;
+    }
+
+    #progress .student-path::before {
+        left: 24px !important;
+        right: auto !important;
+        top: 18px !important;
+        bottom: 18px !important;
+        width: 4px !important;
+        height: auto !important;
+    }
+
+    #progress .path-step {
+        grid-template-columns: 52px 1fr !important;
+        justify-items: start !important;
+        min-height: 60px !important;
+    }
+}
