@@ -21107,3 +21107,97 @@ body.light-theme #profile .profile-activity-list li {
         min-height: 96px !important;
     }
 }
+
+/* Perfil: ajuste final de tarjetas pequeñas de estadisticas */
+#profile .profile-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
+    gap: 18px !important;
+    width: 100% !important;
+    align-items: stretch !important;
+}
+
+#profile .profile-stat-card {
+    min-width: 0 !important;
+    min-height: 184px !important;
+    padding: 22px 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    overflow: hidden !important;
+    text-align: center !important;
+}
+
+#profile .profile-stat-card > div {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#profile .profile-stat-card small {
+    max-width: 100% !important;
+    color: var(--text-tertiary) !important;
+    font-size: 0.78rem !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.06em !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+}
+
+#profile .profile-stat-card strong {
+    max-width: 100% !important;
+    margin: 4px 0 0 !important;
+    color: #ffffff !important;
+    font-size: clamp(1.8rem, 3vw, 2.25rem) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+
+#profile .profile-stat-card em {
+    max-width: 100% !important;
+    margin-top: 4px !important;
+    color: rgba(226, 232, 240, 0.72) !important;
+    font-size: 0.92rem !important;
+    line-height: 1.25 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+}
+
+#profile .profile-stat-icon {
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    margin-bottom: 6px !important;
+    border-radius: 17px !important;
+}
+
+#profile .profile-stat-icon svg {
+    width: 26px !important;
+    height: 26px !important;
+}
+
+body.light-theme #profile .profile-stat-card strong {
+    color: #172033 !important;
+}
+
+body.light-theme #profile .profile-stat-card em {
+    color: rgba(51, 65, 85, 0.76) !important;
+}
+
+@media (max-width: 760px) {
+    #profile .profile-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+        gap: 14px !important;
+    }
+
+    #profile .profile-stat-card {
+        min-height: 160px !important;
+        padding: 18px 14px !important;
+    }
+}
