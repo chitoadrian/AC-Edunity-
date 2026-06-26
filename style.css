@@ -20129,3 +20129,196 @@ body.light-theme .auth-chat-bubble::before {
         animation: none !important;
     }
 }
+
+/* Proporciones equilibradas para login, registro y recuperacion */
+#login-page .auth-container,
+#register-page .auth-container {
+    display: grid !important;
+    place-items: center !important;
+    min-height: 100vh !important;
+    padding: 48px 6vw !important;
+    overflow: hidden !important;
+}
+
+.auth-layout {
+    width: min(1240px, 100%) !important;
+    min-height: min(760px, calc(100vh - 96px)) !important;
+    display: grid !important;
+    grid-template-columns: minmax(420px, 560px) minmax(420px, 560px) !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 56px !important;
+    padding: 0 !important;
+    overflow: visible !important;
+}
+
+.auth-visual {
+    width: 100% !important;
+    max-width: 560px !important;
+    height: 620px !important;
+    min-height: 620px !important;
+    justify-self: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible !important;
+}
+
+#login-page .auth-card,
+#register-page .auth-card,
+.auth-card,
+.login-card,
+.register-card,
+.password-card {
+    width: 100% !important;
+    max-width: 560px !important;
+    min-height: 620px !important;
+    max-height: none !important;
+    justify-self: center !important;
+    box-sizing: border-box !important;
+}
+
+#login-page .auth-card,
+#register-page .auth-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+
+.auth-laptop {
+    width: 500px !important;
+    height: 390px !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+}
+
+.auth-laptop,
+.auth-laptop * {
+    box-sizing: border-box !important;
+}
+
+.laptop-screen::before {
+    inset: 20px !important;
+}
+
+.laptop-topbar {
+    left: 38px !important;
+    right: 38px !important;
+    top: 38px !important;
+}
+
+.laptop-sidebar {
+    left: 48px !important;
+    top: 96px !important;
+    width: 84px !important;
+    height: 220px !important;
+}
+
+.laptop-card-main {
+    left: 152px !important;
+    top: 96px !important;
+    width: 292px !important;
+    height: 136px !important;
+}
+
+.laptop-card-main::before {
+    width: 222px !important;
+    height: 64px !important;
+}
+
+.laptop-card-small {
+    left: 152px !important;
+    top: 256px !important;
+    width: 138px !important;
+    height: 70px !important;
+}
+
+.laptop-card-small.two {
+    left: 306px !important;
+}
+
+.auth-chat-bubble,
+.auth-gear,
+.auth-pencil {
+    transform-origin: center !important;
+}
+
+.auth-chat-bubble {
+    width: 142px !important;
+    min-height: 66px !important;
+}
+
+.auth-chat-bubble.one {
+    top: 44px !important;
+    left: 24px !important;
+}
+
+.auth-chat-bubble.two {
+    right: 24px !important;
+    bottom: 58px !important;
+}
+
+.auth-gear {
+    right: 54px !important;
+    top: 104px !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-width: 7px !important;
+}
+
+.auth-gear::after {
+    inset: 11px !important;
+}
+
+.auth-pencil {
+    left: 72px !important;
+    bottom: 106px !important;
+    width: 72px !important;
+    height: 11px !important;
+}
+
+@media (max-width: 1120px) {
+    .auth-layout {
+        grid-template-columns: minmax(360px, 500px) minmax(380px, 520px) !important;
+        gap: 34px !important;
+    }
+
+    .auth-visual {
+        max-width: 500px !important;
+    }
+
+    .auth-laptop {
+        width: 450px !important;
+        height: 352px !important;
+    }
+}
+
+@media (max-width: 980px) {
+    #login-page .auth-container,
+    #register-page .auth-container {
+        padding: 32px 18px !important;
+        overflow: auto !important;
+    }
+
+    .auth-layout {
+        grid-template-columns: 1fr !important;
+        width: min(560px, 100%) !important;
+        min-height: calc(100vh - 64px) !important;
+        gap: 0 !important;
+    }
+
+    .auth-visual {
+        display: none !important;
+    }
+
+    #login-page .auth-card,
+    #register-page .auth-card,
+    .auth-card,
+    .login-card,
+    .register-card,
+    .password-card {
+        max-width: 560px !important;
+        min-height: auto !important;
+    }
+}
