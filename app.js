@@ -6986,6 +6986,23 @@ function renderProfile(workspace) {
                 </div>
                 <button class="btn-primary btn-small" type="button" onclick="openProfileForm()">Editar perfil</button>
             </div>
+            <aside class="profile-hero-summary" aria-label="Resumen del perfil">
+                <div>
+                    ${appIconHTML('trend', 'profile-summary-icon card-icon')}
+                    <span>Nivel</span>
+                    <strong>${escapeHTML(level)}</strong>
+                </div>
+                <div>
+                    ${appIconHTML('chart', 'profile-summary-icon card-icon')}
+                    <span>XP</span>
+                    <strong>${escapeHTML(xp)}</strong>
+                </div>
+                <div>
+                    ${appIconHTML('calendar', 'profile-summary-icon card-icon')}
+                    <span>Racha</span>
+                    <strong>${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
+                </div>
+            </aside>
         </section>
 
         <section class="profile-stats-grid">
@@ -7003,6 +7020,11 @@ function renderProfile(workspace) {
                 <span class="profile-section-kicker">Mi camino academico</span>
                 <h3>Nivel ${level}</h3>
                 <p>${xp ? `Te faltan ${xpToNext} XP para subir al nivel ${level + 1}.` : 'Completa actividades para ganar XP y desbloquear logros.'}</p>
+                <div class="profile-level-route">
+                    <span>Nivel ${escapeHTML(level)}</span>
+                    <i aria-hidden="true"></i>
+                    <span>Nivel ${escapeHTML(level + 1)}</span>
+                </div>
             </div>
             <div class="profile-xp-track">
                 <div class="profile-xp-fill" style="width:${xpProgress}%"></div>
