@@ -22335,3 +22335,242 @@ body.light-theme .monitor-stand {
         animation: none !important;
     }
 }
+
+/* Auth illustration composition: monitor protagonista y ventanas con aire */
+.auth-study-scene {
+    width: 560px !important;
+    height: 560px !important;
+}
+
+.study-monitor {
+    left: 50% !important;
+    top: 138px !important;
+    width: 392px !important;
+    height: 294px !important;
+    border-radius: 30px !important;
+    transform: translateX(-50%) perspective(1100px) rotateX(1.5deg) rotateY(-3deg) !important;
+    z-index: 2 !important;
+}
+
+.monitor-dashboard {
+    left: 94px !important;
+    right: 22px !important;
+    top: 62px !important;
+    bottom: 24px !important;
+}
+
+.monitor-stand {
+    top: 432px !important;
+    z-index: 1 !important;
+}
+
+.monitor-base {
+    top: 478px !important;
+    z-index: 1 !important;
+}
+
+.study-window,
+.study-chat,
+.study-ai-card {
+    border-width: 1px !important;
+    border-radius: 18px !important;
+    box-shadow:
+        0 18px 42px rgba(2, 8, 23, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+    z-index: 4 !important;
+}
+
+.calendar-window {
+    left: 2px !important;
+    top: 42px !important;
+    width: 136px !important;
+    height: 112px !important;
+    padding: 14px !important;
+}
+
+.calendar-grid {
+    margin-top: 13px !important;
+    gap: 7px !important;
+}
+
+.calendar-grid span {
+    height: 14px !important;
+    border-radius: 5px !important;
+}
+
+.tasks-window {
+    right: -10px !important;
+    top: 42px !important;
+    width: 142px !important;
+    height: 122px !important;
+    padding: 14px !important;
+}
+
+.task-row {
+    height: 11px !important;
+    margin-top: 12px !important;
+}
+
+.chat-one {
+    left: 218px !important;
+    top: 42px !important;
+    width: 112px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 13px !important;
+}
+
+.study-ai-card {
+    right: -18px !important;
+    bottom: auto !important;
+    top: 236px !important;
+    width: 126px !important;
+    min-height: 66px !important;
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    gap: 9px !important;
+    padding: 12px !important;
+}
+
+.ai-orb {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 12px !important;
+}
+
+.study-ai-card strong {
+    font-size: 0.82rem !important;
+}
+
+.study-ai-card span:last-child {
+    font-size: 0.64rem !important;
+}
+
+.document-window {
+    left: -8px !important;
+    bottom: 52px !important;
+    width: 134px !important;
+    height: 126px !important;
+    padding: 15px !important;
+}
+
+.document-lines {
+    gap: 11px !important;
+}
+
+.document-lines span {
+    height: 9px !important;
+}
+
+.progress-window {
+    right: -10px !important;
+    bottom: 32px !important;
+    width: 156px !important;
+    height: 104px !important;
+    padding: 14px !important;
+}
+
+.progress-line {
+    height: 7px !important;
+    margin: 13px 0 12px !important;
+}
+
+.progress-bars {
+    height: 28px !important;
+    gap: 7px !important;
+}
+
+.progress-bars span:nth-child(1) { height: 14px !important; }
+.progress-bars span:nth-child(2) { height: 25px !important; }
+.progress-bars span:nth-child(3) { height: 20px !important; }
+
+.study-pencil {
+    left: 220px !important;
+    bottom: 42px !important;
+    width: 104px !important;
+    height: 24px !important;
+    z-index: 5 !important;
+}
+
+.pencil-body {
+    width: 82px !important;
+    height: 10px !important;
+}
+
+.pencil-tip {
+    right: 7px !important;
+    border-top-width: 9px !important;
+    border-bottom-width: 9px !important;
+    border-left-width: 15px !important;
+}
+
+.pencil-trace {
+    width: 64px !important;
+}
+
+.study-gear {
+    right: 94px !important;
+    top: 302px !important;
+    width: 42px !important;
+    height: 42px !important;
+    z-index: 5 !important;
+}
+
+.study-gear span {
+    inset: 13px !important;
+}
+
+.chat-two {
+    right: 174px !important;
+    bottom: 28px !important;
+    width: 112px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 13px !important;
+}
+
+.study-chat span {
+    height: 7px !important;
+}
+
+.study-chat span + span {
+    margin-top: 9px !important;
+}
+
+.window-label {
+    font-size: 0.68rem !important;
+}
+
+body.light-theme .study-window,
+body.light-theme .study-chat,
+body.light-theme .study-ai-card {
+    box-shadow:
+        0 24px 52px rgba(30, 64, 175, 0.16),
+        0 10px 22px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86) !important;
+}
+
+@media (max-width: 1120px) {
+    .auth-study-scene {
+        width: 520px !important;
+    }
+
+    .study-monitor {
+        width: 370px !important;
+    }
+
+    .calendar-window {
+        left: 0 !important;
+    }
+
+    .tasks-window {
+        right: 0 !important;
+    }
+
+    .study-ai-card {
+        right: -4px !important;
+    }
+
+    .progress-window {
+        right: -2px !important;
+    }
+}
