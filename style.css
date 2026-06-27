@@ -22574,3 +22574,123 @@ body.light-theme .study-ai-card {
         right: -2px !important;
     }
 }
+
+/* Auth overlap fix: la ilustracion queda encerrada en su columna izquierda */
+#login-page .auth-layout,
+#register-page .auth-layout {
+    grid-template-columns: minmax(420px, 52%) minmax(420px, 48%) !important;
+    gap: 72px !important;
+    overflow: hidden !important;
+}
+
+#login-page .auth-visual,
+#register-page .auth-visual,
+#login-page .auth-study-visual,
+#register-page .auth-study-visual {
+    width: 100% !important;
+    max-width: 620px !important;
+    overflow: hidden !important;
+    justify-self: center !important;
+    z-index: 1 !important;
+    padding-inline: 18px !important;
+    box-sizing: border-box !important;
+}
+
+#login-page .auth-study-scene,
+#register-page .auth-study-scene {
+    width: min(500px, 100%) !important;
+    height: 560px !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+}
+
+#login-page .auth-visual *,
+#register-page .auth-visual * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#login-page .auth-card,
+#register-page .auth-card,
+#login-page .login-card,
+#register-page .login-card {
+    position: relative !important;
+    z-index: 10 !important;
+    justify-self: center !important;
+}
+
+#login-page .tasks-window,
+#register-page .tasks-window {
+    right: 18px !important;
+}
+
+#login-page .study-ai-card,
+#register-page .study-ai-card {
+    right: 20px !important;
+}
+
+#login-page .progress-window,
+#register-page .progress-window {
+    right: 18px !important;
+}
+
+#login-page .calendar-window,
+#register-page .calendar-window {
+    left: 18px !important;
+}
+
+#login-page .document-window,
+#register-page .document-window {
+    left: 16px !important;
+}
+
+#login-page .chat-one,
+#register-page .chat-one {
+    left: 194px !important;
+}
+
+#login-page .chat-two,
+#register-page .chat-two {
+    right: 156px !important;
+}
+
+#login-page .study-monitor,
+#register-page .study-monitor {
+    width: 374px !important;
+}
+
+@media (max-width: 1120px) {
+    #login-page .auth-layout,
+    #register-page .auth-layout {
+        grid-template-columns: minmax(360px, 500px) minmax(380px, 520px) !important;
+        gap: 48px !important;
+    }
+
+    #login-page .auth-study-scene,
+    #register-page .auth-study-scene {
+        width: min(470px, 100%) !important;
+    }
+
+    #login-page .study-monitor,
+    #register-page .study-monitor {
+        width: 348px !important;
+    }
+
+    #login-page .tasks-window,
+    #register-page .tasks-window,
+    #login-page .study-ai-card,
+    #register-page .study-ai-card,
+    #login-page .progress-window,
+    #register-page .progress-window {
+        right: 14px !important;
+    }
+}
+
+@media (max-width: 980px) {
+    #login-page .auth-layout,
+    #register-page .auth-layout {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+        overflow: visible !important;
+    }
+}
