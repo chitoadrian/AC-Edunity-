@@ -22694,3 +22694,159 @@ body.light-theme .study-ai-card {
         overflow: visible !important;
     }
 }
+
+/* Auth emergency fix: escalar la escena completa sin deformar sus tarjetas */
+#login-page .auth-layout,
+#register-page .auth-layout {
+    grid-template-columns: minmax(420px, 52%) minmax(420px, 48%) !important;
+    gap: 64px !important;
+    overflow: hidden !important;
+}
+
+#login-page .auth-study-visual,
+#register-page .auth-study-visual {
+    width: 100% !important;
+    max-width: 640px !important;
+    height: 620px !important;
+    min-height: 620px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    z-index: 1 !important;
+}
+
+#login-page .auth-visual-inner,
+#register-page .auth-visual-inner {
+    position: relative !important;
+    width: 720px !important;
+    height: 620px !important;
+    min-width: 720px !important;
+    flex: 0 0 720px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transform: scale(0.86) !important;
+    transform-origin: center !important;
+}
+
+#login-page .auth-study-scene,
+#register-page .auth-study-scene {
+    position: relative !important;
+    width: 560px !important;
+    height: 560px !important;
+    min-width: 560px !important;
+    max-width: none !important;
+    flex: 0 0 560px !important;
+    margin: 0 !important;
+}
+
+#login-page .auth-visual .auth-visual-inner *,
+#register-page .auth-visual .auth-visual-inner * {
+    max-width: none !important;
+}
+
+#login-page .study-monitor,
+#register-page .study-monitor {
+    width: 392px !important;
+    height: 294px !important;
+    top: 138px !important;
+}
+
+#login-page .calendar-window,
+#register-page .calendar-window {
+    left: 2px !important;
+    top: 42px !important;
+    width: 136px !important;
+    height: 112px !important;
+}
+
+#login-page .tasks-window,
+#register-page .tasks-window {
+    right: -10px !important;
+    top: 42px !important;
+    width: 142px !important;
+    height: 122px !important;
+}
+
+#login-page .study-ai-card,
+#register-page .study-ai-card {
+    right: -18px !important;
+    top: 236px !important;
+    width: 126px !important;
+    min-height: 66px !important;
+}
+
+#login-page .document-window,
+#register-page .document-window {
+    left: -8px !important;
+    bottom: 52px !important;
+    width: 134px !important;
+    height: 126px !important;
+}
+
+#login-page .progress-window,
+#register-page .progress-window {
+    right: -10px !important;
+    bottom: 32px !important;
+    width: 156px !important;
+    height: 104px !important;
+}
+
+#login-page .study-pencil,
+#register-page .study-pencil {
+    left: 220px !important;
+    bottom: 42px !important;
+    width: 104px !important;
+}
+
+#login-page .chat-one,
+#register-page .chat-one {
+    left: 218px !important;
+    top: 42px !important;
+    width: 112px !important;
+}
+
+#login-page .chat-two,
+#register-page .chat-two {
+    right: 174px !important;
+    bottom: 28px !important;
+    width: 112px !important;
+}
+
+#login-page .auth-card,
+#register-page .auth-card,
+#login-page .login-card,
+#register-page .login-card {
+    position: relative !important;
+    z-index: 10 !important;
+    justify-self: center !important;
+}
+
+@media (max-width: 1120px) {
+    #login-page .auth-layout,
+    #register-page .auth-layout {
+        grid-template-columns: minmax(360px, 500px) minmax(380px, 520px) !important;
+        gap: 48px !important;
+    }
+
+    #login-page .auth-visual-inner,
+    #register-page .auth-visual-inner {
+        transform: scale(0.78) !important;
+    }
+}
+
+@media (max-width: 980px) {
+    #login-page .auth-layout,
+    #register-page .auth-layout {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+        overflow: visible !important;
+    }
+
+    #login-page .auth-study-visual,
+    #register-page .auth-study-visual {
+        display: none !important;
+    }
+}
