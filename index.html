@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AC Edunity - Gestion Educativa Inteligente Personalizada</title>
-    <link rel="stylesheet" href="style.css?v=20260627-calendar-compact">
+    <link rel="stylesheet" href="style.css?v=20260628-landing-redesign">
 </head>
 <body>
     <!-- LANDING PAGE -->
@@ -51,6 +51,11 @@
                 <div class="hero-actions">
                     <button class="btn-large" onclick="showRegister()">Comenzar gratis</button>
                 </div>
+                <div class="hero-proof reveal delay-2" aria-label="Resumen de herramientas principales">
+                    <span><strong>11+</strong> secciones academicas</span>
+                    <span><strong>Tutor</strong> para estudiar mejor</span>
+                    <span><strong>XP</strong> y progreso visual</span>
+                </div>
             </div>
             <div class="hero-visual reveal-right delay-1">
                 <div class="dashboard-mockup">
@@ -67,6 +72,7 @@
                         <div class="mockup-card"><small>XP</small><b>240</b></div>
                         <div class="mockup-card wide accent"><small>Tutor</small><p>Listo para resumir tus apuntes</p></div>
                     </div>
+                    <div class="mockup-progress-line" aria-hidden="true"><span></span></div>
                 </div>
                 <div class="floating-card card-1">
                     <span class="icon"></span>
@@ -96,6 +102,10 @@
                     </div>
                     <h3>Organizacion</h3>
                     <p>Materias, tareas y calendario con una experiencia clara para estudiar sin desorden.</p>
+                    <ul class="feature-list">
+                        <li>Materias personalizadas</li>
+                        <li>Agenda y pendientes</li>
+                    </ul>
                 </div>
                 <div class="benefit-card reveal-scale delay-2">
                     <div class="benefit-icon" aria-hidden="true">
@@ -103,6 +113,10 @@
                     </div>
                     <h3>Aprendizaje</h3>
                     <p>IA simulada, flashcards, cuestionarios y explicaciones sencillas para repasar mejor.</p>
+                    <ul class="feature-list">
+                        <li>Explicaciones simples</li>
+                        <li>Flashcards y practica</li>
+                    </ul>
                 </div>
                 <div class="benefit-card reveal-scale delay-3">
                     <div class="benefit-icon" aria-hidden="true">
@@ -110,6 +124,10 @@
                     </div>
                     <h3>Seguimiento</h3>
                     <p>Notas, promedio, XP, logros y progreso visual para medir tu avance academico.</p>
+                    <ul class="feature-list">
+                        <li>Promedio y nivel</li>
+                        <li>Logros desbloqueables</li>
+                    </ul>
                 </div>
                 <div class="benefit-card reveal-scale delay-2">
                     <div class="benefit-icon" aria-hidden="true">
@@ -117,51 +135,68 @@
                     </div>
                     <h3>Mochila</h3>
                     <p>Apuntes, PDFs simulados y recursos conectados con Tutor para practicar.</p>
+                    <ul class="feature-list">
+                        <li>Biblioteca digital</li>
+                        <li>Recursos por materia</li>
+                    </ul>
                 </div>
             </div>
         </section>
 
-        <section class="about-project" id="ai-preview">
-            <div class="about-container">
-                <div class="about-text reveal-left">
-                    <h2>Acerca de AC Edunity</h2>
+        <section class="about-project ai-showcase" id="ai-preview">
+            <div class="about-container ai-showcase-container">
+                <div class="about-text ai-copy reveal-left">
+                    <span class="section-eyebrow">Tutor IA</span>
+                    <h2>Estudia con un asistente academico siempre listo</h2>
                     <p class="about-description">
                         AC Edunity es una plataforma educativa inteligente que ayuda a los estudiantes a organizar materias, tareas, calendario, notas y mejorar el aprendizaje mediante herramientas digitales e inteligencia artificial simulada.
                     </p>
                     <p class="about-description">
-                        Nuestro objetivo es proporcionar a cada estudiante una experiencia de aprendizaje personalizada, permitiendo una mejor gestion del tiempo academico y potenciando el desarrollo de habilidades de estudio con soporte de tecnologia inteligente.
+                        Tutor te ayuda a explicar temas, practicar para examenes, crear preguntas y convertir ideas en material de estudio mas claro.
                     </p>
-                    <div class="about-features">
+                    <div class="about-features ai-feature-stack">
                         <div class="about-feature reveal delay-1">
                             <span class="feature-icon"></span>
-                            <span>Organizacion completa de estudios</span>
+                            <span>Resume apuntes y textos cortos</span>
                         </div>
                         <div class="about-feature reveal delay-2">
                             <span class="feature-icon"></span>
-                            <span>Asistente IA para generacion de contenido</span>
+                            <span>Crea preguntas para practicar</span>
                         </div>
                         <div class="about-feature reveal delay-3">
                             <span class="feature-icon"></span>
-                            <span>Gamificacion y seguimiento de progreso</span>
+                            <span>Genera flashcards y repasos</span>
                         </div>
                         <div class="about-feature reveal delay-2">
                             <span class="feature-icon"></span>
-                            <span>Interfaz intuitiva y moderna</span>
+                            <span>Explica temas paso a paso</span>
                         </div>
                     </div>
                 </div>
-                <div class="about-visual reveal-right delay-1">
-                    <div class="about-stat reveal-scale delay-1">
-                        <span class="stat-num">11+</span>
-                        <span class="stat-label">Secciones</span>
+                <div class="about-visual ai-panel reveal-right delay-1">
+                    <div class="ai-window">
+                        <div class="ai-window-top">
+                            <span></span><span></span><span></span>
+                            <strong>Tutor AC Edunity</strong>
+                        </div>
+                        <div class="ai-message user-message">Necesito repasar funciones cuadraticas.</div>
+                        <div class="ai-message tutor-message">
+                            <strong>Tutor</strong>
+                            <p>Te explico el concepto, te doy un ejemplo y luego practicamos con preguntas.</p>
+                        </div>
+                        <div class="ai-tool-row">
+                            <span>Resumen</span>
+                            <span>Preguntas</span>
+                            <span>Flashcards</span>
+                        </div>
                     </div>
-                    <div class="about-stat reveal-scale delay-2">
-                        <span class="stat-num">50+</span>
-                        <span class="stat-label">Caracteristicas</span>
+                    <div class="ai-orbit-card ai-card-one">
+                        <span></span>
+                        <p>Preparar examen</p>
                     </div>
-                    <div class="about-stat reveal-scale delay-3">
-                        <span class="stat-num">100%</span>
-                        <span class="stat-label">Responsive</span>
+                    <div class="ai-orbit-card ai-card-two">
+                        <span></span>
+                        <p>Repasar rapido</p>
                     </div>
                 </div>
             </div>
@@ -1491,6 +1526,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=20260627-calendar-compact"></script>
+    <script src="app.js?v=20260628-landing-redesign"></script>
 </body>
 </html>
