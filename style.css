@@ -18872,6 +18872,163 @@ body.light-theme .sidebar .nav-item.active .nav-icon {
     box-shadow: 0 0 18px rgba(14, 165, 233, 0.38), 0 0 28px rgba(236, 72, 153, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
 }
 
+/* Landing empty-card cleanup */
+#landing-page .hero-visual .hero-mini-card {
+    min-height: 82px !important;
+    padding: 13px 14px !important;
+    display: grid !important;
+    grid-template-columns: 46px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 12px !important;
+    overflow: hidden !important;
+}
+
+#landing-page .hero-mini-card .mini-card-icon {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, rgba(123, 104, 238, 0.96), rgba(73, 204, 249, 0.88)) !important;
+    box-shadow: 0 14px 32px rgba(73, 204, 249, 0.20) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+
+#landing-page .hero-mini-card .mini-card-icon svg,
+#landing-page .about-feature .feature-icon svg,
+#landing-page .ai-orbit-card .ai-orbit-icon svg {
+    width: 23px !important;
+    height: 23px !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+    stroke-width: 2.15 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    transform: none !important;
+}
+
+#landing-page .hero-mini-card .mini-card-copy {
+    min-width: 0 !important;
+    display: grid !important;
+    gap: 3px !important;
+}
+
+#landing-page .hero-mini-card .mini-card-copy strong {
+    color: #ffffff !important;
+    font-size: 0.98rem !important;
+    line-height: 1.08 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#landing-page .hero-mini-card .mini-card-copy small {
+    color: rgba(226, 232, 240, 0.74) !important;
+    font-size: 0.76rem !important;
+    line-height: 1.18 !important;
+}
+
+#landing-page .hero-mini-card .mini-card-indicator {
+    justify-self: end !important;
+    padding: 6px 8px !important;
+    border-radius: 999px !important;
+    color: #7ee7ff !important;
+    font-size: 0.66rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+    background: rgba(73, 204, 249, 0.12) !important;
+    border: 1px solid rgba(73, 204, 249, 0.22) !important;
+}
+
+#landing-page .hero-mini-card p {
+    display: none !important;
+}
+
+#landing-page .about-feature .feature-icon {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+
+#landing-page .about-feature .feature-icon::before,
+#landing-page .about-feature .feature-icon::after {
+    content: none !important;
+}
+
+#landing-page .ai-orbit-card {
+    min-height: 78px !important;
+    display: grid !important;
+    grid-template-columns: 46px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 14px !important;
+}
+
+#landing-page .ai-orbit-card .ai-orbit-icon {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    border-radius: 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, rgba(253, 113, 175, 0.86), rgba(73, 204, 249, 0.78)) !important;
+    box-shadow: 0 14px 34px rgba(253, 113, 175, 0.16) !important;
+}
+
+#landing-page .ai-orbit-card p {
+    margin: 0 !important;
+    min-width: 0 !important;
+    display: grid !important;
+    gap: 3px !important;
+    line-height: 1.1 !important;
+}
+
+#landing-page .ai-orbit-card p strong {
+    color: #ffffff !important;
+    font-size: 0.92rem !important;
+}
+
+#landing-page .ai-orbit-card p small {
+    color: rgba(226, 232, 240, 0.68) !important;
+    font-size: 0.72rem !important;
+    line-height: 1.2 !important;
+}
+
+body.light-theme #landing-page .hero-mini-card .mini-card-copy strong,
+body.light-theme #landing-page .ai-orbit-card p strong {
+    color: #0f172a !important;
+}
+
+body.light-theme #landing-page .hero-mini-card .mini-card-copy small,
+body.light-theme #landing-page .ai-orbit-card p small {
+    color: #64748b !important;
+}
+
+body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
+    color: #0369a1 !important;
+    background: rgba(14, 165, 233, 0.11) !important;
+    border-color: rgba(14, 165, 233, 0.18) !important;
+}
+
+@media (max-width: 760px) {
+    #landing-page .hero-visual .hero-mini-card {
+        grid-template-columns: 46px minmax(0, 1fr) !important;
+    }
+
+    #landing-page .hero-mini-card .mini-card-indicator {
+        grid-column: 2 !important;
+        justify-self: start !important;
+    }
+}
+
 /* Sidebar profesional: iconos SVG monocromaticos y uniformes */
 .sidebar .sidebar-icon {
     width: 34px !important;
@@ -24086,5 +24243,129 @@ body.light-theme #calendar .event-item.event-custom .event-date {
 
     #calendar .event-item.event-custom .card-actions {
         grid-template-columns: 1fr !important;
+    }
+}
+
+/* Final landing cards priority layer */
+#landing-page .hero-visual .hero-mini-card {
+    min-height: 82px !important;
+    padding: 13px 14px !important;
+    display: grid !important;
+    grid-template-columns: 46px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+#landing-page .hero-mini-card .mini-card-icon,
+#landing-page .ai-orbit-card .ai-orbit-icon {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+
+#landing-page .hero-mini-card .mini-card-icon {
+    background: linear-gradient(135deg, rgba(123, 104, 238, 0.96), rgba(73, 204, 249, 0.88)) !important;
+}
+
+#landing-page .ai-orbit-card .ai-orbit-icon {
+    background: linear-gradient(135deg, rgba(253, 113, 175, 0.86), rgba(73, 204, 249, 0.78)) !important;
+}
+
+#landing-page .hero-mini-card svg,
+#landing-page .about-feature .feature-icon svg,
+#landing-page .ai-orbit-card .ai-orbit-icon svg {
+    width: 23px !important;
+    height: 23px !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+    stroke-width: 2.15 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    transform: none !important;
+}
+
+#landing-page .hero-mini-card .mini-card-copy,
+#landing-page .ai-orbit-card p {
+    min-width: 0 !important;
+    display: grid !important;
+    gap: 3px !important;
+    margin: 0 !important;
+}
+
+#landing-page .hero-mini-card .mini-card-copy strong,
+#landing-page .ai-orbit-card p strong {
+    color: #ffffff !important;
+    font-size: 0.96rem !important;
+    line-height: 1.08 !important;
+}
+
+#landing-page .hero-mini-card .mini-card-copy small,
+#landing-page .ai-orbit-card p small {
+    color: rgba(226, 232, 240, 0.72) !important;
+    font-size: 0.74rem !important;
+    line-height: 1.2 !important;
+}
+
+#landing-page .hero-mini-card .mini-card-indicator {
+    justify-self: end !important;
+    padding: 6px 8px !important;
+    border-radius: 999px !important;
+    color: #7ee7ff !important;
+    font-size: 0.66rem !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+    background: rgba(73, 204, 249, 0.12) !important;
+    border: 1px solid rgba(73, 204, 249, 0.22) !important;
+}
+
+#landing-page .about-feature .feature-icon::before,
+#landing-page .about-feature .feature-icon::after {
+    content: none !important;
+}
+
+#landing-page .about-feature .feature-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#landing-page .ai-orbit-card {
+    min-height: 78px !important;
+    display: grid !important;
+    grid-template-columns: 46px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 14px !important;
+}
+
+body.light-theme #landing-page .hero-mini-card .mini-card-copy strong,
+body.light-theme #landing-page .ai-orbit-card p strong {
+    color: #0f172a !important;
+}
+
+body.light-theme #landing-page .hero-mini-card .mini-card-copy small,
+body.light-theme #landing-page .ai-orbit-card p small {
+    color: #64748b !important;
+}
+
+body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
+    color: #0369a1 !important;
+    background: rgba(14, 165, 233, 0.11) !important;
+    border-color: rgba(14, 165, 233, 0.18) !important;
+}
+
+@media (max-width: 760px) {
+    #landing-page .hero-visual .hero-mini-card {
+        grid-template-columns: 46px minmax(0, 1fr) !important;
+    }
+
+    #landing-page .hero-mini-card .mini-card-indicator {
+        grid-column: 2 !important;
+        justify-self: start !important;
     }
 }
