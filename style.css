@@ -19029,6 +19029,233 @@ body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
     }
 }
 
+/* Hero principal: mini widgets visuales 2x2 */
+#landing-page .hero-visual {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(128px, 1fr)) !important;
+    grid-auto-rows: 1fr !important;
+    gap: clamp(14px, 2vw, 20px) !important;
+    align-content: center !important;
+    justify-content: center !important;
+    width: min(100%, 420px) !important;
+    min-width: 0 !important;
+    margin-inline: auto !important;
+    padding: clamp(12px, 2vw, 18px) !important;
+    border-radius: 30px !important;
+    overflow: visible !important;
+}
+
+#landing-page .hero-visual .dashboard-mockup {
+    display: none !important;
+}
+
+#landing-page .hero-visual::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: inherit !important;
+    background:
+        radial-gradient(circle at 16% 12%, rgba(56, 189, 248, 0.22), transparent 36%),
+        radial-gradient(circle at 86% 86%, rgba(236, 72, 153, 0.18), transparent 38%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.22) !important;
+    pointer-events: none !important;
+}
+
+#landing-page .hero-visual .floating-card.hero-widget-mini {
+    position: relative !important;
+    inset: auto !important;
+    z-index: 1 !important;
+    display: grid !important;
+    grid-template-rows: 1fr auto !important;
+    place-items: center !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 148px !important;
+    aspect-ratio: 1 / 1 !important;
+    margin: 0 !important;
+    padding: clamp(18px, 2vw, 22px) !important;
+    border-radius: 26px !important;
+    overflow: hidden !important;
+    transform: none !important;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.045)),
+        radial-gradient(circle at 18% 0%, var(--widget-glow, rgba(56, 189, 248, 0.26)), transparent 56%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22), 0 0 30px var(--widget-shadow, rgba(56, 189, 248, 0.14)) !important;
+    backdrop-filter: blur(18px) saturate(1.12) !important;
+    animation: heroWidgetFloat 6.5s ease-in-out infinite !important;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, filter 180ms ease !important;
+}
+
+#landing-page .hero-visual .floating-card.hero-widget-mini:hover {
+    transform: translateY(-5px) scale(1.02) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    box-shadow: 0 24px 54px rgba(0, 0, 0, 0.26), 0 0 38px var(--widget-shadow, rgba(56, 189, 248, 0.22)) !important;
+    filter: brightness(1.06) saturate(1.06) !important;
+}
+
+#landing-page .hero-visual .card-1 { --widget-a: #10b981; --widget-b: #38bdf8; --widget-c: #6366f1; --widget-glow: rgba(16, 185, 129, 0.28); --widget-shadow: rgba(16, 185, 129, 0.18); }
+#landing-page .hero-visual .card-2 { --widget-a: #06b6d4; --widget-b: #6366f1; --widget-c: #a855f7; --widget-glow: rgba(99, 102, 241, 0.30); --widget-shadow: rgba(99, 102, 241, 0.20); }
+#landing-page .hero-visual .card-3 { --widget-a: #2563eb; --widget-b: #38bdf8; --widget-c: #06b6d4; --widget-glow: rgba(56, 189, 248, 0.28); --widget-shadow: rgba(56, 189, 248, 0.18); }
+#landing-page .hero-visual .card-4 { --widget-a: #f59e0b; --widget-b: #facc15; --widget-c: #7c3aed; --widget-glow: rgba(250, 204, 21, 0.24); --widget-shadow: rgba(168, 85, 247, 0.18); }
+
+#landing-page .hero-widget-mini .mini-card-icon {
+    width: clamp(56px, 6vw, 64px) !important;
+    height: clamp(56px, 6vw, 64px) !important;
+    min-width: clamp(56px, 6vw, 64px) !important;
+    margin: 8px 0 10px !important;
+    border-radius: 22px !important;
+    background: linear-gradient(135deg, var(--widget-a), var(--widget-b), var(--widget-c)) !important;
+    box-shadow: 0 14px 28px var(--widget-shadow, rgba(56, 189, 248, 0.18)), inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+#landing-page .hero-widget-mini .mini-card-icon svg {
+    width: clamp(34px, 4vw, 42px) !important;
+    height: clamp(34px, 4vw, 42px) !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+    stroke-width: 2.25 !important;
+    filter: drop-shadow(0 8px 18px rgba(15, 23, 42, 0.24)) !important;
+}
+
+#landing-page .hero-widget-mini .mini-card-copy {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: block !important;
+    margin: 0 !important;
+    text-align: center !important;
+}
+
+#landing-page .hero-widget-mini .mini-card-copy strong {
+    display: block !important;
+    width: 100% !important;
+    color: #ffffff !important;
+    font-size: clamp(0.9rem, 1.35vw, 1rem) !important;
+    font-weight: 950 !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+
+#landing-page .hero-widget-mini .mini-card-copy small {
+    display: none !important;
+}
+
+#landing-page .hero-widget-mini .mini-card-indicator {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    grid-column: auto !important;
+    min-width: 32px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 8px !important;
+    border-radius: 999px !important;
+    color: #ffffff !important;
+    font-size: 10px !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+    background: linear-gradient(135deg, var(--widget-a), var(--widget-b), var(--widget-c)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 0 8px 18px var(--widget-shadow, rgba(56, 189, 248, 0.18)) !important;
+}
+
+#landing-page .hero-widget-mini::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: auto 12px 12px 12px !important;
+    height: 3px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(90deg, var(--widget-a), var(--widget-b), var(--widget-c)) !important;
+    opacity: 0.82 !important;
+}
+
+body.light-theme #landing-page .hero-visual::before {
+    background:
+        radial-gradient(circle at 16% 12%, rgba(14, 165, 233, 0.18), transparent 36%),
+        radial-gradient(circle at 86% 86%, rgba(236, 72, 153, 0.13), transparent 38%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.78)) !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+    box-shadow: 0 24px 58px rgba(15, 23, 42, 0.10) !important;
+}
+
+body.light-theme #landing-page .hero-visual .floating-card.hero-widget-mini {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.84)),
+        radial-gradient(circle at 18% 0%, var(--widget-glow, rgba(56, 189, 248, 0.18)), transparent 56%) !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.10), 0 0 24px var(--widget-shadow, rgba(56, 189, 248, 0.12)) !important;
+}
+
+body.light-theme #landing-page .hero-widget-mini .mini-card-copy strong {
+    color: #0f172a !important;
+}
+
+@keyframes heroWidgetFloat {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -4px; }
+}
+
+@media (max-width: 980px) {
+    #landing-page .hero-visual {
+        width: min(100%, 390px) !important;
+        grid-template-columns: repeat(2, minmax(118px, 1fr)) !important;
+    }
+
+    #landing-page .hero-visual .floating-card.hero-widget-mini {
+        min-height: 136px !important;
+        border-radius: 22px !important;
+    }
+}
+
+@media (max-width: 520px) {
+    #landing-page .hero-visual {
+        width: 100% !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+        padding: 10px !important;
+    }
+
+    #landing-page .hero-visual .floating-card.hero-widget-mini {
+        min-height: 118px !important;
+        padding: 14px 10px !important;
+        border-radius: 20px !important;
+    }
+
+    #landing-page .hero-widget-mini .mini-card-icon {
+        width: 52px !important;
+        height: 52px !important;
+        min-width: 52px !important;
+    }
+
+    #landing-page .hero-widget-mini .mini-card-icon svg {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    #landing-page .hero-widget-mini .mini-card-indicator {
+        top: 9px !important;
+        right: 9px !important;
+        height: 21px !important;
+        min-width: 28px !important;
+        font-size: 9px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #landing-page .hero-visual .floating-card.hero-widget-mini {
+        animation: none !important;
+    }
+}
+
 /* Sidebar profesional: iconos SVG monocromaticos y uniformes */
 .sidebar .sidebar-icon {
     width: 34px !important;
