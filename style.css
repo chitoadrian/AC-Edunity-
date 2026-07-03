@@ -25230,3 +25230,246 @@ body.light-theme #landing-page .hero-mini-card .mini-title {
         padding: 14px 10px !important;
     }
 }
+
+/* Clean light mode priority layer */
+body.light-mode,
+body.light-theme,
+[data-theme="light"] {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+}
+
+body.light-mode .app,
+body.light-mode .app-shell,
+body.light-mode .main-content,
+body.light-mode .page,
+body.light-mode #landing-page,
+body.light-mode .section,
+body.light-mode .dashboard-content,
+body.light-mode .content-area,
+body.light-mode .dashboard-main,
+body.light-mode .page-content,
+body.light-theme .app,
+body.light-theme .app-shell,
+body.light-theme .main-content,
+body.light-theme .page,
+body.light-theme #landing-page,
+body.light-theme .section,
+body.light-theme .dashboard-content,
+body.light-theme .content-area,
+body.light-theme .dashboard-main,
+body.light-theme .page-content,
+[data-theme="light"] .app,
+[data-theme="light"] .app-shell,
+[data-theme="light"] .main-content,
+[data-theme="light"] .page,
+[data-theme="light"] #landing-page,
+[data-theme="light"] .section,
+[data-theme="light"] .dashboard-content,
+[data-theme="light"] .content-area,
+[data-theme="light"] .dashboard-main,
+[data-theme="light"] .page-content {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+}
+
+body.light-mode #landing-page .hero,
+body.light-mode #landing-page .benefits,
+body.light-mode #landing-page .about-project,
+body.light-mode #landing-page .ai-showcase,
+body.light-mode #landing-page .use-benefits,
+body.light-mode #landing-page .hero::before,
+body.light-mode #landing-page .ai-showcase::before,
+body.light-theme #landing-page .hero,
+body.light-theme #landing-page .benefits,
+body.light-theme #landing-page .about-project,
+body.light-theme #landing-page .ai-showcase,
+body.light-theme #landing-page .use-benefits,
+body.light-theme #landing-page .hero::before,
+body.light-theme #landing-page .ai-showcase::before,
+[data-theme="light"] #landing-page .hero,
+[data-theme="light"] #landing-page .benefits,
+[data-theme="light"] #landing-page .about-project,
+[data-theme="light"] #landing-page .ai-showcase,
+[data-theme="light"] #landing-page .use-benefits,
+[data-theme="light"] #landing-page .hero::before,
+[data-theme="light"] #landing-page .ai-showcase::before {
+    background: #ffffff !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode p,
+body.light-mode label,
+body.light-theme h1,
+body.light-theme h2,
+body.light-theme h3,
+body.light-theme h4,
+body.light-theme p,
+body.light-theme label,
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4,
+[data-theme="light"] p,
+[data-theme="light"] label {
+    color: #0f172a !important;
+}
+
+body.light-mode span:not(.hero-badge):not(.section-eyebrow):not(.mini-badge):not(.stat-num),
+body.light-theme span:not(.hero-badge):not(.section-eyebrow):not(.mini-badge):not(.stat-num),
+[data-theme="light"] span:not(.hero-badge):not(.section-eyebrow):not(.mini-badge):not(.stat-num) {
+    color: #0f172a !important;
+}
+
+body.light-mode .muted,
+body.light-mode .subtitle,
+body.light-mode .section-subtitle,
+body.light-mode .about-description,
+body.light-mode .feature-list li,
+body.light-mode .card-subtitle,
+body.light-theme .muted,
+body.light-theme .subtitle,
+body.light-theme .section-subtitle,
+body.light-theme .about-description,
+body.light-theme .feature-list li,
+body.light-theme .card-subtitle,
+[data-theme="light"] .muted,
+[data-theme="light"] .subtitle,
+[data-theme="light"] .section-subtitle,
+[data-theme="light"] .about-description,
+[data-theme="light"] .feature-list li,
+[data-theme="light"] .card-subtitle {
+    color: #475569 !important;
+}
+
+body.light-mode .landing-nav,
+body.light-mode .sidebar,
+body.light-mode .card,
+body.light-mode .glass-card,
+body.light-mode .hero-dashboard,
+body.light-mode .dashboard-mockup,
+body.light-mode .mockup-card,
+body.light-mode .feature-card,
+body.light-mode .benefit-card,
+body.light-mode .use-benefit-card,
+body.light-mode .ai-window,
+body.light-mode .ai-orbit-card,
+body.light-mode .stat-card,
+body.light-mode .summary-card,
+body.light-mode .subject-card,
+body.light-mode .task-card,
+body.light-mode .calendar-container,
+body.light-mode .calendar-month-card,
+body.light-mode .event-card,
+body.light-mode .grade-card,
+body.light-mode .resource-card,
+body.light-mode .profile-card,
+body.light-mode .auth-card,
+body.light-mode .quick-modal-card,
+body.light-theme .landing-nav,
+body.light-theme .sidebar,
+body.light-theme .card,
+body.light-theme .glass-card,
+body.light-theme .hero-dashboard,
+body.light-theme .dashboard-mockup,
+body.light-theme .mockup-card,
+body.light-theme .feature-card,
+body.light-theme .benefit-card,
+body.light-theme .use-benefit-card,
+body.light-theme .ai-window,
+body.light-theme .ai-orbit-card,
+body.light-theme .stat-card,
+body.light-theme .summary-card,
+body.light-theme .subject-card,
+body.light-theme .task-card,
+body.light-theme .calendar-container,
+body.light-theme .calendar-month-card,
+body.light-theme .event-card,
+body.light-theme .grade-card,
+body.light-theme .resource-card,
+body.light-theme .profile-card,
+body.light-theme .auth-card,
+body.light-theme .quick-modal-card,
+[data-theme="light"] .landing-nav,
+[data-theme="light"] .sidebar,
+[data-theme="light"] .card,
+[data-theme="light"] .glass-card,
+[data-theme="light"] .hero-dashboard,
+[data-theme="light"] .dashboard-mockup,
+[data-theme="light"] .mockup-card,
+[data-theme="light"] .feature-card,
+[data-theme="light"] .benefit-card,
+[data-theme="light"] .use-benefit-card,
+[data-theme="light"] .ai-window,
+[data-theme="light"] .ai-orbit-card,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .summary-card,
+[data-theme="light"] .subject-card,
+[data-theme="light"] .task-card,
+[data-theme="light"] .calendar-container,
+[data-theme="light"] .calendar-month-card,
+[data-theme="light"] .event-card,
+[data-theme="light"] .grade-card,
+[data-theme="light"] .resource-card,
+[data-theme="light"] .profile-card,
+[data-theme="light"] .auth-card,
+[data-theme="light"] .quick-modal-card {
+    background: #ffffff !important;
+    background-image: none !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08) !important;
+    color: #0f172a !important;
+}
+
+body.light-mode input,
+body.light-mode select,
+body.light-mode textarea,
+body.light-theme input,
+body.light-theme select,
+body.light-theme textarea,
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder,
+body.light-theme input::placeholder,
+body.light-theme textarea::placeholder,
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+    color: #64748b !important;
+}
+
+body.light-mode .btn-large,
+body.light-mode .btn-primary,
+body.light-mode .quick-action-btn,
+body.light-theme .btn-large,
+body.light-theme .btn-primary,
+body.light-theme .quick-action-btn,
+[data-theme="light"] .btn-large,
+[data-theme="light"] .btn-primary,
+[data-theme="light"] .quick-action-btn {
+    color: #ffffff !important;
+}
+
+body.light-mode .btn-secondary,
+body.light-mode .btn-ghost,
+body.light-theme .btn-secondary,
+body.light-theme .btn-ghost,
+[data-theme="light"] .btn-secondary,
+[data-theme="light"] .btn-ghost {
+    color: #0f172a !important;
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+}
