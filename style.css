@@ -24976,7 +24976,35 @@ body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
     }
 }
 
-/* Final real Hero mini widgets layout */
+/* Final real Hero layout: copy left, dashboard right, widgets below */
+#landing-page .hero {
+    width: min(1180px, calc(100% - 40px)) !important;
+    margin: 0 auto !important;
+    padding: clamp(48px, 6vw, 78px) 0 clamp(58px, 7vw, 92px) !important;
+    display: block !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+#landing-page .hero > .hero-content {
+    display: grid !important;
+    grid-template-columns: minmax(0, 0.95fr) minmax(440px, 1.05fr) !important;
+    align-items: center !important;
+    gap: clamp(38px, 5vw, 74px) !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+#landing-page .hero-left {
+    min-width: 0 !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+
+#landing-page .hero-left p {
+    max-width: 640px !important;
+}
+
 .hero-mini-grid {
   display: grid !important;
   grid-template-columns: repeat(2, 130px) !important;
@@ -25021,41 +25049,71 @@ body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
 #landing-page .hero-visual {
     display: grid !important;
     grid-template-columns: 1fr !important;
-    align-items: center !important;
-    justify-items: center !important;
-    min-width: 0 !important;
-    overflow: visible !important;
-}
-
-#landing-page .hero-visual .dashboard-mockup {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    grid-column: 1 / -1 !important;
+    gap: 18px !important;
+    align-items: start !important;
+    justify-items: stretch !important;
     width: 100% !important;
-    max-width: 700px !important;
-    min-height: 405px !important;
+    max-width: 690px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
     position: relative !important;
     z-index: 3 !important;
 }
 
+#landing-page .hero-visual .dashboard-mockup {
+    order: 1 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 395px !important;
+    grid-column: 1 !important;
+    margin: 0 !important;
+}
+
+#landing-page .hero-visual .mockup-card p {
+    max-width: none !important;
+    margin: 0 !important;
+    color: inherit !important;
+    font-size: 0.94rem !important;
+    line-height: 1.35 !important;
+    text-align: left !important;
+}
+
 #landing-page .hero-mini-grid {
+    order: 2 !important;
     position: relative !important;
     z-index: 2 !important;
+    display: grid !important;
     width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    max-width: none !important;
+    margin: 0 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 14px !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
 }
 
 #landing-page .hero-mini-card {
     position: relative !important;
     inset: auto !important;
-    min-width: 130px !important;
-    max-width: 130px !important;
-    min-height: 130px !important;
-    max-height: 130px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 92px !important;
+    min-height: 92px !important;
+    max-height: 92px !important;
+    padding: 14px 16px !important;
+    border-radius: 22px !important;
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    gap: 12px !important;
+    text-align: left !important;
     margin: 0 !important;
     box-sizing: border-box !important;
     background:
@@ -25073,7 +25131,11 @@ body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
 #landing-page .hero-mini-card.card-4 { --widget-a: #f59e0b; --widget-b: #facc15; --widget-c: #7c3aed; --widget-glow: rgba(250, 204, 21, 0.24); --widget-shadow: rgba(168, 85, 247, 0.18); }
 
 #landing-page .hero-mini-card svg {
-    flex: 0 0 42px !important;
+    width: 32px !important;
+    height: 32px !important;
+    flex: 0 0 32px !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
     stroke: #ffffff !important;
     fill: none !important;
     stroke-width: 2.25 !important;
@@ -25082,18 +25144,27 @@ body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
 }
 
 #landing-page .hero-mini-card .mini-title {
-    width: 100% !important;
+    width: auto !important;
+    min-width: 0 !important;
     margin: 0 !important;
     color: #ffffff !important;
     font-weight: 950 !important;
     letter-spacing: 0 !important;
-    text-align: center !important;
+    text-align: left !important;
+    font-size: 0.96rem !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
 }
 
 #landing-page .hero-mini-card .mini-badge {
-    position: absolute !important;
-    top: 10px !important;
-    right: 10px !important;
+    position: static !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: center !important;
     min-width: 28px !important;
     height: 21px !important;
     display: inline-flex !important;
@@ -25119,6 +25190,27 @@ body.light-theme #landing-page .hero-mini-card {
 
 body.light-theme #landing-page .hero-mini-card .mini-title {
     color: #0f172a !important;
+}
+
+.study-pet {
+    right: clamp(14px, 2vw, 28px) !important;
+    bottom: clamp(14px, 2vw, 26px) !important;
+    z-index: 20 !important;
+}
+
+.pet-bubble {
+    max-width: 245px !important;
+}
+
+@media (max-width: 1120px) {
+    #landing-page .hero > .hero-content {
+        grid-template-columns: 1fr !important;
+    }
+
+    #landing-page .hero-visual {
+        max-width: 760px !important;
+        margin: 0 auto !important;
+    }
 }
 
 @media (max-width: 520px) {
