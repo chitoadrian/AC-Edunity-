@@ -19080,15 +19080,25 @@ body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
 }
 
 #landing-page .hero-visual .dashboard-mockup {
-    display: none !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    max-width: 700px !important;
+    min-height: 405px !important;
+    position: relative !important;
+    z-index: 3 !important;
 }
 
 #landing-page .hero-mini-grid {
     position: relative !important;
     z-index: 2 !important;
-    width: auto !important;
+    width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 14px !important;
 }
 
 #landing-page .hero-mini-card {
@@ -19233,15 +19243,25 @@ body.light-theme #landing-page .hero-mini-card .mini-title {
 }
 
 #landing-page .hero-visual .dashboard-mockup {
-    display: none !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    max-width: 700px !important;
+    min-height: 405px !important;
+    position: relative !important;
+    z-index: 3 !important;
 }
 
 #landing-page .hero-mini-grid {
     position: relative !important;
     z-index: 2 !important;
-    width: auto !important;
+    width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 14px !important;
 }
 
 #landing-page .hero-mini-card {
@@ -24787,21 +24807,48 @@ body.light-theme #calendar .event-item.event-custom .event-date {
 }
 
 /* Final landing cards priority layer */
-#landing-page .hero-visual .hero-mini-card {
-    min-height: 82px !important;
-    padding: 13px 14px !important;
+#landing-page .hero-visual {
     display: grid !important;
-    grid-template-columns: 46px minmax(0, 1fr) auto !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    align-items: start !important;
+    align-content: center !important;
+    max-width: 720px !important;
+    min-height: 620px !important;
+    margin-left: auto !important;
+}
+
+#landing-page .hero-visual .dashboard-mockup {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    grid-column: 1 / -1 !important;
+    order: 1 !important;
+    width: 100% !important;
+    max-width: 700px !important;
+    min-height: 405px !important;
+    position: relative !important;
+    z-index: 3 !important;
+}
+
+#landing-page .hero-visual .hero-mini-card {
+    grid-column: auto !important;
+    order: 2 !important;
+    min-height: 76px !important;
+    padding: 12px !important;
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) !important;
     align-items: center !important;
-    gap: 12px !important;
+    gap: 10px !important;
+    border-radius: 20px !important;
 }
 
 #landing-page .hero-mini-card .mini-card-icon,
 #landing-page .ai-orbit-card .ai-orbit-icon {
-    width: 46px !important;
-    height: 46px !important;
-    min-width: 46px !important;
-    border-radius: 16px !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border-radius: 14px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -24832,7 +24879,7 @@ body.light-theme #calendar .event-item.event-custom .event-date {
 #landing-page .hero-mini-card .mini-card-copy,
 #landing-page .ai-orbit-card p {
     min-width: 0 !important;
-    display: grid !important;
+    display: block !important;
     gap: 3px !important;
     margin: 0 !important;
 }
@@ -24840,8 +24887,12 @@ body.light-theme #calendar .event-item.event-custom .event-date {
 #landing-page .hero-mini-card .mini-card-copy strong,
 #landing-page .ai-orbit-card p strong {
     color: #ffffff !important;
-    font-size: 0.96rem !important;
+    display: block !important;
+    font-size: 0.88rem !important;
     line-height: 1.08 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
 }
 
 #landing-page .hero-mini-card .mini-card-copy small,
@@ -24861,6 +24912,11 @@ body.light-theme #calendar .event-item.event-custom .event-date {
     white-space: nowrap !important;
     background: rgba(73, 204, 249, 0.12) !important;
     border: 1px solid rgba(73, 204, 249, 0.22) !important;
+}
+
+#landing-page .hero-mini-card .mini-card-copy small,
+#landing-page .hero-mini-card .mini-card-indicator {
+    display: none !important;
 }
 
 #landing-page .about-feature .feature-icon::before,
@@ -24900,8 +24956,18 @@ body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
 }
 
 @media (max-width: 760px) {
+    #landing-page .hero-visual {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        min-height: 0 !important;
+    }
+
+    #landing-page .hero-visual .dashboard-mockup {
+        grid-column: 1 / -1 !important;
+        min-height: 340px !important;
+    }
+
     #landing-page .hero-visual .hero-mini-card {
-        grid-template-columns: 46px minmax(0, 1fr) !important;
+        grid-template-columns: 40px minmax(0, 1fr) !important;
     }
 
     #landing-page .hero-mini-card .mini-card-indicator {
@@ -24962,15 +25028,25 @@ body.light-theme #landing-page .hero-mini-card .mini-card-indicator {
 }
 
 #landing-page .hero-visual .dashboard-mockup {
-    display: none !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    max-width: 700px !important;
+    min-height: 405px !important;
+    position: relative !important;
+    z-index: 3 !important;
 }
 
 #landing-page .hero-mini-grid {
     position: relative !important;
     z-index: 2 !important;
-    width: auto !important;
+    width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 14px !important;
 }
 
 #landing-page .hero-mini-card {
