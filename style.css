@@ -25491,6 +25491,109 @@ body.light-mode .auth-brand,
   }
 }
 
+/* Animation compatibility: keep animated visuals visible on older/mobile browsers */
+#landing-page .reveal,
+#landing-page .reveal-left,
+#landing-page .reveal-right,
+#landing-page .reveal-scale {
+  visibility: visible !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+}
+
+#landing-page .reveal.active,
+#landing-page .reveal-left.active,
+#landing-page .reveal-right.active,
+#landing-page .reveal-scale.active {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translate3d(0, 0, 0) scale(1) !important;
+}
+
+@media (max-width: 760px) {
+  #landing-page .reveal,
+  #landing-page .reveal-left,
+  #landing-page .reveal-right,
+  #landing-page .reveal-scale {
+    transform: translate3d(0, 22px, 0) scale(0.98) !important;
+  }
+
+  #landing-page .reveal.active,
+  #landing-page .reveal-left.active,
+  #landing-page .reveal-right.active,
+  #landing-page .reveal-scale.active {
+    transform: translate3d(0, 0, 0) scale(1) !important;
+  }
+}
+
+#login-page .auth-visual,
+#register-page .auth-visual,
+#login-page .auth-visual-inner,
+#register-page .auth-visual-inner,
+.study-pet,
+.pet-robot,
+.hero-dashboard,
+.hero-mini-card,
+.auth-study-scene,
+.study-window,
+.study-chat,
+.study-pencil,
+.study-gear,
+.study-particle {
+  animation-play-state: running !important;
+}
+
+@media (max-width: 980px) {
+  #login-page .auth-layout,
+  #register-page .auth-layout {
+    gap: 18px !important;
+  }
+
+  #login-page .auth-visual,
+  #register-page .auth-visual {
+    display: flex !important;
+    width: 100% !important;
+    height: 280px !important;
+    min-height: 280px !important;
+    max-height: 280px !important;
+    overflow: visible !important;
+    justify-self: center !important;
+    transform: none !important;
+  }
+
+  #login-page .auth-visual-inner,
+  #register-page .auth-visual-inner {
+    width: 720px !important;
+    height: 620px !important;
+    transform: scale(0.46) !important;
+    transform-origin: center center !important;
+  }
+}
+
+@media (max-width: 620px) {
+  #login-page .auth-visual,
+  #register-page .auth-visual {
+    height: 220px !important;
+    min-height: 220px !important;
+    max-height: 220px !important;
+  }
+
+  #login-page .auth-visual-inner,
+  #register-page .auth-visual-inner {
+    transform: scale(0.36) !important;
+  }
+}
+
+@supports not (animation-name: fadeIn) {
+  #landing-page .reveal,
+  #landing-page .reveal-left,
+  #landing-page .reveal-right,
+  #landing-page .reveal-scale {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 body.light-mode input::placeholder,
 body.light-mode textarea::placeholder,
 body.light-theme input::placeholder,

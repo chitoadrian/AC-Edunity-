@@ -335,6 +335,15 @@ function initLandingReveal() {
 
     if (!revealItems.length) return;
 
+    const updateRevealItems = () => {
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 720;
+        revealItems.forEach(item => {
+            const rect = item.getBoundingClientRect();
+            const isVisible = rect.top < viewportHeight * 0.92 && rect.bottom > viewportHeight * -0.08;
+            item.classList.toggle('active', isVisible);
+        });
+    };
+
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion || !('IntersectionObserver' in window)) {
         revealItems.forEach(item => item.classList.add('active'));
@@ -346,11 +355,33 @@ function initLandingReveal() {
             entry.target.classList.toggle('active', entry.isIntersecting);
         });
     }, {
-        threshold: 0.16,
-        rootMargin: '0px 0px -60px 0px'
+        threshold: 0.01,
+        rootMargin: '120px 0px 120px 0px'
     });
 
     revealItems.forEach(item => revealObserver.observe(item));
+    updateRevealItems();
+
+    let ticking = false;
+    const safeRevealFallback = () => {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(() => {
+            updateRevealItems();
+            ticking = false;
+        });
+    };
+
+    window.addEventListener('scroll', safeRevealFallback, { passive: true });
+    window.addEventListener('resize', safeRevealFallback, { passive: true });
+    window.setTimeout(() => {
+        if (document.body.classList.contains('is-landing')) updateRevealItems();
+    }, 700);
+    window.setTimeout(() => {
+        if (document.body.classList.contains('is-landing')) {
+            revealItems.forEach(item => item.classList.add('active'));
+        }
+    }, 1800);
 }
 
 function resetLandingReveal() {
@@ -372,16 +403,8 @@ function resetLandingReveal() {
 }
 
 function initLandingWheelControl() {
-    window.addEventListener('wheel', event => {
-        if (!document.body.classList.contains('is-landing')) return;
-
-        const scroller = document.scrollingElement || document.documentElement;
-        const maxScroll = scroller.scrollHeight - scroller.clientHeight;
-        if (maxScroll <= 0) return;
-
-        event.preventDefault();
-        scroller.scrollTop += event.deltaY;
-    }, { passive: false, capture: true });
+    // Mantener el scroll nativo evita bloqueos de rueda/touchpad en navegadores
+    // del colegio y moviles; las animaciones reveal se controlan por scroll pasivo.
 }
 
 // ============================================
