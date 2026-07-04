@@ -6871,10 +6871,13 @@ function getProfileInitials(name) {
 }
 
 function getProfileAvatarContent(profile) {
-    if (profile.avatarStyle === 'photo' && profile.avatarText.trim()) {
-        return `<img src="${escapeHTML(profile.avatarText.trim())}" alt="Foto de perfil">`;
+    const avatarValue = String(profile.avatarUrl || profile.avatarText || '').trim();
+    const isImageUrl = /^(https?:\/\/|data:image\/)/i.test(avatarValue);
+
+    if ((profile.avatarStyle === 'photo' || profile.avatarStyle === 'custom') && avatarValue && isImageUrl) {
+        return `<img src="${escapeHTML(avatarValue)}" alt="Foto de perfil" loading="lazy">`;
     }
-    if (profile.avatarStyle === 'custom' && profile.avatarText.trim()) return escapeHTML(profile.avatarText.trim().slice(0, 4));
+    if (profile.avatarStyle === 'custom' && avatarValue) return escapeHTML(avatarValue.slice(0, 4));
     if (profile.avatarStyle === 'rocket') return '🚀';
     if (profile.avatarStyle === 'book') return '📚';
     if (profile.avatarStyle === 'code') return '💻';
@@ -7683,6 +7686,12 @@ function getPublicUserFromAuth(user, profile = null) {
     };
 }
 
+function profileInterestsToString(value = '') {
+    if (Array.isArray(value)) return value.filter(Boolean).join(', ');
+    if (value && typeof value === 'object') return Object.values(value).filter(Boolean).join(', ');
+    return String(value || '');
+}
+
 async function ensureProfileRow(user, fallbackName = '') {
     const sb = getSupabaseClient();
     const { data: existing, error: selectError } = await sb
@@ -7729,7 +7738,12 @@ async function ensureProfileRow(user, fallbackName = '') {
         role: 'Estudiante',
         xp: 0,
         streak: 0,
-        level: 1
+        level: 1,
+        study_area: '',
+        bio: '',
+        interests: '',
+        avatar_type: 'initials',
+        avatar_url: ''
     };
 
     const { data: created, error: insertError } = await sb
@@ -7800,6 +7814,11 @@ async function syncWorkspaceFromSupabase() {
         xp: 0,
         streak: 0,
         level: 1,
+        study_area: '',
+        bio: '',
+        interests: '',
+        avatar_type: 'initials',
+        avatar_url: '',
         created_at: currentUser.createdAt || ''
     };
 
@@ -7981,56 +8000,170 @@ function pushRecentMessage(text) {
 function getCurrentUserProfile() {
     const extras = loadWorkspaceExtras().profileExtras || {};
     const safeName = currentUser?.name || profileState?.full_name || 'Estudiante';
+    const supabaseInterests = profileInterestsToString(profileState?.interests);
+    const fallbackAvatarStyle = extras.avatarStyle || 'initials';
+    const avatarType = profileState?.avatar_type || fallbackAvatarStyle;
+    const avatarUrl = profileState?.avatar_url || '';
     return {
         name: safeName,
         role: profileState?.role || 'Estudiante',
-        career: extras.career || '',
-        bio: extras.bio || '',
-        interests: extras.interests || '',
-        avatarStyle: extras.avatarStyle || 'initials',
-        avatarText: extras.avatarText || '',
+        career: profileState?.study_area || extras.career || '',
+        bio: profileState?.bio || extras.bio || '',
+        interests: supabaseInterests || extras.interests || '',
+        avatarStyle: avatarType,
+        avatarText: avatarUrl || extras.avatarText || '',
+        avatarUrl,
         createdAt: profileState?.created_at || currentUser?.createdAt || '',
         goals: Array.isArray(extras.goals) ? extras.goals : []
     };
 }
 
-function saveCurrentUserProfile(profileUpdates) {
+async function uploadProfileAvatar(file) {
+    if (!currentUser?.id) throw new Error('No hay usuario activo.');
+    if (!(file instanceof File) || file.size === 0) return '';
+    if (!file.type || !file.type.startsWith('image/')) {
+        throw new Error('Selecciona un archivo de imagen valido.');
+    }
+    if (file.size > 2 * 1024 * 1024) {
+        throw new Error('La imagen debe pesar maximo 2MB.');
+    }
+
+    const sb = getSupabaseClient();
+    const extension = (file.name.split('.').pop() || file.type.split('/').pop() || 'png')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '')
+        .slice(0, 8) || 'png';
+    const filePath = `${currentUser.id}/avatar-${Date.now()}.${extension}`;
+
+    console.log('[PROFILE AVATAR] subiendo avatar', { path: filePath, size: file.size, type: file.type });
+    const { error: uploadError } = await sb.storage
+        .from('profile-avatars')
+        .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: file.type
+        });
+
+    if (uploadError) {
+        logSupabaseError('profile avatar upload', uploadError);
+        throw uploadError;
+    }
+
+    const { data } = sb.storage.from('profile-avatars').getPublicUrl(filePath);
+    return data?.publicUrl || '';
+}
+
+async function saveCurrentUserProfile(profileUpdates = {}) {
     if (!currentUser?.id) return;
 
     const extras = loadWorkspaceExtras();
+    const currentProfile = getCurrentUserProfile();
+    const avatarFile = profileUpdates.avatarFile instanceof File && profileUpdates.avatarFile.size > 0
+        ? profileUpdates.avatarFile
+        : null;
+
     extras.profileExtras = {
         ...(extras.profileExtras || {}),
-        career: profileUpdates.career ?? extras.profileExtras?.career ?? '',
-        bio: profileUpdates.bio ?? extras.profileExtras?.bio ?? '',
-        interests: profileUpdates.interests ?? extras.profileExtras?.interests ?? '',
-        avatarStyle: profileUpdates.avatarStyle ?? extras.profileExtras?.avatarStyle ?? 'initials',
-        avatarText: profileUpdates.avatarText ?? extras.profileExtras?.avatarText ?? '',
+        career: profileUpdates.career ?? extras.profileExtras?.career ?? currentProfile.career ?? '',
+        bio: profileUpdates.bio ?? extras.profileExtras?.bio ?? currentProfile.bio ?? '',
+        interests: profileUpdates.interests ?? extras.profileExtras?.interests ?? currentProfile.interests ?? '',
+        avatarStyle: profileUpdates.avatarStyle ?? extras.profileExtras?.avatarStyle ?? currentProfile.avatarStyle ?? 'initials',
+        avatarText: profileUpdates.avatarText ?? extras.profileExtras?.avatarText ?? currentProfile.avatarText ?? '',
         goals: profileUpdates.goals ?? extras.profileExtras?.goals ?? []
     };
     saveWorkspaceExtras(extras);
 
-    if (profileUpdates.name) {
+    if (profileUpdates.name !== undefined) {
         currentUser.name = profileUpdates.name;
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         if (profileState) profileState.full_name = profileUpdates.name;
     }
-    if (profileUpdates.role && profileState) {
+    if (profileUpdates.role !== undefined && profileState) {
         profileState.role = profileUpdates.role;
     }
 
-    const remotePatch = {};
-    if (profileUpdates.name) remotePatch.full_name = profileUpdates.name;
-    if (profileUpdates.role) remotePatch.role = profileUpdates.role;
+    const shouldPersistRemote = ['name', 'role', 'career', 'bio', 'interests', 'avatarStyle', 'avatarText'].some(key => key in profileUpdates) || !!avatarFile;
+    if (!shouldPersistRemote) return;
 
-    if (Object.keys(remotePatch).length) {
-        getSupabaseClient()
-            .from('profiles')
-            .update(remotePatch)
-            .eq('id', currentUser.id)
-            .then(({ error }) => {
-                if (error) notify('No se pudo guardar todo el perfil en Supabase.', 'error');
-            });
+    const sb = getSupabaseClient();
+    const { data: userData, error: userError } = await sb.auth.getUser();
+    if (userError) {
+        logSupabaseError('profiles getUser', userError);
+        throw userError;
     }
+    const user = userData?.user;
+    if (!user?.id) throw new Error('No hay sesion activa para guardar el perfil.');
+
+    let avatarUrl = profileUpdates.avatarText ?? currentProfile.avatarUrl ?? currentProfile.avatarText ?? '';
+    let avatarType = profileUpdates.avatarStyle ?? currentProfile.avatarStyle ?? 'initials';
+
+    if (avatarFile) {
+        avatarUrl = await uploadProfileAvatar(avatarFile);
+        avatarType = 'custom';
+        extras.profileExtras.avatarStyle = 'custom';
+        extras.profileExtras.avatarText = avatarUrl;
+        saveWorkspaceExtras(extras);
+    }
+
+    const payload = {
+        id: user.id,
+        full_name: profileUpdates.name ?? currentProfile.name ?? currentUser.name ?? user.email?.split('@')[0] ?? 'Estudiante',
+        role: profileUpdates.role ?? currentProfile.role ?? 'Estudiante',
+        study_area: profileUpdates.career ?? currentProfile.career ?? '',
+        bio: profileUpdates.bio ?? currentProfile.bio ?? '',
+        interests: profileUpdates.interests ?? currentProfile.interests ?? '',
+        avatar_type: avatarType || 'initials',
+        avatar_url: avatarUrl || '',
+        updated_at: new Date().toISOString()
+    };
+
+    console.log('[PROFILE] guardando perfil en Supabase', { id: payload.id, avatar_type: payload.avatar_type });
+    const { data, error } = await sb
+        .from('profiles')
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single();
+
+    if (error) {
+        logSupabaseError('profiles upsert own', error);
+        throw error;
+    }
+
+    profileState = data;
+    currentUser = getPublicUserFromAuth(user, data);
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    console.log('[PROFILE] perfil guardado correctamente', { id: data.id });
+}
+
+function openProfileForm() {
+    const profile = getCurrentUserProfile();
+    openQuickForm({
+        title: 'Editar perfil',
+        submitLabel: 'Guardar perfil',
+        fields: [
+            { name: 'name', label: 'Nombre', value: profile.name, placeholder: 'Tu nombre' },
+            { name: 'career', label: 'Carrera o area de estudio', value: profile.career, placeholder: 'Ej: Informatica' },
+            { name: 'bio', label: 'Descripcion personal', type: 'textarea', rows: 3, value: profile.bio, placeholder: 'Ej: Construyendo mi camino de aprendizaje.' },
+            { name: 'interests', label: 'Intereses', value: profile.interests, placeholder: 'Ej: IA educativa, programacion, robotica' },
+            { name: 'avatarFile', label: 'Subir foto o imagen personalizada', type: 'file', accept: 'image/*', required: false }
+        ],
+        onSubmit: async values => {
+            try {
+                await saveCurrentUserProfile({
+                    name: values.name.trim(),
+                    career: values.career.trim(),
+                    bio: values.bio.trim(),
+                    interests: values.interests.trim(),
+                    avatarFile: values.avatarFile
+                });
+                refreshWorkspaceUI();
+                notify('Perfil actualizado.', 'success');
+            } catch (error) {
+                console.error('[PROFILE ERROR]', error);
+                notify(error.message || 'No se pudo guardar el perfil.', 'error');
+            }
+        }
+    });
 }
 
 function showLanding() {

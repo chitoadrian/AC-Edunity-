@@ -25625,3 +25625,29 @@ body.light-theme .btn-ghost,
     background: #ffffff !important;
     border-color: #cbd5e1 !important;
 }
+
+.quick-modal-form input[type="file"] {
+    cursor: pointer !important;
+    padding: 13px 14px !important;
+    line-height: 1.4 !important;
+}
+
+.quick-modal-form input[type="file"]::file-selector-button {
+    margin-right: 12px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    padding: 9px 13px !important;
+    color: #ffffff !important;
+    font-family: inherit !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    background: linear-gradient(135deg, #7b68ee, #49ccf9, #fd71af) !important;
+}
+
+#profile .profile-avatar-premium img {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    object-fit: cover !important;
+    border-radius: 24px !important;
+}
