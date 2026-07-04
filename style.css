@@ -25644,6 +25644,25 @@ body.light-theme .btn-ghost,
     background: linear-gradient(135deg, #7b68ee, #49ccf9, #fd71af) !important;
 }
 
+.remove-avatar-btn {
+    width: fit-content !important;
+    border: 1px solid rgba(244, 114, 182, 0.45) !important;
+    background: rgba(244, 114, 182, 0.10) !important;
+    color: #f472b6 !important;
+    border-radius: 16px !important;
+    padding: 12px 18px !important;
+    font-family: inherit !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
+}
+
+.remove-avatar-btn:hover {
+    background: rgba(244, 114, 182, 0.18) !important;
+    border-color: rgba(244, 114, 182, 0.65) !important;
+    transform: translateY(-1px) !important;
+}
+
 #profile .profile-avatar-premium img {
     width: 100% !important;
     height: 100% !important;

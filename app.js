@@ -8162,8 +8162,68 @@ async function saveCurrentUserProfile(profileUpdates = {}) {
     console.log('[PROFILE] perfil guardado correctamente', { id: profileState.id });
 }
 
+async function removeCustomProfileAvatar() {
+    if (!currentUser?.id) return;
+
+    const confirmed = window.confirm('¿Seguro que quieres borrar tu foto de perfil?');
+    if (!confirmed) return;
+
+    try {
+        const sb = getSupabaseClient();
+        const { data: userData, error: userError } = await sb.auth.getUser();
+        if (userError) {
+            logSupabaseError('profiles getUser remove avatar', userError);
+            throw userError;
+        }
+
+        const user = userData?.user;
+        if (!user?.id) throw new Error('No hay sesion activa para borrar el avatar.');
+
+        console.log('[PROFILE AVATAR] borrando avatar personalizado', { id: user.id });
+        const { data, error } = await sb
+            .from('profiles')
+            .update({
+                avatar_url: null,
+                avatar_type: 'initials',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error guardando perfil:', error);
+            logSupabaseError('profiles remove avatar', error);
+            throw error;
+        }
+
+        profileState = data;
+        const extras = loadWorkspaceExtras();
+        extras.profileExtras = {
+            ...(extras.profileExtras || {}),
+            avatarStyle: 'initials',
+            avatarText: ''
+        };
+        saveWorkspaceExtras(extras);
+
+        currentUser = getPublicUserFromAuth(user, profileState);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+        const fileInput = document.querySelector('.quick-modal-form input[name="avatarFile"]');
+        if (fileInput) fileInput.value = '';
+        document.querySelector('.remove-avatar-btn')?.remove();
+
+        refreshWorkspaceUI();
+        notify('Avatar eliminado. Volviste a usar tus iniciales.', 'success');
+    } catch (error) {
+        console.error('[PROFILE AVATAR REMOVE ERROR]', error);
+        notify('No se pudo borrar el avatar. Intenta otra vez.', 'error');
+    }
+}
+
 function openProfileForm() {
     const profile = getCurrentUserProfile();
+    const hasCustomAvatar = Boolean(profile.avatarUrl || profile.avatarStyle === 'custom');
     openQuickForm({
         title: 'Editar perfil',
         submitLabel: 'Guardar perfil',
@@ -8191,6 +8251,19 @@ function openProfileForm() {
             }
         }
     });
+
+    if (hasCustomAvatar) {
+        const avatarInput = document.querySelector('.quick-modal-form input[name="avatarFile"]');
+        const avatarLabel = avatarInput?.closest('label');
+        if (avatarLabel && !avatarLabel.querySelector('.remove-avatar-btn')) {
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.className = 'remove-avatar-btn';
+            removeButton.textContent = 'Borrar avatar';
+            removeButton.addEventListener('click', removeCustomProfileAvatar);
+            avatarLabel.appendChild(removeButton);
+        }
+    }
 }
 
 function showLanding() {
