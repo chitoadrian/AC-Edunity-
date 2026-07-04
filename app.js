@@ -6990,11 +6990,7 @@ function renderProfile(workspace) {
         { id: 'default-streak', text: 'Mantener racha de estudio', done: streak > 1 }
     ];
     const recentItems = (workspace.recent || []).slice(0, 5);
-    const interests = String(profile.interests || 'Organizacion academica, IA educativa, Productividad')
-        .split(',')
-        .map(item => item.trim())
-        .filter(Boolean)
-        .slice(0, 4);
+    const interests = normalizeInterests(profile.interests).slice(0, 4);
 
     profileLayout.innerHTML = `
         <section class="profile-hero premium-profile-card">
@@ -7686,9 +7682,27 @@ function getPublicUserFromAuth(user, profile = null) {
     };
 }
 
+function normalizeInterests(value = '') {
+    if (Array.isArray(value)) {
+        return value
+            .filter(Boolean)
+            .map(item => String(item).trim())
+            .filter(Boolean);
+    }
+
+    if (typeof value === 'string') {
+        return value
+            .split(',')
+            .map(item => item.trim())
+            .filter(Boolean);
+    }
+
+    return [];
+}
+
 function profileInterestsToString(value = '') {
-    if (Array.isArray(value)) return value.filter(Boolean).join(', ');
-    if (value && typeof value === 'object') return Object.values(value).filter(Boolean).join(', ');
+    if (Array.isArray(value) || typeof value === 'string') return normalizeInterests(value).join(', ');
+    if (value && typeof value === 'object') return normalizeInterests(Object.values(value)).join(', ');
     return String(value || '');
 }
 
@@ -7741,7 +7755,7 @@ async function ensureProfileRow(user, fallbackName = '') {
         level: 1,
         study_area: '',
         bio: '',
-        interests: '',
+        interests: [],
         avatar_type: 'initials',
         avatar_url: ''
     };
@@ -7816,7 +7830,7 @@ async function syncWorkspaceFromSupabase() {
         level: 1,
         study_area: '',
         bio: '',
-        interests: '',
+        interests: [],
         avatar_type: 'initials',
         avatar_url: '',
         created_at: currentUser.createdAt || ''
@@ -8111,9 +8125,9 @@ async function saveCurrentUserProfile(profileUpdates = {}) {
         role: profileUpdates.role ?? currentProfile.role ?? 'Estudiante',
         study_area: profileUpdates.career ?? currentProfile.career ?? '',
         bio: profileUpdates.bio ?? currentProfile.bio ?? '',
-        interests: profileUpdates.interests ?? currentProfile.interests ?? '',
-        avatar_type: avatarType || 'initials',
-        avatar_url: avatarUrl || '',
+        interests: normalizeInterests(profileUpdates.interests ?? currentProfile.interests),
+        avatar_type: avatarUrl ? 'custom' : avatarType || 'initials',
+        avatar_url: avatarUrl || null,
         updated_at: new Date().toISOString()
     };
 
@@ -8125,14 +8139,27 @@ async function saveCurrentUserProfile(profileUpdates = {}) {
         .single();
 
     if (error) {
+        console.error('Error guardando perfil:', error);
         logSupabaseError('profiles upsert own', error);
         throw error;
     }
 
-    profileState = data;
-    currentUser = getPublicUserFromAuth(user, data);
+    const { data: savedProfile, error: reloadError } = await sb
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+    if (reloadError) {
+        console.error('Error guardando perfil:', reloadError);
+        logSupabaseError('profiles reload own', reloadError);
+        throw reloadError;
+    }
+
+    profileState = savedProfile || data;
+    currentUser = getPublicUserFromAuth(user, profileState);
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    console.log('[PROFILE] perfil guardado correctamente', { id: data.id });
+    console.log('[PROFILE] perfil guardado correctamente', { id: profileState.id });
 }
 
 function openProfileForm() {
@@ -8160,7 +8187,7 @@ function openProfileForm() {
                 notify('Perfil actualizado.', 'success');
             } catch (error) {
                 console.error('[PROFILE ERROR]', error);
-                notify(error.message || 'No se pudo guardar el perfil.', 'error');
+                notify('No se pudo guardar el perfil. Revisa los datos e intenta otra vez.', 'error');
             }
         }
     });
