@@ -7185,22 +7185,30 @@ function renderProfile(workspace) {
                 </div>
                 <button class="btn-primary btn-small" type="button" onclick="openProfileForm()">Editar perfil</button>
             </div>
-            <aside class="profile-hero-summary profile-academic-summary" aria-label="Resumen academico">
+            <aside class="profile-summary-card profile-academic-summary" aria-label="Resumen academico">
                 <span class="profile-summary-title">Resumen academico</span>
-                <div>
-                    ${appIconHTML('trend', 'profile-summary-icon card-icon')}
-                    <span>Nivel</span>
-                    <strong>${escapeHTML(level)}</strong>
-                </div>
-                <div>
-                    ${appIconHTML('chart', 'profile-summary-icon card-icon')}
-                    <span>XP</span>
-                    <strong>${escapeHTML(xp)}</strong>
-                </div>
-                <div>
-                    ${appIconHTML('calendar', 'profile-summary-icon card-icon')}
-                    <span>Racha</span>
-                    <strong>${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
+                <div class="profile-summary-list">
+                    <div class="profile-summary-item">
+                        <span class="profile-summary-label">
+                            ${appIconHTML('trend', 'profile-summary-icon')}
+                            <span>Nivel</span>
+                        </span>
+                        <strong class="profile-summary-value">${escapeHTML(level)}</strong>
+                    </div>
+                    <div class="profile-summary-item">
+                        <span class="profile-summary-label">
+                            ${appIconHTML('chart', 'profile-summary-icon')}
+                            <span>XP</span>
+                        </span>
+                        <strong class="profile-summary-value">${escapeHTML(xp)}</strong>
+                    </div>
+                    <div class="profile-summary-item">
+                        <span class="profile-summary-label">
+                            ${appIconHTML('calendar', 'profile-summary-icon')}
+                            <span>Racha</span>
+                        </span>
+                        <strong class="profile-summary-value">${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
+                    </div>
                 </div>
             </aside>
         </section>

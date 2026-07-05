@@ -25935,3 +25935,155 @@ body.light-theme #progress .progress-achievement-card small {
         padding: 18px 12px !important;
     }
 }
+
+/* Perfil: panel superior limpio con resumen academico tipo lista */
+#profile .profile-hero {
+    display: grid !important;
+    grid-template-columns: 220px minmax(0, 1fr) minmax(320px, 360px) !important;
+    align-items: center !important;
+    gap: 34px !important;
+}
+
+#profile .profile-summary-card {
+    position: relative !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    max-width: 360px !important;
+    min-width: 0 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    display: block !important;
+    padding: 24px !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    border-radius: 28px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 22px 54px rgba(15, 23, 42, 0.18) !important;
+}
+
+#profile .profile-summary-card .profile-summary-title {
+    display: block !important;
+    margin: 0 0 16px !important;
+    color: #38bdf8 !important;
+    font-size: 0.78rem !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.10em !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    text-transform: uppercase !important;
+}
+
+#profile .profile-summary-list {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: none !important;
+    align-items: stretch !important;
+    align-content: start !important;
+    justify-items: stretch !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+#profile .profile-summary-item {
+    min-height: 64px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
+    padding: 14px 16px !important;
+    border: 1px solid rgba(148, 163, 184, 0.14) !important;
+    border-radius: 18px !important;
+    background: rgba(15, 23, 42, 0.28) !important;
+}
+
+#profile .profile-summary-label {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    color: rgba(226, 232, 240, 0.74) !important;
+    font-size: 0.9rem !important;
+    font-weight: 850 !important;
+    line-height: 1.15 !important;
+    text-transform: none !important;
+}
+
+#profile .profile-summary-card .profile-summary-icon {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #6366f1, #38bdf8) !important;
+    box-shadow: 0 10px 22px rgba(56, 189, 248, 0.20) !important;
+}
+
+#profile .profile-summary-card .profile-summary-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+#profile .profile-summary-value {
+    flex: 0 0 auto !important;
+    max-width: 46% !important;
+    color: #f8fafc !important;
+    font-size: 1.35rem !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+}
+
+body.light-theme #profile .profile-summary-card {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.09) !important;
+}
+
+body.light-theme #profile .profile-summary-item {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.light-theme #profile .profile-summary-label {
+    color: #475569 !important;
+}
+
+body.light-theme #profile .profile-summary-value {
+    color: #0f172a !important;
+}
+
+@media (max-width: 1100px) {
+    #profile .profile-hero {
+        grid-template-columns: 200px minmax(0, 1fr) !important;
+    }
+
+    #profile .profile-summary-card {
+        grid-column: 1 / -1 !important;
+        max-width: none !important;
+        justify-self: stretch !important;
+    }
+}
+
+@media (max-width: 720px) {
+    #profile .profile-hero {
+        grid-template-columns: 1fr !important;
+        gap: 24px !important;
+        text-align: center !important;
+    }
+
+    #profile .profile-summary-card {
+        padding: 20px !important;
+    }
+
+    #profile .profile-summary-card .profile-summary-title {
+        text-align: center !important;
+    }
+}
