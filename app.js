@@ -449,8 +449,23 @@ function legacyShowLandingLocal() {
     resetLandingReveal();
 }
 
-function showLogin() {
+async function showLogin() {
     clearAuthMessages();
+    try {
+        const sb = getSupabaseClient();
+        const { data: sessionData } = await sb.auth.getSession();
+        const authUser = sessionData?.session?.user;
+        if (authUser) {
+            console.log("[APP] Sesion activa encontrada desde Iniciar sesion");
+            currentUser = getPublicUserFromAuth(authUser);
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            await bootstrapAuthenticatedApp(authUser);
+            showDashboard(getStoredAppView());
+            return;
+        }
+    } catch (error) {
+        console.warn('[APP] No se pudo comprobar la sesion activa antes del login:', error);
+    }
     showPage('login-page');
 }
 
@@ -7205,8 +7220,10 @@ let profileState = null;
 let authListenerReady = false;
 let loginInProgress = false;
 let logoutInProgress = false;
-const APP_INSIDE_SESSION_KEY = 'ac_inside_app';
-const APP_CURRENT_VIEW_SESSION_KEY = 'ac_current_view';
+const APP_INSIDE_SESSION_KEY = 'ac_inside_student_app';
+const APP_CURRENT_VIEW_SESSION_KEY = 'ac_current_student_view';
+const LEGACY_APP_INSIDE_SESSION_KEY = 'ac_inside_app';
+const LEGACY_APP_CURRENT_VIEW_SESSION_KEY = 'ac_current_view';
 const VALID_APP_VIEWS = new Set([
     'dashboard',
     'subjects',
@@ -7234,14 +7251,21 @@ function rememberAppView(view) {
 function clearAppViewSession() {
     sessionStorage.removeItem(APP_INSIDE_SESSION_KEY);
     sessionStorage.removeItem(APP_CURRENT_VIEW_SESSION_KEY);
+    sessionStorage.removeItem(LEGACY_APP_INSIDE_SESSION_KEY);
+    sessionStorage.removeItem(LEGACY_APP_CURRENT_VIEW_SESSION_KEY);
 }
 
 function shouldRestoreAppFromSession() {
-    return sessionStorage.getItem(APP_INSIDE_SESSION_KEY) === 'true';
+    return sessionStorage.getItem(APP_INSIDE_SESSION_KEY) === 'true'
+        || sessionStorage.getItem(LEGACY_APP_INSIDE_SESSION_KEY) === 'true';
 }
 
 function getStoredAppView() {
-    return normalizeAppView(sessionStorage.getItem(APP_CURRENT_VIEW_SESSION_KEY) || 'dashboard');
+    return normalizeAppView(
+        sessionStorage.getItem(APP_CURRENT_VIEW_SESSION_KEY)
+        || sessionStorage.getItem(LEGACY_APP_CURRENT_VIEW_SESSION_KEY)
+        || 'dashboard'
+    );
 }
 
 function logSupabaseError(context, error) {
@@ -8975,13 +8999,16 @@ async function initializeApp() {
     initLandingReveal();
     initLandingWheelControl();
 
-    console.log("[APP] Landing inicial");
+    const shouldRestoreStudentApp = shouldRestoreAppFromSession();
+    console.log(shouldRestoreStudentApp ? "[APP] Restauracion de panel pendiente" : "[APP] Landing inicial");
     currentUser = null;
     profileState = null;
     workspaceState = mergeWorkspaceState();
     localStorage.removeItem('currentUser');
     localStorage.removeItem('acEdunityUser');
-    showLanding({ preserveAppView: true });
+    if (!shouldRestoreStudentApp) {
+        showLanding();
+    }
 
     try {
         const sb = getSupabaseClient();
@@ -9039,6 +9066,7 @@ async function initializeApp() {
         workspaceState = mergeWorkspaceState();
         localStorage.removeItem('currentUser');
         localStorage.removeItem('acEdunityUser');
+        clearAppViewSession();
         showLanding();
     } catch (error) {
         currentUser = null;
