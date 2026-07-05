@@ -16936,12 +16936,26 @@ html.is-landing::-webkit-scrollbar-thumb {
 }
 
 body.is-landing::-webkit-scrollbar,
-body.is-landing *::-webkit-scrollbar {
+body.is-landing #landing-page::-webkit-scrollbar,
+body.is-landing .landing-page::-webkit-scrollbar,
+body.is-landing .landing-main::-webkit-scrollbar,
+body.is-landing .landing-content::-webkit-scrollbar,
+body.is-landing .public-page::-webkit-scrollbar,
+body.is-landing .sections-wrapper::-webkit-scrollbar,
+body.is-landing .page-wrapper::-webkit-scrollbar,
+body.is-landing .hero-section::-webkit-scrollbar {
     width: 0 !important;
     height: 0 !important;
 }
 
-body.is-landing * {
+body.is-landing #landing-page,
+body.is-landing .landing-page,
+body.is-landing .landing-main,
+body.is-landing .landing-content,
+body.is-landing .public-page,
+body.is-landing .sections-wrapper,
+body.is-landing .page-wrapper,
+body.is-landing .hero-section {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
 }
@@ -26583,6 +26597,8 @@ html.landing-mode {
     min-height: 100% !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
+    scroll-behavior: auto !important;
+    overscroll-behavior-y: auto !important;
     scrollbar-width: auto !important;
     scrollbar-color: #cbd5e1 #ffffff !important;
 }
@@ -26590,8 +26606,10 @@ html.landing-mode {
 body.is-landing,
 body.landing-mode {
     min-height: 100% !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    scroll-behavior: auto !important;
+    overscroll-behavior-y: auto !important;
 }
 
 body.is-landing #landing-page,
@@ -26621,7 +26639,9 @@ body.is-landing .dashboard-shell {
     min-height: auto !important;
     overflow: visible !important;
     overflow-y: visible !important;
-    overflow-x: hidden !important;
+    overflow-x: visible !important;
+    scroll-snap-type: none !important;
+    overscroll-behavior: auto !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
 }
