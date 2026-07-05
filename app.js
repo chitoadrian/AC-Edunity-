@@ -6994,162 +6994,6 @@ function toggleProfileGoal(goalId) {
     renderProfile(loadWorkspace());
 }
 
-function renderProfileLegacyUnused(workspace) {
-    const profileLayout = document.querySelector('#profile .profile-layout');
-    if (!profileLayout) return;
-
-    const profile = getCurrentUserProfile();
-    const name = profile.name || 'Estudiante AC';
-    const level = getLevel(workspace.xp);
-    const average = getAverageGrade(workspace);
-    const streak = getDisplayStreak(workspace);
-    const completedTasks = workspace.tasks.filter(task => task.status === 'completed').length;
-    const achievements = getProfileAchievements(workspace);
-    const unlockedAchievements = achievements.filter(item => item.unlocked).length;
-    const xp = workspace.xp || 0;
-    const xpPerLevel = 250;
-    const xpCurrent = xp % xpPerLevel;
-    const xpToNext = xpPerLevel - xpCurrent;
-    const xpProgress = Math.min(100, (xpCurrent / xpPerLevel) * 100);
-    const goals = profile.goals.length ? profile.goals : [
-        { id: 'default-weekly', text: 'Completar tareas semanales', done: completedTasks > 0 },
-        { id: 'default-average', text: 'Mejorar promedio', done: average >= 8 },
-        { id: 'default-streak', text: 'Mantener racha de estudio', done: streak > 1 }
-    ];
-    const recentItems = (workspace.recent || []).slice(0, 5);
-    const interests = normalizeInterests(profile.interests).slice(0, 4);
-
-    profileLayout.innerHTML = `
-        <section class="profile-hero premium-profile-card">
-            <div class="profile-avatar-zone">
-                <div class="profile-avatar profile-avatar-premium">${getProfileAvatarContent(profile)}</div>
-                <button class="btn-secondary btn-small" type="button" onclick="openAvatarForm()">Cambiar avatar</button>
-            </div>
-            <div class="profile-details profile-details-premium">
-                <span class="profile-role">${escapeHTML(profile.role || 'Estudiante')}</span>
-                <h2 id="profile-name">${escapeHTML(name)}</h2>
-                <p class="profile-career">${escapeHTML(profile.career || 'Personaliza tu carrera o area de estudio')}</p>
-                <p>${escapeHTML(profile.bio || 'Personaliza tu perfil para empezar.')}</p>
-                <div class="profile-tags">
-                    ${interests.map(tag => `<span>${escapeHTML(tag)}</span>`).join('')}
-                </div>
-                <button class="btn-primary btn-small" type="button" onclick="openProfileForm()">Editar perfil</button>
-            </div>
-            <aside class="profile-hero-summary" aria-label="Resumen del perfil">
-                <div>
-                    ${appIconHTML('trend', 'profile-summary-icon card-icon')}
-                    <span>Nivel</span>
-                    <strong>${escapeHTML(level)}</strong>
-                </div>
-                <div>
-                    ${appIconHTML('chart', 'profile-summary-icon card-icon')}
-                    <span>XP</span>
-                    <strong>${escapeHTML(xp)}</strong>
-                </div>
-                <div>
-                    ${appIconHTML('calendar', 'profile-summary-icon card-icon')}
-                    <span>Racha</span>
-                    <strong>${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
-                </div>
-            </aside>
-        </section>
-
-        <section class="profile-stats-grid">
-            ${profileStatCard('⭐', 'Nivel actual', level, 'avance academico')}
-            ${profileStatCard('🔥', 'Racha', `${streak} ${streak === 1 ? 'dia' : 'dias'}`, 'constancia')}
-            ${profileStatCard('⚡', 'XP acumulado', xp, 'experiencia')}
-            ${profileStatCard('🏆', 'Logros', `${unlockedAchievements}/${achievements.length}`, 'insignias')}
-            ${profileStatCard('📚', 'Materias', workspace.subjects.length, 'creadas')}
-            ${profileStatCard('📝', 'Tareas', completedTasks, 'completadas')}
-            ${profileStatCard('📂', 'PDFs', workspace.resources.length, 'subidos')}
-        </section>
-
-        <section class="profile-progress-card premium-profile-card">
-            <div>
-                <span class="profile-section-kicker">Mi camino academico</span>
-                <h3>Nivel ${level}</h3>
-                <p>${xp ? `Te faltan ${xpToNext} XP para subir al nivel ${level + 1}.` : 'Completa actividades para ganar XP y desbloquear logros.'}</p>
-                <div class="profile-level-route">
-                    <span>Nivel ${escapeHTML(level)}</span>
-                    <i aria-hidden="true"></i>
-                    <span>Nivel ${escapeHTML(level + 1)}</span>
-                </div>
-            </div>
-            <div class="profile-xp-track">
-                <div class="profile-xp-fill" style="width:${xpProgress}%"></div>
-            </div>
-            <div class="profile-xp-meta">
-                <span>${xpCurrent} / ${xpPerLevel} XP</span>
-                <span>${xp} XP acumulado</span>
-            </div>
-        </section>
-
-        <section class="profile-achievements-card premium-profile-card">
-            <div class="profile-section-header">
-                <div>
-                    <span class="profile-section-kicker">Mis logros</span>
-                    <h3>Insignias destacadas</h3>
-                </div>
-            </div>
-            <div class="profile-badges-grid">
-                ${achievements.map(item => `
-                    <article class="profile-badge ${item.unlocked ? 'unlocked' : 'locked'}">
-                        ${appIconHTML(getProfileStatIconName(item.name, ''), 'profile-badge-icon card-icon')}
-                        <strong>${escapeHTML(item.name)}</strong>
-                        <small>${item.unlocked ? 'Desbloqueado' : 'Bloqueado'}</small>
-                    </article>
-                `).join('')}
-            </div>
-        </section>
-
-        <section class="profile-goals-card premium-profile-card">
-            <div class="profile-section-header">
-                <div>
-                    <span class="profile-section-kicker">Mis metas</span>
-                    <h3>Objetivos personales</h3>
-                </div>
-                <button class="btn-secondary btn-small" type="button" onclick="openGoalForm()">+ Meta</button>
-            </div>
-            <div class="profile-goals-list">
-                ${goals.map(goal => `
-                    <button class="profile-goal ${goal.done ? 'done' : ''}" type="button" onclick="${String(goal.id).startsWith('default-') ? '' : `toggleProfileGoal('${escapeHTML(goal.id)}')`}">
-                        <span>${goal.done ? '✓' : '+'}</span>
-                        <strong>${escapeHTML(goal.text)}</strong>
-                    </button>
-                `).join('')}
-            </div>
-        </section>
-
-        <section class="profile-activity-card premium-profile-card">
-            <span class="profile-section-kicker">Actividad reciente</span>
-            <h3>Historial del estudiante</h3>
-            ${recentItems.length ? `
-                <ul class="profile-activity-list">
-                    ${recentItems.map(item => `<li><span>${escapeHTML(item.time)}</span><strong>${escapeHTML(item.text)}</strong></li>`).join('')}
-                </ul>
-            ` : `
-                <div class="profile-empty-note">
-                    <strong>Tu actividad aparecera aqui cuando empieces.</strong>
-                    <span>Crea materias, completa tareas, usa Tutor o sube PDFs.</span>
-                </div>
-            `}
-        </section>
-    `;
-}
-
-function profileStatCard(icon, label, value, detail) {
-    return `
-        <article class="profile-stat-card premium-profile-card">
-            ${appIconHTML(getProfileStatIconName(label, icon), 'profile-stat-icon card-icon')}
-            <div>
-                <small>${escapeHTML(label)}</small>
-                <strong>${escapeHTML(value)}</strong>
-                <em>${escapeHTML(detail)}</em>
-            </div>
-        </article>
-    `;
-}
-
 function renderProfile(workspace) {
     const profileLayout = document.querySelector('#profile .profile-layout');
     if (!profileLayout) return;
@@ -7185,23 +7029,23 @@ function renderProfile(workspace) {
                 </div>
                 <button class="btn-primary btn-small" type="button" onclick="openProfileForm()">Editar perfil</button>
             </div>
-            <div class="profile-summary-card" aria-label="Resumen academico">
-                <h3 class="profile-summary-title">Resumen academico</h3>
-                <div class="profile-summary-list">
-                    <div class="profile-summary-row">
-                        ${appIconHTML('trend', 'profile-summary-icon')}
-                        <span class="profile-summary-label">Nivel actual</span>
-                        <strong class="profile-summary-value">${escapeHTML(level)}</strong>
+            <div class="profile-academic-box" aria-label="Resumen academico">
+                <h3 class="profile-academic-title">Resumen academico</h3>
+                <div class="profile-academic-list">
+                    <div class="profile-academic-row">
+                        ${appIconHTML('trend', 'profile-academic-icon')}
+                        <span class="profile-academic-label">Nivel actual</span>
+                        <strong class="profile-academic-value">${escapeHTML(level)}</strong>
                     </div>
-                    <div class="profile-summary-row">
-                        ${appIconHTML('chart', 'profile-summary-icon')}
-                        <span class="profile-summary-label">XP acumulado</span>
-                        <strong class="profile-summary-value">${escapeHTML(xp)}</strong>
+                    <div class="profile-academic-row">
+                        ${appIconHTML('chart', 'profile-academic-icon')}
+                        <span class="profile-academic-label">XP acumulado</span>
+                        <strong class="profile-academic-value">${escapeHTML(xp)}</strong>
                     </div>
-                    <div class="profile-summary-row">
-                        ${appIconHTML('calendar', 'profile-summary-icon')}
-                        <span class="profile-summary-label">Racha</span>
-                        <strong class="profile-summary-value">${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
+                    <div class="profile-academic-row">
+                        ${appIconHTML('calendar', 'profile-academic-icon')}
+                        <span class="profile-academic-label">Racha</span>
+                        <strong class="profile-academic-value">${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
                     </div>
                 </div>
             </div>

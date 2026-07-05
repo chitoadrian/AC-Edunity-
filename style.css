@@ -26239,3 +26239,157 @@ body.light-theme #profile .profile-summary-value,
         text-align: left !important;
     }
 }
+
+/* Perfil: resumen academico definitivo con estructura nueva sin clases heredadas */
+#profile .profile-hero,
+#profile .profile-identity-card {
+    display: grid !important;
+    grid-template-columns: 240px minmax(0, 1fr) 430px !important;
+    gap: 36px !important;
+    align-items: center !important;
+}
+
+#profile .profile-academic-box {
+    width: 100% !important;
+    max-width: 430px !important;
+    min-width: 0 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    padding: 28px !important;
+    border-radius: 30px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(148, 163, 184, 0.20) !important;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    position: static !important;
+    transform: none !important;
+}
+
+#profile .profile-academic-title {
+    margin: 0 !important;
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.12em !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+    color: #38bdf8 !important;
+}
+
+#profile .profile-academic-list {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+#profile .profile-academic-row {
+    width: 100% !important;
+    min-height: 62px !important;
+    display: grid !important;
+    grid-template-columns: 48px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 12px 16px !important;
+    border-radius: 20px !important;
+    background: rgba(15, 23, 42, 0.32) !important;
+    border: 1px solid rgba(148, 163, 184, 0.16) !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    position: static !important;
+    transform: none !important;
+}
+
+#profile .profile-academic-icon {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #6366f1, #38bdf8) !important;
+    box-shadow: 0 12px 26px rgba(56, 189, 248, 0.22) !important;
+    position: static !important;
+    transform: none !important;
+}
+
+#profile .profile-academic-icon svg {
+    width: 23px !important;
+    height: 23px !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+    stroke-width: 2.2 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+}
+
+#profile .profile-academic-label {
+    min-width: 0 !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    color: rgba(226, 232, 240, 0.78) !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    line-height: 1.2 !important;
+}
+
+#profile .profile-academic-value {
+    font-size: 1.35rem !important;
+    font-weight: 900 !important;
+    color: #f8fafc !important;
+    white-space: nowrap !important;
+    text-align: right !important;
+    line-height: 1 !important;
+}
+
+body.light-mode #profile .profile-academic-box,
+body.light-theme #profile .profile-academic-box,
+[data-theme="light"] #profile .profile-academic-box {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.light-mode #profile .profile-academic-row,
+body.light-theme #profile .profile-academic-row,
+[data-theme="light"] #profile .profile-academic-row {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-mode #profile .profile-academic-label,
+body.light-theme #profile .profile-academic-label,
+[data-theme="light"] #profile .profile-academic-label {
+    color: #475569 !important;
+}
+
+body.light-mode #profile .profile-academic-value,
+body.light-theme #profile .profile-academic-value,
+[data-theme="light"] #profile .profile-academic-value {
+    color: #0f172a !important;
+}
+
+@media (max-width: 1150px) {
+    #profile .profile-hero,
+    #profile .profile-identity-card {
+        grid-template-columns: 220px minmax(0, 1fr) !important;
+    }
+
+    #profile .profile-academic-box {
+        grid-column: 1 / -1 !important;
+        max-width: 100% !important;
+        justify-self: stretch !important;
+    }
+}
+
+@media (max-width: 720px) {
+    #profile .profile-hero,
+    #profile .profile-identity-card {
+        grid-template-columns: 1fr !important;
+    }
+}
