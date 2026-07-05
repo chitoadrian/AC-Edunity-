@@ -7185,26 +7185,26 @@ function renderProfile(workspace) {
                 </div>
                 <button class="btn-primary btn-small" type="button" onclick="openProfileForm()">Editar perfil</button>
             </div>
-            <aside class="profile-summary-card profile-academic-summary" aria-label="Resumen academico">
-                <span class="profile-summary-title">Resumen academico</span>
+            <div class="profile-summary-card" aria-label="Resumen academico">
+                <h3 class="profile-summary-title">Resumen academico</h3>
                 <div class="profile-summary-list">
-                    <div class="profile-summary-item">
+                    <div class="profile-summary-row">
                         ${appIconHTML('trend', 'profile-summary-icon')}
                         <span class="profile-summary-label">Nivel actual</span>
                         <strong class="profile-summary-value">${escapeHTML(level)}</strong>
                     </div>
-                    <div class="profile-summary-item">
+                    <div class="profile-summary-row">
                         ${appIconHTML('chart', 'profile-summary-icon')}
                         <span class="profile-summary-label">XP acumulado</span>
                         <strong class="profile-summary-value">${escapeHTML(xp)}</strong>
                     </div>
-                    <div class="profile-summary-item">
+                    <div class="profile-summary-row">
                         ${appIconHTML('calendar', 'profile-summary-icon')}
                         <span class="profile-summary-label">Racha</span>
                         <strong class="profile-summary-value">${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
                     </div>
                 </div>
-            </aside>
+            </div>
         </section>
 
         <section class="profile-goals-card premium-profile-card">

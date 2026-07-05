@@ -26091,3 +26091,151 @@ body.light-theme #profile .profile-summary-value {
         text-align: center !important;
     }
 }
+
+/* Perfil: resumen academico reconstruido como lista limpia */
+#profile .profile-hero,
+#profile .profile-identity-card {
+    align-items: center !important;
+}
+
+#profile .profile-summary-card {
+    width: 100% !important;
+    max-width: 420px !important;
+    min-width: 0 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    padding: 28px !important;
+    border-radius: 28px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+#profile .profile-summary-title {
+    margin: 0 !important;
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.12em !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+    color: #38bdf8 !important;
+}
+
+#profile .profile-summary-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+#profile .profile-summary-row {
+    width: 100% !important;
+    min-height: 58px !important;
+    display: grid !important;
+    grid-template-columns: 46px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 12px 14px !important;
+    border-radius: 18px !important;
+    background: rgba(15, 23, 42, 0.28) !important;
+    border: 1px solid rgba(148, 163, 184, 0.14) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+#profile .profile-summary-icon {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #6366f1, #38bdf8) !important;
+    box-shadow: 0 10px 24px rgba(56, 189, 248, 0.20) !important;
+}
+
+#profile .profile-summary-icon svg {
+    width: 22px !important;
+    height: 22px !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+    stroke-width: 2.2 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+}
+
+#profile .profile-summary-label {
+    min-width: 0 !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    color: rgba(226, 232, 240, 0.75) !important;
+    white-space: normal !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#profile .profile-summary-value {
+    font-size: 1.35rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    color: #f8fafc !important;
+    white-space: nowrap !important;
+    text-align: right !important;
+}
+
+body.light-mode #profile .profile-summary-card,
+body.light-theme #profile .profile-summary-card,
+[data-theme="light"] #profile .profile-summary-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08) !important;
+}
+
+body.light-mode #profile .profile-summary-row,
+body.light-theme #profile .profile-summary-row,
+[data-theme="light"] #profile .profile-summary-row {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.light-mode #profile .profile-summary-label,
+body.light-theme #profile .profile-summary-label,
+[data-theme="light"] #profile .profile-summary-label {
+    color: #475569 !important;
+}
+
+body.light-mode #profile .profile-summary-value,
+body.light-theme #profile .profile-summary-value,
+[data-theme="light"] #profile .profile-summary-value {
+    color: #0f172a !important;
+}
+
+@media (max-width: 1100px) {
+    #profile .profile-summary-card {
+        grid-column: 1 / -1 !important;
+        max-width: 100% !important;
+        justify-self: stretch !important;
+    }
+}
+
+@media (max-width: 720px) {
+    #profile .profile-summary-card {
+        padding: 22px !important;
+    }
+
+    #profile .profile-summary-title {
+        text-align: left !important;
+    }
+}
