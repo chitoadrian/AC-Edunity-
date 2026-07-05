@@ -7189,24 +7189,18 @@ function renderProfile(workspace) {
                 <span class="profile-summary-title">Resumen academico</span>
                 <div class="profile-summary-list">
                     <div class="profile-summary-item">
-                        <span class="profile-summary-label">
-                            ${appIconHTML('trend', 'profile-summary-icon')}
-                            <span>Nivel</span>
-                        </span>
+                        ${appIconHTML('trend', 'profile-summary-icon')}
+                        <span class="profile-summary-label">Nivel actual</span>
                         <strong class="profile-summary-value">${escapeHTML(level)}</strong>
                     </div>
                     <div class="profile-summary-item">
-                        <span class="profile-summary-label">
-                            ${appIconHTML('chart', 'profile-summary-icon')}
-                            <span>XP</span>
-                        </span>
+                        ${appIconHTML('chart', 'profile-summary-icon')}
+                        <span class="profile-summary-label">XP acumulado</span>
                         <strong class="profile-summary-value">${escapeHTML(xp)}</strong>
                     </div>
                     <div class="profile-summary-item">
-                        <span class="profile-summary-label">
-                            ${appIconHTML('calendar', 'profile-summary-icon')}
-                            <span>Racha</span>
-                        </span>
+                        ${appIconHTML('calendar', 'profile-summary-icon')}
+                        <span class="profile-summary-label">Racha</span>
                         <strong class="profile-summary-value">${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
                     </div>
                 </div>
