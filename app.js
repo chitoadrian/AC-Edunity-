@@ -609,6 +609,7 @@ function navigateTo(sectionId, evt) {
     }
 
     currentSection = sectionId;
+    rememberAppView(sectionId);
 
     // Scroll al top en mobile
     if (isTabletOrSmaller) {
@@ -7204,16 +7205,43 @@ let profileState = null;
 let authListenerReady = false;
 let loginInProgress = false;
 let logoutInProgress = false;
-const DASHBOARD_SESSION_KEY = 'acEdunityDashboardActive';
+const APP_INSIDE_SESSION_KEY = 'ac_inside_app';
+const APP_CURRENT_VIEW_SESSION_KEY = 'ac_current_view';
+const VALID_APP_VIEWS = new Set([
+    'dashboard',
+    'subjects',
+    'tasks',
+    'calendar',
+    'grades',
+    'attendance',
+    'ai-assistant',
+    'progress',
+    'backpack',
+    'profile'
+]);
 
-function wasPageReloaded() {
-    const navigationEntry = performance.getEntriesByType?.('navigation')?.[0];
-    if (navigationEntry) return navigationEntry.type === 'reload';
-    return performance.navigation?.type === 1;
+function normalizeAppView(view) {
+    if (view === 'tutor') return 'ai-assistant';
+    return VALID_APP_VIEWS.has(view) ? view : 'dashboard';
 }
 
-function canRestoreDashboardOnReload() {
-    return wasPageReloaded() && sessionStorage.getItem(DASHBOARD_SESSION_KEY) === 'true';
+function rememberAppView(view) {
+    const normalizedView = normalizeAppView(view);
+    sessionStorage.setItem(APP_INSIDE_SESSION_KEY, 'true');
+    sessionStorage.setItem(APP_CURRENT_VIEW_SESSION_KEY, normalizedView);
+}
+
+function clearAppViewSession() {
+    sessionStorage.removeItem(APP_INSIDE_SESSION_KEY);
+    sessionStorage.removeItem(APP_CURRENT_VIEW_SESSION_KEY);
+}
+
+function shouldRestoreAppFromSession() {
+    return sessionStorage.getItem(APP_INSIDE_SESSION_KEY) === 'true';
+}
+
+function getStoredAppView() {
+    return normalizeAppView(sessionStorage.getItem(APP_CURRENT_VIEW_SESSION_KEY) || 'dashboard');
 }
 
 function logSupabaseError(context, error) {
@@ -7412,7 +7440,7 @@ async function handleUpdatePassword(newPassword, confirmPassword) {
         currentUser = null;
         profileState = null;
         workspaceState = mergeWorkspaceState();
-        sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+        clearAppViewSession();
         showLanding();
         window.history.replaceState({}, document.title, window.location.pathname);
     } catch (error) {
@@ -8254,8 +8282,10 @@ function openProfileForm() {
     setupProfileAvatarUploadControls(hasCustomAvatar);
 }
 
-function showLanding() {
-    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+function showLanding(options = {}) {
+    if (!options.preserveAppView) {
+        clearAppViewSession();
+    }
     clearAuthMessages();
     ['login-email', 'login-password', 'register-name', 'register-email', 'register-password'].forEach(id => {
         const input = document.getElementById(id);
@@ -8266,7 +8296,7 @@ function showLanding() {
     console.log("[APP] Mostrando landing");
 }
 
-function showDashboard() {
+function showDashboard(sectionId = 'dashboard') {
     const appPage = document.getElementById('app-page');
     if (!appPage) {
         console.error('[LOGIN] No se encontro #app-page para mostrar el dashboard');
@@ -8282,21 +8312,24 @@ function showDashboard() {
     document.documentElement.classList.add('is-dashboard');
     document.body.classList.remove('landing-mode', 'is-landing');
     document.body.classList.add('is-dashboard');
-    sessionStorage.setItem(DASHBOARD_SESSION_KEY, 'true');
-    currentSection = 'dashboard';
+    const targetSection = normalizeAppView(sectionId);
+    rememberAppView(targetSection);
+    currentSection = targetSection;
 
     applySidebarCollapsedState();
 
     try {
         updateDashboardGreeting();
         refreshWorkspaceUI();
-        navigateTo('dashboard');
+        navigateTo(targetSection);
     } catch (error) {
         console.error('[LOGIN] Error renderizando dashboard:', error);
         const dashboardSection = document.getElementById('dashboard');
         if (dashboardSection) {
             document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
             dashboardSection.classList.add('active');
+            rememberAppView('dashboard');
+            currentSection = 'dashboard';
         }
     }
 
@@ -8304,7 +8337,7 @@ function showDashboard() {
 }
 
 function showApp() {
-    showDashboard();
+    showDashboard('dashboard');
 }
 
 async function handleRegister(event) {
@@ -8517,7 +8550,7 @@ async function handleLogout(event) {
         workspaceState = mergeWorkspaceState();
         localStorage.removeItem("currentUser");
         localStorage.removeItem("acEdunityUser");
-        sessionStorage.clear();
+        clearAppViewSession();
 
         console.log("[LOGOUT] Sesión cerrada");
         console.log("[APP] Mostrando landing");
@@ -8948,8 +8981,7 @@ async function initializeApp() {
     workspaceState = mergeWorkspaceState();
     localStorage.removeItem('currentUser');
     localStorage.removeItem('acEdunityUser');
-    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
-    showLanding();
+    showLanding({ preserveAppView: true });
 
     try {
         const sb = getSupabaseClient();
@@ -8973,7 +9005,7 @@ async function initializeApp() {
                     workspaceState = mergeWorkspaceState();
                     localStorage.removeItem('currentUser');
                     localStorage.removeItem('acEdunityUser');
-                    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+                    clearAppViewSession();
                     showLanding();
                     return;
                 }
@@ -8981,18 +9013,32 @@ async function initializeApp() {
             authListenerReady = true;
         }
 
-        const { error } = await sb.auth.getSession();
+        const { data: sessionData, error } = await sb.auth.getSession();
         if (error) throw error;
         if (isPasswordRecoveryUrl()) {
             console.log('[PASSWORD UPDATE] Link de recuperacion detectado en URL');
             window.setTimeout(openPasswordUpdateModal, 250);
+            clearAppViewSession();
+            showLanding();
+            return;
         }
+
+        if (sessionData?.session?.user && shouldRestoreAppFromSession()) {
+            const authUser = sessionData.session.user;
+            const restoredView = getStoredAppView();
+            console.log("[APP] Restaurando menu estudiantil en:", restoredView);
+            currentUser = getPublicUserFromAuth(authUser);
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            await bootstrapAuthenticatedApp(authUser);
+            showDashboard(restoredView);
+            return;
+        }
+
         currentUser = null;
         profileState = null;
         workspaceState = mergeWorkspaceState();
         localStorage.removeItem('currentUser');
         localStorage.removeItem('acEdunityUser');
-        sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
         showLanding();
     } catch (error) {
         currentUser = null;
