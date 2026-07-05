@@ -16874,6 +16874,49 @@ body.is-dashboard .app-content {
     overflow-y: visible !important;
 }
 
+/* Landing: el scroll debe pertenecer solo al documento, no al contenedor interno. */
+html.is-landing {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+
+body.is-landing {
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+}
+
+body.is-landing #landing-page,
+body.is-landing #landing-page.page,
+body.is-landing #landing-page.page.active,
+body.is-landing .landing-page,
+body.is-landing .landing-main,
+body.is-landing .landing-content,
+body.is-landing .public-page,
+body.is-landing .sections-wrapper,
+body.is-landing .page-wrapper,
+body.is-landing .hero-section {
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    scrollbar-width: auto !important;
+    scrollbar-color: auto !important;
+}
+
+body.is-landing #landing-page::-webkit-scrollbar,
+body.is-landing .landing-page::-webkit-scrollbar,
+body.is-landing .landing-main::-webkit-scrollbar,
+body.is-landing .landing-content::-webkit-scrollbar,
+body.is-landing .public-page::-webkit-scrollbar,
+body.is-landing .sections-wrapper::-webkit-scrollbar,
+body.is-landing .page-wrapper::-webkit-scrollbar,
+body.is-landing .hero-section::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+}
+
 @media (max-width: 900px) {
     #tasks .task-board.task-list-modern,
     #tasks .task-list-modern {
