@@ -442,6 +442,15 @@ function showPage(pageId) {
     }
 }
 
+function finishBooting() {
+    document.body.classList.remove('app-booting');
+    document.documentElement.classList.remove('app-booting');
+    const bootLoader = document.getElementById('app-boot-loader');
+    if (bootLoader) {
+        bootLoader.setAttribute('aria-hidden', 'true');
+    }
+}
+
 function legacyShowLandingLocal() {
     currentUser = null;
     localStorage.removeItem('currentUser');
@@ -8317,6 +8326,7 @@ function showLanding(options = {}) {
     });
     showPage('landing-page');
     resetLandingReveal();
+    finishBooting();
     console.log("[APP] Mostrando landing");
 }
 
@@ -8358,6 +8368,7 @@ function showDashboard(sectionId = 'dashboard') {
     }
 
     window.scrollTo(0, 0);
+    finishBooting();
 }
 
 function showApp() {
@@ -9006,9 +9017,6 @@ async function initializeApp() {
     workspaceState = mergeWorkspaceState();
     localStorage.removeItem('currentUser');
     localStorage.removeItem('acEdunityUser');
-    if (!shouldRestoreStudentApp) {
-        showLanding();
-    }
 
     try {
         const sb = getSupabaseClient();

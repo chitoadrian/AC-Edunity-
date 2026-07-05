@@ -7,9 +7,18 @@
     <link rel="icon" type="image/png" href="assets/ac-edunity-logo.png">
     <link rel="shortcut icon" type="image/png" href="assets/ac-edunity-logo.png">
     <link rel="apple-touch-icon" href="assets/ac-edunity-logo.png">
-    <link rel="stylesheet" href="style.css?v=20260705-student-session-navigation">
+    <link rel="stylesheet" href="style.css?v=20260705-boot-loader-session-restore">
 </head>
-<body>
+<body class="app-booting">
+    <div id="app-boot-loader" class="app-boot-loader" role="status" aria-live="polite">
+        <div class="boot-loader-card">
+            <img src="assets/ac-edunity-logo.png" alt="AC Edunity" class="boot-loader-logo">
+            <div class="boot-loader-title">AC Edunity</div>
+            <p class="boot-loader-text">Cargando tu espacio academico...</p>
+            <div class="boot-loader-spinner" aria-hidden="true"></div>
+        </div>
+    </div>
+
     <!-- LANDING PAGE -->
     <div id="landing-page" class="page active">
         <nav class="landing-nav reveal">
@@ -1583,6 +1592,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=20260705-student-session-navigation"></script>
+    <script src="app.js?v=20260705-boot-loader-session-restore"></script>
 </body>
 </html>
