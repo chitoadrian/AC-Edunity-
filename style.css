@@ -26571,3 +26571,99 @@ body.light-theme #profile .profile-academic-value,
         grid-template-columns: 1fr !important;
     }
 }
+
+/* Correccion final: landing con un solo scrollbar principal claro. */
+html,
+body {
+    overflow-x: hidden !important;
+}
+
+html.is-landing,
+html.landing-mode {
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-width: auto !important;
+    scrollbar-color: #cbd5e1 #ffffff !important;
+}
+
+body.is-landing,
+body.landing-mode {
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+
+body.is-landing #landing-page,
+body.is-landing #landing-page.page,
+body.is-landing #landing-page.page.active,
+body.landing-mode #landing-page,
+body.landing-mode #landing-page.page,
+body.landing-mode #landing-page.page.active,
+body.is-landing #app,
+body.is-landing .app,
+body.is-landing .main-app,
+body.is-landing .app-shell,
+body.is-landing .page-shell,
+body.is-landing .page-wrapper,
+body.is-landing .landing-page,
+body.is-landing .landing-wrapper,
+body.is-landing .landing-main,
+body.is-landing .landing-content,
+body.is-landing .public-page,
+body.is-landing .marketing-page,
+body.is-landing .home-page,
+body.is-landing .sections-wrapper,
+body.is-landing .content-area,
+body.is-landing .dashboard-shell {
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+html.is-landing::-webkit-scrollbar,
+html.landing-mode::-webkit-scrollbar {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+html.is-landing::-webkit-scrollbar-track,
+html.landing-mode::-webkit-scrollbar-track {
+    background: #ffffff !important;
+}
+
+html.is-landing::-webkit-scrollbar-thumb,
+html.landing-mode::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border: 4px solid #ffffff !important;
+    border-radius: 999px !important;
+}
+
+body.is-landing::-webkit-scrollbar,
+body.landing-mode::-webkit-scrollbar,
+body.is-landing #landing-page::-webkit-scrollbar,
+body.landing-mode #landing-page::-webkit-scrollbar,
+body.is-landing .app::-webkit-scrollbar,
+body.is-landing .app-shell::-webkit-scrollbar,
+body.is-landing .main-app::-webkit-scrollbar,
+body.is-landing .page-shell::-webkit-scrollbar,
+body.is-landing .page-wrapper::-webkit-scrollbar,
+body.is-landing .landing-page::-webkit-scrollbar,
+body.is-landing .landing-wrapper::-webkit-scrollbar,
+body.is-landing .landing-main::-webkit-scrollbar,
+body.is-landing .landing-content::-webkit-scrollbar,
+body.is-landing .public-page::-webkit-scrollbar,
+body.is-landing .marketing-page::-webkit-scrollbar,
+body.is-landing .home-page::-webkit-scrollbar,
+body.is-landing .sections-wrapper::-webkit-scrollbar,
+body.is-landing .content-area::-webkit-scrollbar,
+body.is-landing .dashboard-shell::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
+}
