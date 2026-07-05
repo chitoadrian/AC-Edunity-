@@ -918,6 +918,29 @@ function appIconHTML(name, className = 'app-icon') {
     return `<span class="${className}" aria-hidden="true">${appIconSvg(name)}</span>`;
 }
 
+function achievementIconSvg(name) {
+    const icons = {
+        subject: '<svg viewBox="0 0 24 24"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v16H7.5A2.5 2.5 0 0 0 5 21V5.5Z"></path><path d="M5 5.5A2.5 2.5 0 0 1 7.5 8H19"></path><path d="M9 12h6"></path></svg>',
+        task: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg>',
+        done: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8 12.5 2.7 2.7L16 9.5"></path></svg>',
+        note: '<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M14 3v5h5"></path><path d="M9 13h6"></path><path d="M9 17h4"></path></svg>',
+        ai: '<svg viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="11" rx="4"></rect><path d="M12 7V4"></path><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><path d="M9.5 15h5"></path><path d="M3 11v3"></path><path d="M21 11v3"></path></svg>',
+        streak: '<svg viewBox="0 0 24 24"><path d="M13 3s1 4-2 6c-2.4 1.6-4 3.7-4 6.4A5.5 5.5 0 0 0 12.5 21a5.8 5.8 0 0 0 5.8-5.8c0-3.3-2.2-5.4-4.1-7.2-.9-.8-1.3-2-1.2-5Z"></path><path d="M11 17c0-1.2.8-2 1.8-2.8.6.9 1.2 1.6 1.2 2.7A1.5 1.5 0 0 1 12.5 18 1.5 1.5 0 0 1 11 17Z"></path></svg>',
+        level: '<svg viewBox="0 0 24 24"><path d="M12 3 15 9l6 .9-4.5 4.3 1.1 6.1L12 17.3 6.4 20.3l1.1-6.1L3 9.9 9 9l3-6Z"></path></svg>',
+        attendance: '<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="3"></rect><path d="M9 3v4"></path><path d="M15 3v4"></path><path d="m8.5 13 2.2 2.2 4.8-5"></path></svg>',
+        average: '<svg viewBox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-4"></path><path d="M6 9h2"></path><path d="M11 5h2"></path><path d="M16 12h2"></path></svg>',
+        pdf: '<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"></path><path d="M14 3v5h5"></path><path d="M9 13h6"></path><path d="M9 17h3"></path></svg>',
+        constant: '<svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-5"></path><path d="M17 4v5h-5"></path><path d="M19 12a7 7 0 0 1-12 5"></path><path d="M7 20v-5h5"></path></svg>',
+        lock: '<svg viewBox="0 0 24 24"><rect x="6" y="10" width="12" height="10" rx="3"></rect><path d="M8.5 10V7.8a3.5 3.5 0 0 1 7 0V10"></path></svg>'
+    };
+    return icons[name] || icons.level;
+}
+
+function achievementIconHTML(name, unlocked) {
+    const lock = unlocked ? '' : `<span class="achievement-lock" aria-hidden="true">${achievementIconSvg('lock')}</span>`;
+    return `<span class="progress-achievement-icon" aria-hidden="true">${achievementIconSvg(name)}${lock}</span>`;
+}
+
 function getDashboardIconName(icon) {
     const map = {
         subjects: 'book',
@@ -6335,15 +6358,19 @@ function renderProgress(workspace) {
     const xpProgress = Math.min(100, (xpCurrent / xpPerLevel) * 100);
     const completedTasks = workspace.tasks.filter(task => task.status === 'completed').length;
     const attendancePositive = workspace.attendance.filter(item => isAttendancePositive(item.status)).length;
+    const average = getAverageGrade(workspace);
     const achievements = [
         { name: 'Primera materia', detail: 'Crea tu primera clase', icon: 'subject', unlocked: workspace.subjects.length > 0 },
         { name: 'Primera tarea', detail: 'Agrega un pendiente', icon: 'task', unlocked: workspace.tasks.length > 0 },
         { name: 'Tarea completada', detail: 'Marca una tarea como lista', icon: 'done', unlocked: completedTasks > 0 },
         { name: 'Primer apunte', detail: 'Sube un PDF o recurso', icon: 'note', unlocked: workspace.resources.length > 0 },
         { name: 'Uso de Tutor', detail: 'Pregunta con un apunte', icon: 'ai', unlocked: workspace.resources.some(resource => resource.usedAI) },
+        { name: 'Primera racha', detail: 'Registra tu primer dia activo', icon: 'streak', unlocked: (workspace.streak || 0) > 0 },
         { name: '7 dias de racha', detail: 'Mantente constante', icon: 'streak', unlocked: (workspace.streak || 0) >= 7 },
         { name: 'Nivel 5 alcanzado', detail: 'Acumula suficiente XP', icon: 'level', unlocked: level >= 5 },
-        { name: 'Estudiante constante', detail: 'Registra asistencia', icon: 'attendance', unlocked: attendancePositive >= 5 }
+        { name: 'Estudiante constante', detail: 'Registra asistencia', icon: 'constant', unlocked: attendancePositive >= 5 },
+        { name: 'Buen promedio', detail: 'Alcanza 8.00 o mas', icon: 'average', unlocked: average >= 8 },
+        { name: 'Primer PDF', detail: 'Guarda tu primer recurso', icon: 'pdf', unlocked: workspace.resources.length > 0 }
     ];
     const unlocked = achievements.filter(item => item.unlocked).length;
     const pathLevels = [1, 2, 3, 4, 5];
@@ -6406,8 +6433,8 @@ function renderProgress(workspace) {
             </div>
             <div class="achievements-grid premium-achievements-grid">
                 ${achievements.map(item => `
-                    <div class="achievement premium-achievement ${item.unlocked ? 'unlocked' : 'locked'}">
-                        <div class="achievement-icon achievement-${escapeHTML(item.icon)}" aria-hidden="true"></div>
+                    <div class="achievement premium-achievement progress-achievement-card ${item.unlocked ? 'unlocked' : 'locked'}">
+                        ${achievementIconHTML(item.icon, item.unlocked)}
                         <p>${escapeHTML(item.name)}</p>
                         <small>${item.unlocked ? escapeHTML(item.detail) : 'Bloqueado'}</small>
                     </div>
@@ -6967,7 +6994,7 @@ function toggleProfileGoal(goalId) {
     renderProfile(loadWorkspace());
 }
 
-function renderProfile(workspace) {
+function renderProfileLegacyUnused(workspace) {
     const profileLayout = document.querySelector('#profile .profile-layout');
     if (!profileLayout) return;
 
@@ -7120,6 +7147,96 @@ function profileStatCard(icon, label, value, detail) {
                 <em>${escapeHTML(detail)}</em>
             </div>
         </article>
+    `;
+}
+
+function renderProfile(workspace) {
+    const profileLayout = document.querySelector('#profile .profile-layout');
+    if (!profileLayout) return;
+
+    const profile = getCurrentUserProfile();
+    const name = profile.name || 'Estudiante AC';
+    const level = getLevel(workspace.xp);
+    const average = getAverageGrade(workspace);
+    const streak = getDisplayStreak(workspace);
+    const completedTasks = workspace.tasks.filter(task => task.status === 'completed').length;
+    const xp = workspace.xp || 0;
+    const goals = profile.goals.length ? profile.goals : [
+        { id: 'default-weekly', text: 'Completar tareas semanales', done: completedTasks > 0 },
+        { id: 'default-average', text: 'Mejorar promedio', done: average >= 8 },
+        { id: 'default-streak', text: 'Mantener racha de estudio', done: streak > 1 }
+    ];
+    const recentItems = (workspace.recent || []).slice(0, 5);
+    const interests = normalizeInterests(profile.interests).slice(0, 4);
+
+    profileLayout.innerHTML = `
+        <section class="profile-hero premium-profile-card">
+            <div class="profile-avatar-zone">
+                <div class="profile-avatar profile-avatar-premium">${getProfileAvatarContent(profile)}</div>
+                <button class="btn-secondary btn-small" type="button" onclick="openAvatarForm()">Cambiar avatar</button>
+            </div>
+            <div class="profile-details profile-details-premium">
+                <span class="profile-role">${escapeHTML(profile.role || 'Estudiante')}</span>
+                <h2 id="profile-name">${escapeHTML(name)}</h2>
+                <p class="profile-career">${escapeHTML(profile.career || 'Personaliza tu carrera o area de estudio')}</p>
+                <p>${escapeHTML(profile.bio || 'Personaliza tu perfil para empezar.')}</p>
+                <div class="profile-tags">
+                    ${interests.map(tag => `<span>${escapeHTML(tag)}</span>`).join('')}
+                </div>
+                <button class="btn-primary btn-small" type="button" onclick="openProfileForm()">Editar perfil</button>
+            </div>
+            <aside class="profile-hero-summary profile-academic-summary" aria-label="Resumen academico">
+                <span class="profile-summary-title">Resumen academico</span>
+                <div>
+                    ${appIconHTML('trend', 'profile-summary-icon card-icon')}
+                    <span>Nivel</span>
+                    <strong>${escapeHTML(level)}</strong>
+                </div>
+                <div>
+                    ${appIconHTML('chart', 'profile-summary-icon card-icon')}
+                    <span>XP</span>
+                    <strong>${escapeHTML(xp)}</strong>
+                </div>
+                <div>
+                    ${appIconHTML('calendar', 'profile-summary-icon card-icon')}
+                    <span>Racha</span>
+                    <strong>${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
+                </div>
+            </aside>
+        </section>
+
+        <section class="profile-goals-card premium-profile-card">
+            <div class="profile-section-header">
+                <div>
+                    <span class="profile-section-kicker">Mis metas</span>
+                    <h3>Objetivos personales</h3>
+                </div>
+                <button class="btn-secondary btn-small" type="button" onclick="openGoalForm()">+ Meta</button>
+            </div>
+            <div class="profile-goals-list">
+                ${goals.map(goal => `
+                    <button class="profile-goal ${goal.done ? 'done' : ''}" type="button" onclick="${String(goal.id).startsWith('default-') ? '' : `toggleProfileGoal('${escapeHTML(goal.id)}')`}">
+                        <span>${goal.done ? 'OK' : '+'}</span>
+                        <strong>${escapeHTML(goal.text)}</strong>
+                    </button>
+                `).join('')}
+            </div>
+        </section>
+
+        <section class="profile-activity-card premium-profile-card">
+            <span class="profile-section-kicker">Actividad reciente</span>
+            <h3>Historial del estudiante</h3>
+            ${recentItems.length ? `
+                <ul class="profile-activity-list">
+                    ${recentItems.map(item => `<li><span>${escapeHTML(item.time)}</span><strong>${escapeHTML(item.text)}</strong></li>`).join('')}
+                </ul>
+            ` : `
+                <div class="profile-empty-note">
+                    <strong>Tu actividad aparecera aqui cuando empieces.</strong>
+                    <span>Crea materias, completa tareas, usa Tutor o sube PDFs.</span>
+                </div>
+            `}
+        </section>
     `;
 }
 
@@ -8211,7 +8328,8 @@ async function removeCustomProfileAvatar() {
 
         const fileInput = document.querySelector('.quick-modal-form input[name="avatarFile"]');
         if (fileInput) fileInput.value = '';
-        document.querySelector('.remove-avatar-btn')?.remove();
+        const removeButton = document.querySelector('.remove-avatar-btn');
+        if (removeButton) removeButton.disabled = true;
 
         refreshWorkspaceUI();
         notify('Avatar eliminado. Volviste a usar tus iniciales.', 'success');
@@ -8221,9 +8339,44 @@ async function removeCustomProfileAvatar() {
     }
 }
 
+function hasCustomProfileAvatar(profile = getCurrentUserProfile()) {
+    const avatarValue = String(profile?.avatarUrl || profile?.avatarText || profileState?.avatar_url || '').trim();
+    return Boolean(
+        avatarValue ||
+        profileState?.avatar_type === 'custom' ||
+        profile?.avatarStyle === 'custom'
+    );
+}
+
+function setupProfileAvatarUploadControls(canRemoveAvatar) {
+    const avatarInput = document.querySelector('.quick-modal-form input[name="avatarFile"]');
+    const avatarLabel = avatarInput?.closest('label');
+    if (!avatarInput || !avatarLabel) return;
+
+    let row = avatarLabel.querySelector('.avatar-upload-row');
+    if (!row) {
+        row = document.createElement('div');
+        row.className = 'avatar-upload-row';
+        avatarInput.parentNode.insertBefore(row, avatarInput);
+        row.appendChild(avatarInput);
+    }
+
+    let removeButton = row.querySelector('.remove-avatar-btn');
+    if (!removeButton) {
+        removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'remove-avatar-btn';
+        removeButton.textContent = 'Borrar avatar';
+        removeButton.addEventListener('click', removeCustomProfileAvatar);
+        row.appendChild(removeButton);
+    }
+
+    removeButton.disabled = !canRemoveAvatar;
+}
+
 function openProfileForm() {
     const profile = getCurrentUserProfile();
-    const hasCustomAvatar = Boolean(profile.avatarUrl || profile.avatarStyle === 'custom');
+    const hasCustomAvatar = hasCustomProfileAvatar(profile);
     openQuickForm({
         title: 'Editar perfil',
         submitLabel: 'Guardar perfil',
@@ -8252,18 +8405,7 @@ function openProfileForm() {
         }
     });
 
-    if (hasCustomAvatar) {
-        const avatarInput = document.querySelector('.quick-modal-form input[name="avatarFile"]');
-        const avatarLabel = avatarInput?.closest('label');
-        if (avatarLabel && !avatarLabel.querySelector('.remove-avatar-btn')) {
-            const removeButton = document.createElement('button');
-            removeButton.type = 'button';
-            removeButton.className = 'remove-avatar-btn';
-            removeButton.textContent = 'Borrar avatar';
-            removeButton.addEventListener('click', removeCustomProfileAvatar);
-            avatarLabel.appendChild(removeButton);
-        }
-    }
+    setupProfileAvatarUploadControls(hasCustomAvatar);
 }
 
 function showLanding() {
