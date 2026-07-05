@@ -16878,11 +16878,14 @@ body.is-dashboard .app-content {
 html.is-landing {
     overflow-x: hidden !important;
     overflow-y: auto !important;
+    scrollbar-width: auto !important;
+    scrollbar-color: #cbd5e1 #ffffff !important;
 }
 
 body.is-landing {
     overflow-x: hidden !important;
     overflow-y: visible !important;
+    scrollbar-width: none !important;
 }
 
 body.is-landing #landing-page,
@@ -16915,6 +16918,32 @@ body.is-landing .page-wrapper::-webkit-scrollbar,
 body.is-landing .hero-section::-webkit-scrollbar {
     width: 0 !important;
     height: 0 !important;
+}
+
+html.is-landing::-webkit-scrollbar {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+html.is-landing::-webkit-scrollbar-track {
+    background: #ffffff !important;
+}
+
+html.is-landing::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border: 4px solid #ffffff !important;
+    border-radius: 999px !important;
+}
+
+body.is-landing::-webkit-scrollbar,
+body.is-landing *::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+}
+
+body.is-landing * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
 }
 
 @media (max-width: 900px) {
