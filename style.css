@@ -26586,7 +26586,7 @@ body.light-theme #profile .profile-academic-value,
     }
 }
 
-/* Correccion final: landing con un solo scrollbar principal claro. */
+/* Scroll limpio del menu principal: solo html/body controlan la landing. */
 html,
 body {
     height: auto !important;
@@ -26596,19 +26596,7 @@ body {
     scroll-behavior: auto !important;
 }
 
-html.is-landing,
-html.landing-mode {
-    min-height: 100% !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    scroll-behavior: auto !important;
-    overscroll-behavior-y: auto !important;
-    scrollbar-width: auto !important;
-    scrollbar-color: #cbd5e1 #ffffff !important;
-}
-
-body.is-landing,
-body.landing-mode {
+body.landing-active {
     height: auto !important;
     min-height: 100% !important;
     overflow-x: hidden !important;
@@ -26617,64 +26605,41 @@ body.landing-mode {
     overscroll-behavior-y: auto !important;
 }
 
-body.is-landing #app-page,
-body.is-landing #app-page.page,
-body.is-landing #app-page.page:not(.active),
-body.landing-mode #app-page,
-body.landing-mode #app-page.page,
-body.landing-mode #app-page.page:not(.active) {
-    height: 0 !important;
-    max-height: 0 !important;
+body.landing-active #app-page,
+body.landing-active #app-page.page:not(.active) {
+    display: none !important;
+    height: auto !important;
+    max-height: none !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
-body.is-landing #landing-page,
-body.is-landing #landing-page.page,
-body.is-landing #landing-page.page.active,
-body.landing-mode #landing-page,
-body.landing-mode #landing-page.page,
-body.landing-mode #landing-page.page.active,
-body.is-landing #app,
-body.is-landing .app,
-body.is-landing .main-app,
-body.is-landing .app-shell,
-body.is-landing .page-shell,
-body.is-landing .page-wrapper,
-body.is-landing .landing-page,
-body.is-landing .landing-wrapper,
-body.is-landing .landing-main,
-body.is-landing .landing-content,
-body.is-landing .public-page,
-body.is-landing .marketing-page,
-body.is-landing .home-page,
-body.is-landing .sections-wrapper,
-body.is-landing .content-area,
-body.is-landing .dashboard-shell {
+body.landing-active #app,
+body.landing-active .app,
+body.landing-active .app-shell,
+body.landing-active .main-app,
+body.landing-active .page-shell,
+body.landing-active .page-wrapper,
+body.landing-active .main-content,
+body.landing-active .content-area,
+body.landing-active #landing-page,
+body.landing-active #landing-page.page,
+body.landing-active #landing-page.page.active,
+body.landing-active .landing-page,
+body.landing-active .landing-wrapper,
+body.landing-active .landing-main,
+body.landing-active .landing-content,
+body.landing-active .public-page,
+body.landing-active .marketing-page,
+body.landing-active .home-page,
+body.landing-active .sections-wrapper,
+body.landing-active .hero-section {
     height: auto !important;
     max-height: none !important;
     min-height: auto !important;
     overflow: visible !important;
     overflow-y: visible !important;
     overflow-x: visible !important;
-    scroll-snap-type: none !important;
     overscroll-behavior: auto !important;
-}
-
-html.is-landing::-webkit-scrollbar,
-html.landing-mode::-webkit-scrollbar {
-    width: 14px !important;
-    height: 14px !important;
-}
-
-html.is-landing::-webkit-scrollbar-track,
-html.landing-mode::-webkit-scrollbar-track {
-    background: #ffffff !important;
-}
-
-html.is-landing::-webkit-scrollbar-thumb,
-html.landing-mode::-webkit-scrollbar-thumb {
-    background: #cbd5e1 !important;
-    border: 4px solid #ffffff !important;
-    border-radius: 999px !important;
+    scroll-snap-type: none !important;
 }

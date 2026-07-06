@@ -407,13 +407,13 @@ function initLandingWheelControl() {
     // del colegio y moviles; las animaciones reveal se controlan por scroll pasivo.
 }
 
-function debugScrollContainers() {
+function findScrollContainers() {
     const scrollContainers = [...document.querySelectorAll('*')]
         .filter((el) => {
-            const styles = getComputedStyle(el);
+            const style = getComputedStyle(el);
             return (
                 el.scrollHeight > el.clientHeight &&
-                ['auto', 'scroll'].includes(styles.overflowY)
+                ['auto', 'scroll'].includes(style.overflowY)
             );
         })
         .map((el) => ({
@@ -430,6 +430,8 @@ function debugScrollContainers() {
     console.table(scrollContainers);
     return scrollContainers;
 }
+
+window.findScrollContainers = findScrollContainers;
 
 // ============================================
 // NAVEGACION DE PAGINAS
@@ -454,6 +456,8 @@ function showPage(pageId) {
     document.body.classList.toggle('landing-mode', isLanding);
     document.body.classList.toggle('is-landing', isLanding);
     document.body.classList.toggle('is-dashboard', isDashboard);
+    document.body.classList.toggle('landing-active', isLanding);
+    document.body.classList.toggle('student-active', isDashboard);
     window.scrollTo(0, 0);
 
     // Si es la app, mostrar la seccion por defecto
@@ -466,7 +470,7 @@ function showPage(pageId) {
     }
 
     if (isLanding) {
-        window.requestAnimationFrame(() => debugScrollContainers());
+        window.requestAnimationFrame(() => findScrollContainers());
     }
 }
 
@@ -8374,6 +8378,8 @@ function showDashboard(sectionId = 'dashboard') {
     document.documentElement.classList.add('is-dashboard');
     document.body.classList.remove('landing-mode', 'is-landing');
     document.body.classList.add('is-dashboard');
+    document.body.classList.remove('landing-active');
+    document.body.classList.add('student-active');
     const targetSection = normalizeAppView(sectionId);
     rememberAppView(targetSection);
     currentSection = targetSection;
