@@ -13254,7 +13254,7 @@ body.landing-mode,
 body.is-landing {
     height: auto !important;
     min-height: auto !important;
-    overflow-y: visible !important;
+    overflow-y: auto !important;
     overflow-x: hidden !important;
 }
 
@@ -13273,7 +13273,7 @@ body.is-landing #landing-page.page.active {
     max-height: none !important;
     min-height: auto !important;
     overflow: visible !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
 }
 
 body.is-landing .main-content,
@@ -16884,8 +16884,8 @@ html.is-landing {
 
 body.is-landing {
     overflow-x: hidden !important;
-    overflow-y: visible !important;
-    scrollbar-width: none !important;
+    overflow-y: auto !important;
+    scrollbar-width: auto !important;
 }
 
 body.is-landing #landing-page,
@@ -16916,8 +16916,8 @@ body.is-landing .public-page::-webkit-scrollbar,
 body.is-landing .sections-wrapper::-webkit-scrollbar,
 body.is-landing .page-wrapper::-webkit-scrollbar,
 body.is-landing .hero-section::-webkit-scrollbar {
-    width: 0 !important;
-    height: 0 !important;
+    width: 14px !important;
+    height: 14px !important;
 }
 
 html.is-landing::-webkit-scrollbar {
@@ -16944,8 +16944,8 @@ body.is-landing .public-page::-webkit-scrollbar,
 body.is-landing .sections-wrapper::-webkit-scrollbar,
 body.is-landing .page-wrapper::-webkit-scrollbar,
 body.is-landing .hero-section::-webkit-scrollbar {
-    width: 0 !important;
-    height: 0 !important;
+    width: 14px !important;
+    height: 14px !important;
 }
 
 body.is-landing #landing-page,
@@ -16956,8 +16956,8 @@ body.is-landing .public-page,
 body.is-landing .sections-wrapper,
 body.is-landing .page-wrapper,
 body.is-landing .hero-section {
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
+    scrollbar-width: auto !important;
+    -ms-overflow-style: auto !important;
 }
 
 @media (max-width: 900px) {
@@ -24014,10 +24014,12 @@ body.light-theme .study-ai-card {
 
 #landing-page .mockup-progress-line span {
     display: block;
-    width: 72%;
+    width: 82%;
     height: 100%;
     border-radius: inherit;
     background: linear-gradient(90deg, #7b68ee, #49ccf9, #fd71af);
+    transform: scaleX(0.82);
+    transform-origin: left center;
     animation: landingProgress 3.8s ease-in-out infinite alternate;
 }
 
@@ -24453,8 +24455,8 @@ body.light-theme #landing-page .tutor-message strong {
 }
 
 @keyframes landingProgress {
-    from { width: 58%; }
-    to { width: 82%; }
+    from { transform: scaleX(0.70); }
+    to { transform: scaleX(1); }
 }
 
 @keyframes aiFloat {
@@ -26603,6 +26605,21 @@ body.landing-active {
     overflow-y: auto !important;
     scroll-behavior: auto !important;
     overscroll-behavior-y: auto !important;
+    scrollbar-width: auto !important;
+    -ms-overflow-style: auto !important;
+}
+
+html.is-landing,
+html.landing-mode,
+body.is-landing,
+body.landing-mode {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-behavior: auto !important;
+    scrollbar-width: auto !important;
+    -ms-overflow-style: auto !important;
 }
 
 body.landing-active #app-page,
@@ -26633,15 +26650,35 @@ body.landing-active .public-page,
 body.landing-active .marketing-page,
 body.landing-active .home-page,
 body.landing-active .sections-wrapper,
-body.landing-active .hero-section {
+body.landing-active .hero-section,
+body.landing-active .features-section,
+body.landing-active .ai-section,
+body.landing-active .benefits-section,
+body.is-landing #landing-page,
+body.is-landing #landing-page.page,
+body.is-landing #landing-page.page.active,
+body.is-landing .landing-page,
+body.is-landing .landing-wrapper,
+body.is-landing .landing-main,
+body.is-landing .landing-content,
+body.is-landing .public-page,
+body.is-landing .marketing-page,
+body.is-landing .home-page,
+body.is-landing .sections-wrapper,
+body.is-landing .hero-section,
+body.is-landing .features-section,
+body.is-landing .ai-section,
+body.is-landing .benefits-section {
     height: auto !important;
     max-height: none !important;
     min-height: auto !important;
     overflow: visible !important;
     overflow-y: visible !important;
-    overflow-x: visible !important;
+    overflow-x: clip !important;
     overscroll-behavior: auto !important;
     scroll-snap-type: none !important;
+    scrollbar-width: auto !important;
+    -ms-overflow-style: auto !important;
 }
 
 /* Rendimiento del scroll en landing: animar solo transform/opacity y aligerar filtros. */
@@ -26668,12 +26705,60 @@ body.landing-active .pet-robot {
 body.landing-active #landing-page .hero-mini-card,
 body.landing-active #landing-page .floating-card,
 body.landing-active #landing-page .ai-orbit-card,
-body.landing-active #landing-page .landing-nav {
-    backdrop-filter: blur(10px) saturate(1.05) !important;
+body.landing-active #landing-page .landing-nav,
+body.landing-active #landing-page .dashboard-mockup,
+body.landing-active #landing-page .benefit-card,
+body.landing-active #landing-page .use-benefit-card,
+body.landing-active #landing-page .ai-window,
+body.landing-active #landing-page .ai-panel {
+    backdrop-filter: blur(6px) saturate(1.02) !important;
+    -webkit-backdrop-filter: blur(6px) saturate(1.02) !important;
 }
 
-body.landing-active #landing-page .hero::before {
-    filter: blur(6px) !important;
+body.landing-active #landing-page .hero::before,
+body.landing-active #landing-page .hero-visual::before,
+body.landing-active #landing-page .benefit-card::after,
+body.landing-active #landing-page .ai-showcase::before {
+    filter: blur(4px) !important;
+}
+
+body.landing-active #landing-page .mockup-progress-line span {
+    width: 82% !important;
+    transform-origin: left center !important;
+    will-change: transform;
+}
+
+body.landing-active #landing-page .dashboard-mockup::before,
+body.landing-active #landing-page .mockup-progress-line span,
+body.landing-active #landing-page .ai-orbit-card {
+    animation-duration: 7s !important;
+}
+
+html.is-landing::-webkit-scrollbar,
+html.landing-mode::-webkit-scrollbar,
+body.is-landing::-webkit-scrollbar,
+body.landing-mode::-webkit-scrollbar,
+body.landing-active::-webkit-scrollbar {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+html.is-landing::-webkit-scrollbar-track,
+html.landing-mode::-webkit-scrollbar-track,
+body.is-landing::-webkit-scrollbar-track,
+body.landing-mode::-webkit-scrollbar-track,
+body.landing-active::-webkit-scrollbar-track {
+    background: #ffffff !important;
+}
+
+html.is-landing::-webkit-scrollbar-thumb,
+html.landing-mode::-webkit-scrollbar-thumb,
+body.is-landing::-webkit-scrollbar-thumb,
+body.landing-mode::-webkit-scrollbar-thumb,
+body.landing-active::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border: 4px solid #ffffff !important;
+    border-radius: 999px !important;
 }
 
 @media (max-width: 768px), (pointer: coarse) {

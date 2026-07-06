@@ -398,7 +398,7 @@ function initLandingWheelControl() {
     // del colegio y moviles; las animaciones reveal se controlan por scroll pasivo.
 }
 
-function findScrollContainers() {
+function findScrollProblems() {
     const scrollContainers = [...document.querySelectorAll('*')]
         .filter((el) => {
             const style = getComputedStyle(el);
@@ -422,7 +422,8 @@ function findScrollContainers() {
     return scrollContainers;
 }
 
-window.findScrollContainers = findScrollContainers;
+window.findScrollProblems = findScrollProblems;
+window.findScrollContainers = findScrollProblems;
 
 // ============================================
 // NAVEGACION DE PAGINAS
@@ -461,7 +462,7 @@ function showPage(pageId) {
     }
 
     if (isLanding && window.location.search.includes('debugScroll=1')) {
-        window.requestAnimationFrame(() => findScrollContainers());
+        window.requestAnimationFrame(() => findScrollProblems());
     }
 }
 
@@ -7161,9 +7162,11 @@ function initStudyPet() {
     let startY = 0;
     let eyeFrame = 0;
     let lastPointerEvent = null;
+    const canTrackEyes = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
     const updateEyeDirection = event => {
+        if (!document.body.classList.contains('landing-active')) return;
         lastPointerEvent = event;
         if (eyeFrame) return;
 
@@ -7191,8 +7194,10 @@ function initStudyPet() {
         pet.style.setProperty('--pet-eye-y', '0px');
     };
 
-    document.addEventListener('pointermove', updateEyeDirection, { passive: true });
-    document.addEventListener('pointerleave', resetEyeDirection, { passive: true });
+    if (canTrackEyes) {
+        document.addEventListener('pointermove', updateEyeDirection, { passive: true });
+        document.addEventListener('pointerleave', resetEyeDirection, { passive: true });
+    }
 
     pet.addEventListener('pointerdown', event => {
         if (event.button !== undefined && event.button !== 0) return;
