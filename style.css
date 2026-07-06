@@ -83,6 +83,83 @@ html {
     scroll-behavior: auto;
 }
 
+/* Critical landing scroll guard.
+   Evita que aparezca una barra interna antes de que app.js termine de iniciar. */
+html,
+html.is-landing,
+html.landing-mode {
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-behavior: auto !important;
+}
+
+body,
+body.is-landing,
+body.landing-mode,
+body.landing-active {
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-behavior: auto !important;
+}
+
+body.is-landing #app,
+body.is-landing .app,
+body.is-landing .app-shell,
+body.is-landing .main-app,
+body.is-landing .page-shell,
+body.is-landing .page-wrapper,
+body.is-landing .main-content,
+body.is-landing .content-area,
+body.is-landing #landing-page,
+body.is-landing #landing-page.page,
+body.is-landing #landing-page.page.active,
+body.is-landing .landing-page,
+body.is-landing .landing-wrapper,
+body.is-landing .landing-main,
+body.is-landing .landing-content,
+body.is-landing .public-page,
+body.is-landing .marketing-page,
+body.is-landing .home-page,
+body.is-landing .sections-wrapper,
+body.is-landing .hero-section,
+body.is-landing .features-section,
+body.is-landing .ai-section,
+body.is-landing .benefits-section,
+body.landing-active #app,
+body.landing-active .app,
+body.landing-active .app-shell,
+body.landing-active .main-app,
+body.landing-active .page-shell,
+body.landing-active .page-wrapper,
+body.landing-active .main-content,
+body.landing-active .content-area,
+body.landing-active #landing-page,
+body.landing-active #landing-page.page,
+body.landing-active #landing-page.page.active,
+body.landing-active .landing-page,
+body.landing-active .landing-wrapper,
+body.landing-active .landing-main,
+body.landing-active .landing-content,
+body.landing-active .public-page,
+body.landing-active .marketing-page,
+body.landing-active .home-page,
+body.landing-active .sections-wrapper,
+body.landing-active .hero-section,
+body.landing-active .features-section,
+body.landing-active .ai-section,
+body.landing-active .benefits-section {
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: clip !important;
+    overscroll-behavior: auto !important;
+    scroll-snap-type: none !important;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background-color: var(--bg-dark);

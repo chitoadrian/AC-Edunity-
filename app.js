@@ -9033,6 +9033,11 @@ function refreshWorkspaceUI() {
 }
 
 async function initializeApp() {
+    document.documentElement.classList.add('is-landing', 'landing-mode');
+    document.documentElement.classList.remove('is-dashboard');
+    document.body.classList.add('is-landing', 'landing-mode', 'landing-active');
+    document.body.classList.remove('is-dashboard', 'student-active');
+
     bindAuthForms();
 
     if (isDarkTheme) {
