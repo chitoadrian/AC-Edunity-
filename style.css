@@ -26643,3 +26643,59 @@ body.landing-active .hero-section {
     overscroll-behavior: auto !important;
     scroll-snap-type: none !important;
 }
+
+/* Rendimiento del scroll en landing: animar solo transform/opacity y aligerar filtros. */
+body.landing-active #landing-page,
+body.landing-active .landing-page,
+body.landing-active .landing-wrapper,
+body.landing-active .landing-main,
+body.landing-active .sections-wrapper {
+    scroll-snap-type: none !important;
+}
+
+body.landing-active #landing-page .hero-visual,
+body.landing-active #landing-page .dashboard-mockup,
+body.landing-active #landing-page .hero-mini-card,
+body.landing-active #landing-page .floating-card,
+body.landing-active #landing-page .ai-orbit-card,
+body.landing-active .study-pet,
+body.landing-active .pet-robot {
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    will-change: transform, opacity;
+}
+
+body.landing-active #landing-page .hero-mini-card,
+body.landing-active #landing-page .floating-card,
+body.landing-active #landing-page .ai-orbit-card,
+body.landing-active #landing-page .landing-nav {
+    backdrop-filter: blur(10px) saturate(1.05) !important;
+}
+
+body.landing-active #landing-page .hero::before {
+    filter: blur(6px) !important;
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+    body.landing-active #landing-page .hero::before,
+    body.landing-active #landing-page .hero-visual::before,
+    body.landing-active #landing-page .benefit-card::after,
+    body.landing-active #landing-page .ai-showcase::before {
+        filter: none !important;
+        opacity: 0.55 !important;
+    }
+
+    body.landing-active #landing-page .hero-mini-card,
+    body.landing-active #landing-page .floating-card,
+    body.landing-active #landing-page .ai-orbit-card,
+    body.landing-active #landing-page .landing-nav {
+        backdrop-filter: blur(6px) !important;
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.16) !important;
+    }
+
+    body.landing-active #landing-page .dashboard-mockup::before,
+    body.landing-active #landing-page .mockup-progress-line span,
+    body.landing-active #landing-page .ai-orbit-card {
+        animation-duration: 8s !important;
+    }
+}
