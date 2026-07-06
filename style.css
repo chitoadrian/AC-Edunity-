@@ -26589,7 +26589,11 @@ body.light-theme #profile .profile-academic-value,
 /* Correccion final: landing con un solo scrollbar principal claro. */
 html,
 body {
+    height: auto !important;
+    min-height: 100% !important;
     overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-behavior: auto !important;
 }
 
 html.is-landing,
@@ -26605,11 +26609,24 @@ html.landing-mode {
 
 body.is-landing,
 body.landing-mode {
+    height: auto !important;
     min-height: 100% !important;
-    overflow-x: visible !important;
-    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     scroll-behavior: auto !important;
     overscroll-behavior-y: auto !important;
+}
+
+body.is-landing #app-page,
+body.is-landing #app-page.page,
+body.is-landing #app-page.page:not(.active),
+body.landing-mode #app-page,
+body.landing-mode #app-page.page,
+body.landing-mode #app-page.page:not(.active) {
+    height: 0 !important;
+    max-height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
 }
 
 body.is-landing #landing-page,
@@ -26642,8 +26659,6 @@ body.is-landing .dashboard-shell {
     overflow-x: visible !important;
     scroll-snap-type: none !important;
     overscroll-behavior: auto !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
 }
 
 html.is-landing::-webkit-scrollbar,
@@ -26662,28 +26677,4 @@ html.landing-mode::-webkit-scrollbar-thumb {
     background: #cbd5e1 !important;
     border: 4px solid #ffffff !important;
     border-radius: 999px !important;
-}
-
-body.is-landing::-webkit-scrollbar,
-body.landing-mode::-webkit-scrollbar,
-body.is-landing #landing-page::-webkit-scrollbar,
-body.landing-mode #landing-page::-webkit-scrollbar,
-body.is-landing .app::-webkit-scrollbar,
-body.is-landing .app-shell::-webkit-scrollbar,
-body.is-landing .main-app::-webkit-scrollbar,
-body.is-landing .page-shell::-webkit-scrollbar,
-body.is-landing .page-wrapper::-webkit-scrollbar,
-body.is-landing .landing-page::-webkit-scrollbar,
-body.is-landing .landing-wrapper::-webkit-scrollbar,
-body.is-landing .landing-main::-webkit-scrollbar,
-body.is-landing .landing-content::-webkit-scrollbar,
-body.is-landing .public-page::-webkit-scrollbar,
-body.is-landing .marketing-page::-webkit-scrollbar,
-body.is-landing .home-page::-webkit-scrollbar,
-body.is-landing .sections-wrapper::-webkit-scrollbar,
-body.is-landing .content-area::-webkit-scrollbar,
-body.is-landing .dashboard-shell::-webkit-scrollbar {
-    width: 0 !important;
-    height: 0 !important;
-    display: none !important;
 }

@@ -407,6 +407,30 @@ function initLandingWheelControl() {
     // del colegio y moviles; las animaciones reveal se controlan por scroll pasivo.
 }
 
+function debugScrollContainers() {
+    const scrollContainers = [...document.querySelectorAll('*')]
+        .filter((el) => {
+            const styles = getComputedStyle(el);
+            return (
+                el.scrollHeight > el.clientHeight &&
+                ['auto', 'scroll'].includes(styles.overflowY)
+            );
+        })
+        .map((el) => ({
+            tag: el.tagName,
+            id: el.id,
+            className: el.className,
+            overflowY: getComputedStyle(el).overflowY,
+            height: getComputedStyle(el).height,
+            maxHeight: getComputedStyle(el).maxHeight,
+            scrollHeight: el.scrollHeight,
+            clientHeight: el.clientHeight
+        }));
+
+    console.table(scrollContainers);
+    return scrollContainers;
+}
+
 // ============================================
 // NAVEGACION DE PAGINAS
 // ============================================
@@ -439,6 +463,10 @@ function showPage(pageId) {
 
     if (pageId === 'app-page') {
         applySidebarCollapsedState();
+    }
+
+    if (isLanding) {
+        window.requestAnimationFrame(() => debugScrollContainers());
     }
 }
 
