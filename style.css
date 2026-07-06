@@ -94,13 +94,12 @@ html.landing-mode {
     scroll-behavior: auto !important;
 }
 
-body,
 body.is-landing,
 body.landing-mode,
 body.landing-active {
     min-height: 100% !important;
     overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
     scroll-behavior: auto !important;
 }
 
@@ -13331,7 +13330,7 @@ body.landing-mode,
 body.is-landing {
     height: auto !important;
     min-height: auto !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
     overflow-x: hidden !important;
 }
 
@@ -16961,7 +16960,7 @@ html.is-landing {
 
 body.is-landing {
     overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
     scrollbar-width: auto !important;
 }
 
@@ -26665,13 +26664,20 @@ body.light-theme #profile .profile-academic-value,
     }
 }
 
-/* Scroll limpio del menu principal: solo html/body controlan la landing. */
-html,
-body {
+/* Scroll limpio del menu principal: solo html controla la landing. */
+html {
     height: auto !important;
     min-height: 100% !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
+    scroll-behavior: auto !important;
+}
+
+body {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
     scroll-behavior: auto !important;
 }
 
@@ -26679,7 +26685,7 @@ body.landing-active {
     height: auto !important;
     min-height: 100% !important;
     overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
     scroll-behavior: auto !important;
     overscroll-behavior-y: auto !important;
     scrollbar-width: auto !important;
@@ -26687,13 +26693,22 @@ body.landing-active {
 }
 
 html.is-landing,
-html.landing-mode,
+html.landing-mode {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-behavior: auto !important;
+    scrollbar-width: auto !important;
+    -ms-overflow-style: auto !important;
+}
+
 body.is-landing,
 body.landing-mode {
     height: auto !important;
     min-height: 100% !important;
     overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
     scroll-behavior: auto !important;
     scrollbar-width: auto !important;
     -ms-overflow-style: auto !important;
