@@ -26876,3 +26876,108 @@ body.landing-active::-webkit-scrollbar-thumb {
         animation-duration: 8s !important;
     }
 }
+
+/* ============================================
+   FIX DEFINITIVO: LANDING CON UN SOLO SCROLL REAL
+   El scroll de la landing lo maneja SOLO body.
+   html queda sin scroll para que no aparezcan dos barras.
+   ============================================ */
+html.is-landing,
+html.landing-mode {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+    scroll-behavior: auto !important;
+}
+
+body.is-landing,
+body.landing-mode,
+body.landing-active {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-behavior: auto !important;
+    overscroll-behavior-y: auto !important;
+}
+
+body.is-landing #landing-page,
+body.landing-mode #landing-page,
+body.landing-active #landing-page,
+body.is-landing #landing-page.page,
+body.landing-mode #landing-page.page,
+body.landing-active #landing-page.page,
+body.is-landing #landing-page.page.active,
+body.landing-mode #landing-page.page.active,
+body.landing-active #landing-page.page.active {
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: clip !important;
+    scroll-snap-type: none !important;
+}
+
+body.is-landing #app,
+body.landing-mode #app,
+body.landing-active #app,
+body.is-landing .page-wrapper,
+body.landing-mode .page-wrapper,
+body.landing-active .page-wrapper,
+body.is-landing .main-content,
+body.landing-mode .main-content,
+body.landing-active .main-content,
+body.is-landing .landing-wrapper,
+body.landing-mode .landing-wrapper,
+body.landing-active .landing-wrapper,
+body.is-landing .landing-main,
+body.landing-mode .landing-main,
+body.landing-active .landing-main,
+body.is-landing .landing-content,
+body.landing-mode .landing-content,
+body.landing-active .landing-content,
+body.is-landing .sections-wrapper,
+body.landing-mode .sections-wrapper,
+body.landing-active .sections-wrapper {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: clip !important;
+    scroll-snap-type: none !important;
+}
+
+body.is-landing #app-page,
+body.landing-mode #app-page,
+body.landing-active #app-page,
+body.is-landing #login-page:not(.active),
+body.landing-mode #login-page:not(.active),
+body.landing-active #login-page:not(.active),
+body.is-landing #register-page:not(.active),
+body.landing-mode #register-page:not(.active),
+body.landing-active #register-page:not(.active) {
+    display: none !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+}
+
+body.student-active,
+body.is-dashboard {
+    height: auto !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+
+html.is-dashboard,
+html:not(.is-landing):not(.landing-mode) {
+    height: auto !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
