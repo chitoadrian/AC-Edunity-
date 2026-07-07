@@ -1,7 +1,7 @@
 console.log("APP.JS NUEVO AC EDUNITY CARGADO");
 
 /* ============================================
-   AC Edunity - LOGICA PRINCIPAL
+   AC Edunity - LÓGICA PRINCIPAL
    JavaScript puro - Funcionalidades SPA
    ============================================ */
 
@@ -15,6 +15,12 @@ let isDarkTheme = !localStorage.getItem('theme') || localStorage.getItem('theme'
 let isTabletOrSmaller = window.innerWidth <= 768;
 let calendarViewDate = new Date(2026, 5, 1);
 let sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+const INTERFACE_SOUND_STORAGE_KEY = 'ac_interface_sounds_enabled';
+let interfaceSoundsEnabled = localStorage.getItem(INTERFACE_SOUND_STORAGE_KEY) !== 'false';
+let interfaceSoundAudio = null;
+let lastInterfaceSoundAt = 0;
+let lastInterfaceErrorAt = 0;
+const interfacePointerStart = new WeakMap();
 
 // Datos simulados de usuarios. En el futuro esto puede conectarse con Supabase.
 const defaultUsers = {
@@ -53,6 +59,10 @@ function getPublicUser(email, userRecord = {}) {
 let toastTimeout = null;
 
 function notify(message, type = 'info') {
+    if (type === 'error') {
+        lastInterfaceErrorAt = performance.now();
+    }
+
     let toast = document.getElementById('app-toast');
 
     if (!toast) {
@@ -75,6 +85,191 @@ function notify(message, type = 'info') {
 
 function showToast(message, type = 'info') {
     notify(message, type);
+}
+
+function createInterfaceSoundDataUri() {
+    const sampleRate = 44100;
+    const duration = 0.075;
+    const samples = Math.floor(sampleRate * duration);
+    const buffer = new ArrayBuffer(44 + samples * 2);
+    const view = new DataView(buffer);
+
+    const writeString = (offset, value) => {
+        for (let index = 0; index < value.length; index += 1) {
+            view.setUint8(offset + index, value.charCodeAt(index));
+        }
+    };
+
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + samples * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, samples * 2, true);
+
+    for (let index = 0; index < samples; index += 1) {
+        const progress = index / samples;
+        const envelope = Math.pow(1 - progress, 3.2);
+        const frequency = 760 + (progress * 280);
+        const shimmer = Math.sin(2 * Math.PI * frequency * index / sampleRate);
+        const body = Math.sin(2 * Math.PI * 380 * index / sampleRate) * 0.18;
+        const sample = Math.max(-1, Math.min(1, (shimmer + body) * envelope * 0.32));
+        view.setInt16(44 + index * 2, sample * 32767, true);
+    }
+
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    for (let index = 0; index < bytes.length; index += 1) {
+        binary += String.fromCharCode(bytes[index]);
+    }
+    return `data:audio/wav;base64,${btoa(binary)}`;
+}
+
+function initInterfaceSound() {
+    if (interfaceSoundAudio) return interfaceSoundAudio;
+    interfaceSoundAudio = new Audio(createInterfaceSoundDataUri());
+    interfaceSoundAudio.preload = 'auto';
+    interfaceSoundAudio.volume = 0.16;
+    interfaceSoundAudio.load();
+    return interfaceSoundAudio;
+}
+
+function updateInterfaceSoundControls() {
+    document.querySelectorAll('[data-interface-sound-toggle]').forEach(input => {
+        input.checked = interfaceSoundsEnabled;
+        input.setAttribute('aria-checked', String(interfaceSoundsEnabled));
+    });
+    document.body.classList.toggle('interface-sounds-off', !interfaceSoundsEnabled);
+}
+
+function applyInterfaceSoundPreference(enabled, { persistLocal = true } = {}) {
+    interfaceSoundsEnabled = enabled !== false;
+    if (persistLocal) {
+        localStorage.setItem(INTERFACE_SOUND_STORAGE_KEY, interfaceSoundsEnabled ? 'true' : 'false');
+    }
+    updateInterfaceSoundControls();
+}
+
+async function persistInterfaceSoundPreference(enabled) {
+    try {
+        const sb = getSupabaseClient();
+        const { data, error } = await sb.auth.getUser();
+        if (error || !data?.user) return;
+
+        await sb.auth.updateUser({
+            data: {
+                ...(data.user.user_metadata || {}),
+                interface_sounds_enabled: enabled
+            }
+        });
+    } catch (error) {
+        console.warn('[UI SOUND] No se pudo guardar la preferencia remota:', error);
+    }
+}
+
+function loadInterfaceSoundPreferenceFromUser(user) {
+    const remoteValue = user?.user_metadata?.interface_sounds_enabled;
+    if (typeof remoteValue === 'boolean') {
+        applyInterfaceSoundPreference(remoteValue);
+        return;
+    }
+    applyInterfaceSoundPreference(localStorage.getItem(INTERFACE_SOUND_STORAGE_KEY) !== 'false', { persistLocal: false });
+}
+
+function playInterfaceSound() {
+    if (!interfaceSoundsEnabled) return;
+
+    const now = performance.now();
+    if (now - lastInterfaceSoundAt < 180) return;
+    if (now - lastInterfaceErrorAt < 140) return;
+
+    const audio = initInterfaceSound();
+    lastInterfaceSoundAt = now;
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = 0.16;
+    const playPromise = audio.play();
+    if (playPromise?.catch) {
+        playPromise.catch(() => {});
+    }
+}
+
+function animateInterfacePress(target) {
+    if (!target || target.classList.contains('ui-press-feedback')) return;
+    target.classList.add('ui-press-feedback');
+    window.setTimeout(() => target.classList.remove('ui-press-feedback'), 170);
+}
+
+function isDisabledActionTarget(target) {
+    return !!target?.closest?.('button:disabled, [aria-disabled="true"], .disabled, [disabled]');
+}
+
+function getInterfaceActionTarget(event) {
+    const target = event.target?.closest?.('button, a, [role="button"], input[type="button"], input[type="submit"]');
+    if (!target || isDisabledActionTarget(target)) return null;
+    if (target.closest('.google-tools-sidebar')) return null;
+    return target;
+}
+
+function shouldSkipInterfaceClickSound(event, target) {
+    if (!target) return true;
+    if (event.detail && event.detail > 1) return true;
+
+    const startedAt = interfacePointerStart.get(target);
+    if (startedAt && performance.now() - startedAt > 650) return true;
+
+    const form = target.closest('form');
+    if (form && !form.checkValidity()) return true;
+    if (form && form.closest('#login-page, #register-page, .password-modal')) return true;
+    if (target.type === 'submit') return true;
+
+    return false;
+}
+
+function bindInterfaceSoundEvents() {
+    if (document.body.dataset.interfaceSoundsBound === 'true') return;
+    document.body.dataset.interfaceSoundsBound = 'true';
+
+    document.addEventListener('pointerdown', event => {
+        const target = getInterfaceActionTarget(event);
+        if (target) interfacePointerStart.set(target, performance.now());
+    }, { passive: true });
+
+    document.addEventListener('click', event => {
+        const target = getInterfaceActionTarget(event);
+        if (shouldSkipInterfaceClickSound(event, target)) return;
+        if (performance.now() - lastInterfaceErrorAt < 140) return;
+        animateInterfacePress(target);
+        playInterfaceSound();
+    });
+
+    document.addEventListener('submit', event => {
+        const form = event.target;
+        if (!form || !form.checkValidity()) return;
+        if (form.closest('#login-page, #register-page, .password-modal')) return;
+        window.setTimeout(() => {
+            if (performance.now() - lastInterfaceErrorAt < 220) return;
+            playInterfaceSound();
+        }, 0);
+    }, true);
+}
+
+function toggleInterfaceSounds(enabled) {
+    applyInterfaceSoundPreference(Boolean(enabled));
+    persistInterfaceSoundPreference(interfaceSoundsEnabled);
+    if (interfaceSoundsEnabled) {
+        playInterfaceSound();
+        notify('Sonidos de interfaz activados.', 'success');
+    } else {
+        notify('Sonidos de interfaz desactivados.', 'info');
+    }
 }
 
 function setAuthMessage(pageId, message, type = 'error', action = null) {
@@ -115,38 +310,38 @@ function translateSupabaseError(message = '') {
     const text = String(message || '').toLowerCase();
 
     if (text.includes('user already registered') || text.includes('already registered') || text.includes('already exists') || text.includes('email exists')) {
-        return 'Este correo ya esta registrado. Inicia sesion o usa otro correo.';
+        return 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
     }
 
     if (text.includes('rate limit') || text.includes('too many requests') || text.includes('over_email_send_rate_limit') || text.includes('email rate limit') || text.includes('for security purposes')) {
-        return 'Se alcanzo el limite de intentos. Espera unos minutos e intenta otra vez.';
+        return 'Se alcanzó el límite de intentos. Espera unos minutos e intenta otra vez.';
     }
 
     if (text.includes('invalid login credentials') || text.includes('invalid credentials') || text.includes('invalid email or password')) {
-        return 'Correo o contrasena incorrectos.';
+        return 'Correo o contraseña incorrectos.';
     }
 
     if (text.includes('email not confirmed') || text.includes('not confirmed')) {
-        return 'Debes confirmar tu correo antes de iniciar sesion.';
+        return 'Debes confirmar tu correo antes de iniciar sesión.';
     }
 
     if (text.includes('password should be at least') || text.includes('weak password')) {
-        return 'La contrasena es muy corta o debil. Usa una contrasena mas segura.';
+        return 'La contraseña es muy corta o débil. Usa una contraseña más segura.';
     }
 
     if (text.includes('invalid email')) {
-        return 'Escribe un correo valido.';
+        return 'Escribe un correo válido.';
     }
 
     if (text.includes('failed to fetch') || text.includes('network') || text.includes('fetch')) {
-        return 'No se pudo conectar con Supabase. Revisa tu conexion e intenta otra vez.';
+        return 'No se pudo conectar con Supabase. Revisa tu conexión e intenta otra vez.';
     }
 
-    return 'No se pudo completar la accion. Revisa los datos e intenta otra vez.';
+    return 'No se pudo completar la acción. Revisa los datos e intenta otra vez.';
 }
 
 function isAlreadyRegisteredError(message = '') {
-    return translateSupabaseError(message) === 'Este correo ya esta registrado. Inicia sesion o usa otro correo.';
+    return translateSupabaseError(message) === 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
 }
 
 function showLoginWithEmail(email = '') {
@@ -438,7 +633,7 @@ function showPage(pageId) {
         page.classList.remove('active');
     });
 
-    // Mostrar pagina seleccionada
+    // Mostrar página seleccionada
     selectedPage.classList.add('active');
     const isLanding = pageId === 'landing-page';
     const isDashboard = pageId === 'app-page';
@@ -489,7 +684,7 @@ async function showLogin() {
         const { data: sessionData } = await sb.auth.getSession();
         const authUser = sessionData?.session?.user;
         if (authUser) {
-            console.log("[APP] Sesion activa encontrada desde Iniciar sesion");
+            console.log("[APP] Sesión activa encontrada desde Iniciar sesión");
             currentUser = getPublicUserFromAuth(authUser);
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             await bootstrapAuthenticatedApp(authUser);
@@ -497,7 +692,7 @@ async function showLogin() {
             return;
         }
     } catch (error) {
-        console.warn('[APP] No se pudo comprobar la sesion activa antes del login:', error);
+        console.warn('[APP] No se pudo comprobar la sesión activa antes del login:', error);
     }
     showPage('login-page');
 }
@@ -547,7 +742,7 @@ function updateProfileInfo() {
 }
 
 // ============================================
-// AUTENTICACION LEGACY LOCAL (no usada con Supabase)
+// AUTENTICACIÓN LEGACY LOCAL (no usada con Supabase)
 // ============================================
 
 function legacyHandleLoginLocal(event) {
@@ -573,9 +768,10 @@ function legacyHandleLoginLocal(event) {
         document.getElementById('login-password').value = '';
 
         showApp();
-        notify('Sesion iniciada correctamente.', 'success');
+        notify('Sesión iniciada correctamente.', 'success');
+        playInterfaceSound();
     } else {
-        setAuthMessage('login', 'Email o contrasena incorrectos. Revisa tus datos o crea una cuenta nueva.', 'error');
+        setAuthMessage('login', 'Correo o contraseña incorrectos. Revisa tus datos o crea una cuenta nueva.', 'error');
     }
 }
 
@@ -588,7 +784,7 @@ function legacyHandleRegisterLocal(event) {
     const password = document.getElementById('register-password').value.trim();
 
     if (!name || !email || !password) {
-        setAuthMessage('register', 'Completa nombre, email y contrasena para crear tu cuenta.', 'error');
+        setAuthMessage('register', 'Completa nombre, correo y contraseña para crear tu cuenta.', 'error');
         return;
     }
 
@@ -621,7 +817,7 @@ function legacyHandleLogoutLocal() {
     currentUser = null;
     localStorage.removeItem('currentUser');
     showLanding();
-    notify('Sesion cerrada.', 'info');
+    notify('Sesión cerrada.', 'info');
 }
 
 // ============================================
@@ -641,7 +837,7 @@ function navigateTo(sectionId, evt) {
         item.classList.remove('active');
     });
 
-    // Agregar clase active a la seccion seleccionada
+    // Agregar clase active a la sección seleccionada
     const section = document.getElementById(sectionId);
     if (section) {
         section.classList.add('active');
@@ -797,7 +993,7 @@ function addTaskUI() {
         submitLabel: 'Crear tarea',
         fields: [
             { name: 'topic', label: 'Tarea', placeholder: 'Ej: Resolver ejercicios' },
-            { name: 'subject', label: 'Materia', placeholder: 'Ej: Matematica' }
+            { name: 'subject', label: 'Materia', placeholder: 'Ej: Matemática' }
         ],
         onSubmit: values => createTask(values.topic, values.subject)
     });
@@ -852,7 +1048,7 @@ function addSubjectUI() {
         title: 'Nueva materia',
         submitLabel: 'Crear materia',
         fields: [
-            { name: 'name', label: 'Nombre de la materia', placeholder: 'Ej: Matematica' },
+            { name: 'name', label: 'Nombre de la materia', placeholder: 'Ej: Matemática' },
             { name: 'tasks', label: 'Tareas pendientes', type: 'number', value: '0' }
         ],
         onSubmit: values => {
@@ -940,6 +1136,141 @@ function escapeHTML(value) {
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#039;');
+}
+
+function polishSpanishText(value) {
+    let text = String(value || '');
+    const replacements = [
+        [/\bcontrasena\b/g, 'contrase\u00f1a'],
+        [/\bContrasena\b/g, 'Contrase\u00f1a'],
+        [/\bsesion\b/g, 'sesi\u00f3n'],
+        [/\bSesion\b/g, 'Sesi\u00f3n'],
+        [/\bacademico\b/g, 'acad\u00e9mico'],
+        [/\bacademica\b/g, 'acad\u00e9mica'],
+        [/\bacademicas\b/g, 'acad\u00e9micas'],
+        [/\bdescripcion\b/g, 'descripci\u00f3n'],
+        [/\bDescripcion\b/g, 'Descripci\u00f3n'],
+        [/\binformacion\b/g, 'informaci\u00f3n'],
+        [/\bInformacion\b/g, 'Informaci\u00f3n'],
+        [/\bdefinicion\b/g, 'definici\u00f3n'],
+        [/\bDefinicion\b/g, 'Definici\u00f3n'],
+        [/\bcaracteristicas\b/g, 'caracter\u00edsticas'],
+        [/\bCaracteristicas\b/g, 'Caracter\u00edsticas'],
+        [/\bformula\b/g, 'f\u00f3rmula'],
+        [/\bFormula\b/g, 'F\u00f3rmula'],
+        [/\bpractica\b/g, 'pr\u00e1ctica'],
+        [/\bPractica\b/g, 'Pr\u00e1ctica'],
+        [/\bteoria\b/g, 'teor\u00eda'],
+        [/\bTeoria\b/g, 'Teor\u00eda'],
+        [/\bMatematica\b/g, 'Matem\u00e1tica'],
+        [/\bmatematica\b/g, 'matem\u00e1tica'],
+        [/\bFisica\b/g, 'F\u00edsica'],
+        [/\bfisica\b/g, 'f\u00edsica'],
+        [/\bProgramacion\b/g, 'Programaci\u00f3n'],
+        [/\bprogramacion\b/g, 'programaci\u00f3n'],
+        [/\bQuimica\b/g, 'Qu\u00edmica'],
+        [/\bquimica\b/g, 'qu\u00edmica'],
+        [/\btermica\b/g, 't\u00e9rmica'],
+        [/\benergia\b/g, 'energ\u00eda'],
+        [/\bEnergia\b/g, 'Energ\u00eda'],
+        [/\blimites\b/g, 'l\u00edmites'],
+        [/\bLimites\b/g, 'L\u00edmites'],
+        [/\blimite\b/g, 'l\u00edmite'],
+        [/\bLimite\b/g, 'L\u00edmite'],
+        [/\binteres\b/g, 'inter\u00e9s'],
+        [/\bInteres\b/g, 'Inter\u00e9s'],
+        [/\bdias\b/g, 'd\u00edas'],
+        [/\bdia\b/g, 'd\u00eda'],
+        [/\banos\b/g, 'a\u00f1os'],
+        [/\bano\b/g, 'a\u00f1o'],
+        [/\bdespues\b/g, 'despu\u00e9s'],
+        [/\bTambien\b/g, 'Tambi\u00e9n'],
+        [/\btambien\b/g, 'tambi\u00e9n'],
+        [/\bpodra\b/g, 'podr\u00e1'],
+        [/\bAqui\b/g, 'Aqu\u00ed'],
+        [/\baqui\b/g, 'aqu\u00ed'],
+        [/\bmas\b/g, 'm\u00e1s'],
+        [/\brapido\b/g, 'r\u00e1pido'],
+        [/\brapida\b/g, 'r\u00e1pida'],
+        [/\bbasico\b/g, 'b\u00e1sico'],
+        [/\bbasicos\b/g, 'b\u00e1sicos'],
+        [/\butil\b/g, '\u00fatil'],
+        [/\butiles\b/g, '\u00fatiles'],
+        [/\bcompanero\b/g, 'compa\u00f1ero'],
+        [/\bcompanera\b/g, 'compa\u00f1era'],
+        [/\bexplicacion\b/g, 'explicaci\u00f3n'],
+        [/\bExplicacion\b/g, 'Explicaci\u00f3n'],
+        [/\bconclusion\b/g, 'conclusi\u00f3n'],
+        [/\bConclusion\b/g, 'Conclusi\u00f3n'],
+        [/\bsituacion\b/g, 'situaci\u00f3n'],
+        [/\bsituaciones\b/g, 'situaciones'],
+        [/\boperacion\b/g, 'operaci\u00f3n'],
+        [/\bnumeros\b/g, 'n\u00fameros'],
+        [/\bnumero\b/g, 'n\u00famero'],
+        [/\bgraficas\b/g, 'gr\u00e1ficas'],
+        [/\bgrafica\b/g, 'gr\u00e1fica'],
+        [/\bcalculo\b/g, 'c\u00e1lculo'],
+        [/\bcredito\b/g, 'cr\u00e9dito'],
+        [/\bprestamos\b/g, 'pr\u00e9stamos'],
+        [/\bdolares\b/g, 'd\u00f3lares'],
+        [/\binversion\b/g, 'inversi\u00f3n'],
+        [/\binformatica\b/g, 'inform\u00e1tica'],
+        [/\bmatematico\b/g, 'matem\u00e1tico'],
+        [/\bfenomeno\b/g, 'fen\u00f3meno'],
+        [/\bfenomenos\b/g, 'fen\u00f3menos'],
+        [/\baplicacion\b/g, 'aplicaci\u00f3n'],
+        [/\brelacion\b/g, 'relaci\u00f3n'],
+        [/\bvalido\b/g, 'v\u00e1lido'],
+        [/\bvalida\b/g, 'v\u00e1lida'],
+        [/\bpagina\b/g, 'p\u00e1gina'],
+        [/\bpaginas\b/g, 'p\u00e1ginas'],
+        [/\bproxima\b/g, 'pr\u00f3xima'],
+        [/\bProxima\b/g, 'Pr\u00f3xima'],
+        [/\bproximas\b/g, 'pr\u00f3ximas'],
+        [/\bProximas\b/g, 'Pr\u00f3ximas'],
+        [/\bcomun\b/g, 'com\u00fan'],
+        [/\bdificil\b/g, 'dif\u00edcil'],
+        [/\bfacil\b/g, 'f\u00e1cil'],
+        [/\bpodrias\b/g, 'podr\u00edas'],
+        [/\bguardarias\b/g, 'guardar\u00edas'],
+        [/\breconocerias\b/g, 'reconocer\u00edas'],
+        [/\bexplicarias\b/g, 'explicar\u00edas'],
+        [/\busarias\b/g, 'usar\u00edas'],
+        [/\btendrias\b/g, 'tendr\u00edas'],
+        [/\bsera\b/g, 'ser\u00e1'],
+        [/\btendra\b/g, 'tendr\u00e1'],
+        [/\boptica\b/g, '\u00f3ptica'],
+        [/\bmecanica\b/g, 'mec\u00e1nica'],
+        [/\bparticulas\b/g, 'part\u00edculas'],
+        [/\bdilatacion\b/g, 'dilataci\u00f3n'],
+        [/\bque tema\b/g, 'qu\u00e9 tema'],
+        [/\bque quieres\b/g, 'qu\u00e9 quieres'],
+        [/\bQue es\b/g, 'Qu\u00e9 es'],
+        [/\bQue son\b/g, 'Qu\u00e9 son'],
+        [/\bQue significa\b/g, 'Qu\u00e9 significa'],
+        [/\bQue debo\b/g, 'Qu\u00e9 debo'],
+        [/\bQue dato\b/g, 'Qu\u00e9 dato'],
+        [/\bQue ejemplo\b/g, 'Qu\u00e9 ejemplo'],
+        [/\bQue duda\b/g, 'Qu\u00e9 duda'],
+        [/\bQue conceptos\b/g, 'Qu\u00e9 conceptos'],
+        [/\bQue parte\b/g, 'Qu\u00e9 parte'],
+        [/\bQue forma\b/g, 'Qu\u00e9 forma'],
+        [/\bComo se\b/g, 'C\u00f3mo se'],
+        [/\bComo lo\b/g, 'C\u00f3mo lo'],
+        [/\bComo funciona\b/g, 'C\u00f3mo funciona'],
+        [/\bCual es\b/g, 'Cu\u00e1l es'],
+        [/\bCuanto\b/g, 'Cu\u00e1nto'],
+        [/\bCuales son\b/g, 'Cu\u00e1les son'],
+        [/\bPor que\b/g, 'Por qu\u00e9'],
+        [/\bPara que\b/g, 'Para qu\u00e9'],
+        [/\bpara que\b/g, 'para qu\u00e9'],
+        [/\bEn que\b/g, 'En qu\u00e9'],
+        [/\ben que\b/g, 'en qu\u00e9']
+    ];
+    replacements.forEach(([pattern, replacement]) => {
+        text = text.replace(pattern, replacement);
+    });
+    return text;
 }
 
 function appIconSvg(name) {
@@ -1132,7 +1463,7 @@ function generateSummary() {
             ` Caracteristicas: Propiedades principales del tema\n` +
             ` Aplicaciones: Usos practicos en la vida real\n` +
             ` Ejemplos: Casos de estudio relevantes\n` +
-            ` Importancia: Por que es importante aprender esto\n\n` +
+            ` Importancia: Por qué es importante aprender esto\n\n` +
             `Este resumen fue generado para ayudarte a estudiar de manera eficiente. ` +
             `Utiliza este contenido como base para tu aprendizaje.`
     };
@@ -1150,17 +1481,17 @@ function generateQuestions() {
         return;
     }
 
-    const questions = ` Preguntas de Practica: ${topic}\n\n` +
-        `1. Cuales son los conceptos principales de ${topic}?\n` +
-        `   Respuesta: [Tu respuesta aqui]\n\n` +
-        `2. Como se aplica ${topic} en la practica?\n` +
-        `   Respuesta: [Tu respuesta aqui]\n\n` +
-        `3. Cuales son los errores comunes al estudiar ${topic}?\n` +
-        `   Respuesta: [Tu respuesta aqui]\n\n` +
+    const questions = ` Preguntas de Práctica: ${topic}\n\n` +
+        `1. Cuáles son los conceptos principales de ${topic}?\n` +
+        `   Respuesta: [Tu respuesta aquí]\n\n` +
+        `2. ¿Cómo se aplica ${topic} en la práctica?\n` +
+        `   Respuesta: [Tu respuesta aquí]\n\n` +
+        `3. Cuáles son los errores comunes al estudiar ${topic}?\n` +
+        `   Respuesta: [Tu respuesta aquí]\n\n` +
         `4. Explica la relacion entre ${topic} y otros temas relacionados.\n` +
-        `   Respuesta: [Tu respuesta aqui]\n\n` +
-        `5. Por que es importante dominar ${topic}?\n` +
-        `   Respuesta: [Tu respuesta aqui]`;
+        `   Respuesta: [Tu respuesta aquí]\n\n` +
+        `5. Por qué es importante dominar ${topic}?\n` +
+        `   Respuesta: [Tu respuesta aquí]`;
 
     showAIResult(' Preguntas Generadas', questions);
 }
@@ -1178,7 +1509,7 @@ function generateFlashcards() {
         ` TARJETA 1                       \n` +
         `\n` +
         ` PREGUNTA:                       \n` +
-        ` Que es ${topic}?               \n` +
+        ` Qué es ${topic}?               \n` +
         `                                 \n` +
         ` RESPUESTA (Voltea):             \n` +
         ` Definicion detallada...         \n` +
@@ -1196,7 +1527,7 @@ function generateFlashcards() {
         ` TARJETA 3                       \n` +
         `\n` +
         ` PREGUNTA:                       \n` +
-        ` Aplicaciones practicas          \n` +
+        ` Aplicaciones prácticas          \n` +
         `                                 \n` +
         ` RESPUESTA (Voltea):             \n` +
         ` Ejemplos de uso...              \n` +
@@ -1206,14 +1537,16 @@ function generateFlashcards() {
 }
 
 function showAIResult(title, content) {
-    if (appendTutorMessage('bot', content, title)) {
+    const polishedContent = polishSpanishText(content);
+    const polishedTitle = polishSpanishText(title);
+    if (appendTutorMessage('bot', polishedContent, polishedTitle)) {
         return;
     }
 
     const outputSection = document.getElementById('ai-output-section');
     if (!outputSection) return;
-    document.getElementById('result-title').textContent = title;
-    document.getElementById('result-content').textContent = content;
+    document.getElementById('result-title').textContent = polishedTitle;
+    document.getElementById('result-content').textContent = polishedContent;
     outputSection.style.display = 'block';
 }
 
@@ -1258,9 +1591,9 @@ function addCalendarEventUI() {
         title: 'Nuevo evento',
         submitLabel: 'Agregar evento',
         fields: [
-            { name: 'title', label: 'Evento academico', placeholder: 'Ej: Examen de Matematica' },
-            { name: 'day', label: 'Dia del mes', type: 'number', value: '18' },
-            { name: 'type', label: 'Tipo', value: 'exposicion' },
+            { name: 'title', label: 'Evento académico', placeholder: 'Ej: Examen de Matematica' },
+            { name: 'day', label: 'Día del mes', type: 'number', value: '18' },
+            { name: 'type', label: 'Tipo', value: 'exposición' },
             { name: 'time', label: 'Hora o detalle', value: 'Por definir' }
         ],
         onSubmit: values => {
@@ -1345,22 +1678,22 @@ function generateCalendar() {
             <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
     `;
 
-    // Dias de la semana
+    // Días de la semana
     const days = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
     days.forEach(day => {
         html += `<div style="text-align: center; font-size: 11px; font-weight: 600; color: var(--text-secondary); padding: 8px 0;">${day}</div>`;
     });
 
-    // Dias del mes
+    // Días del mes
     const firstDay = new Date(2026, 5, 1).getDay();
     const daysInMonth = 30;
 
-    // Espacios vacios antes del primer dia
+    // Espacios vacíos antes del primer día
     for (let i = 0; i < firstDay; i++) {
         html += `<div style="padding: 8px; text-align: center; font-size: 12px; color: var(--text-tertiary);">-</div>`;
     }
 
-    // Dias del mes
+    // Días del mes
     for (let day = 1; day <= daysInMonth; day++) {
         const isToday = day === 5;
         const hasEvent = [8, 10, 12, 15, 20].includes(day);
@@ -1433,7 +1766,7 @@ function loadWorkspace() {
             workspace.grades = [];
             workspace.gradebookResetVersion = gradebookResetVersion;
             workspace.recent = [
-                { text: 'La libreta de calificaciones inicio desde cero con el nuevo sistema por periodos.', time: 'Ahora' },
+                { text: 'La libreta de calificaciones inició desde cero con el nuevo sistema por periodos.', time: 'Ahora' },
                 ...(workspace.recent || [])
             ].slice(0, 6);
             localStorage.setItem(getWorkspaceKey(), JSON.stringify(workspace));
@@ -1522,7 +1855,7 @@ function legacyHandleRegisterWithLocalWorkspace(event) {
     const password = document.getElementById('register-password').value.trim();
 
     if (!name || !email || !password) {
-        setAuthMessage('register', 'Completa nombre, email y contrasena para crear tu cuenta.', 'error');
+        setAuthMessage('register', 'Completa nombre, correo y contraseña para crear tu cuenta.', 'error');
         return;
     }
 
@@ -1534,7 +1867,7 @@ function legacyHandleRegisterWithLocalWorkspace(event) {
         role: 'Estudiante',
         career: 'Informatica',
         bio: 'Construyendo mi camino de aprendizaje.',
-        interests: 'Organizacion academica, IA educativa, productividad',
+        interests: 'Organización académica, IA educativa, productividad',
         avatarStyle: 'initials',
         avatarText: '',
         createdAt,
@@ -1569,9 +1902,10 @@ function legacyHandleLoginWithLocalWorkspace(event) {
         document.getElementById('login-email').value = '';
         document.getElementById('login-password').value = '';
         showApp();
-        notify('Sesion iniciada correctamente.', 'success');
+        notify('Sesión iniciada correctamente.', 'success');
+        playInterfaceSound();
     } else {
-        setAuthMessage('login', 'Email o contrasena incorrectos. Revisa tus datos o crea una cuenta nueva.', 'error');
+        setAuthMessage('login', 'Correo o contraseña incorrectos. Revisa tus datos o crea una cuenta nueva.', 'error');
     }
 }
 
@@ -1590,17 +1924,17 @@ function renderDashboard(workspace) {
     section.innerHTML = `
         <div class="section-header">
             <h1>Hola ${escapeHTML(firstName)}</h1>
-            <p class="subtitle">${isEmpty ? 'Bienvenido a AC Edunity. Empieza creando tu primera materia.' : 'Este es el resumen actualizado de tu espacio academico.'}</p>
+            <p class="subtitle">${isEmpty ? 'Bienvenido a AC Edunity. Empieza creando tu primera materia.' : 'Este es el resumen actualizado de tu espacio académico.'}</p>
         </div>
 
         <div class="dashboard-grid">
-            ${dashboardCard('subjects', 'Materias Activas', workspace.subjects.length, workspace.subjects.length ? 'Materias creadas por ti' : 'Sin materias todavia', workspace.subjects.length ? 100 : 0)}
+            ${dashboardCard('subjects', 'Materias Activas', workspace.subjects.length, workspace.subjects.length ? 'Materias creadas por ti' : 'Sin materias todavía', workspace.subjects.length ? 100 : 0)}
             ${dashboardCard('tasks', 'Tareas Pendientes', pending, `${completed} completadas`, workspace.tasks.length ? Math.round((completed / workspace.tasks.length) * 100) : 0)}
-            ${dashboardCard('calendar', 'Proximo Evento', nextEvent ? nextEvent.title : 'Sin eventos', nextEvent ? `${nextEvent.day} - ${nextEvent.type}` : 'Agenda tu primer examen o entrega', nextEvent ? 70 : 0)}
-            ${dashboardCard('grades', 'Promedio Actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} notas registradas` : 'Aun no hay notas', average ? average * 10 : 0)}
+            ${dashboardCard('calendar', 'Próximo evento', nextEvent ? nextEvent.title : 'Sin eventos', nextEvent ? `${nextEvent.day} - ${nextEvent.type}` : 'Agenda tu primer examen o entrega', nextEvent ? 70 : 0)}
+            ${dashboardCard('grades', 'Promedio Actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} notas registradas` : 'Aún no hay notas', average ? average * 10 : 0)}
             ${dashboardCard('xp', 'XP Acumulado', workspace.xp || 0, `Nivel ${level}`, Math.min(100, ((workspace.xp || 0) % 250) / 2.5))}
-            ${dashboardCard('streak', 'Racha de Estudio', workspace.streak || 0, 'dias activos', workspace.streak ? 100 : 0)}
-            ${dashboardCard('AI', 'Recomendacion IA', workspace.resources.length ? 'Repasa un PDF' : 'Sube un apunte', workspace.resources.length ? 'Tutor puede crear cuestionarios' : 'Sube tus apuntes y estudia con ayuda de Tutor', workspace.resources.length ? 85 : 25)}
+            ${dashboardCard('streak', 'Racha de estudio', workspace.streak || 0, 'días activos', workspace.streak ? 100 : 0)}
+            ${dashboardCard('AI', 'Recomendación IA', workspace.resources.length ? 'Repasa un PDF' : 'Sube un apunte', workspace.resources.length ? 'Tutor puede crear cuestionarios' : 'Sube tus apuntes y estudia con ayuda de Tutor', workspace.resources.length ? 85 : 25)}
         </div>
 
         <div class="dashboard-row">
@@ -1621,7 +1955,7 @@ function renderDashboard(workspace) {
                     <ul class="activity-list">${workspace.recent.map(item => `
                         <li><span class="activity-time">${escapeHTML(item.time)}</span><span class="activity-text">${escapeHTML(item.text)}</span></li>
                     `).join('')}</ul>
-                ` : emptyStateHTML('Tu actividad aparecera cuando empieces a usar la plataforma.', 'Crear primera materia', 'addSubjectUI()')}
+                ` : emptyStateHTML('Tu actividad aparecerá cuando empieces a usar la plataforma.', 'Crear primera materia', 'addSubjectUI()')}
             </div>
 
 
@@ -1631,7 +1965,7 @@ function renderDashboard(workspace) {
                 <div class="weekly-chart" aria-label="Progreso semanal simulado">
                     ${[15, 20, 25, 30, 35, 40, Math.min(95, 20 + completed * 12)].map(value => `<span class="week-day" style="height:${value}%"></span>`).join('')}
                 </div>
-                <p class="chart-caption">${completed ? `Has completado ${completed} tarea(s).` : 'Tu grafico crecera cuando completes actividades.'}</p>
+                <p class="chart-caption">${completed ? `Has completado ${completed} tarea(s).` : 'Tu gráfico crecerá cuando completes actividades.'}</p>
             </div>
         </div>
     `;
@@ -1663,7 +1997,7 @@ function addSubjectUI() {
         title: 'Crear materia',
         submitLabel: 'Guardar materia',
         fields: [
-            { name: 'name', label: 'Nombre de la materia', placeholder: 'Ej: Matematica' },
+            { name: 'name', label: 'Nombre de la materia', placeholder: 'Ej: Matemática' },
             { name: 'color', label: 'Color identificador', type: 'select', options: subjectColorOptions }
         ],
         onSubmit: values => {
@@ -1705,7 +2039,7 @@ function renderSubjects(workspace) {
                 <button class="btn-secondary btn-small" data-subject-id="${escapeHTML(subject.id)}">Acceder</button>
             </div>
         `;
-    }).join('') : emptyStateHTML('No tienes materias registradas todavia.', 'Crear primera materia', 'addSubjectUI()');
+    }).join('') : emptyStateHTML('No tienes materias registradas todavía.', 'Crear primera materia', 'addSubjectUI()');
 
     grid.querySelectorAll('[data-subject-id]').forEach(button => {
         button.addEventListener('click', () => {
@@ -1789,8 +2123,8 @@ function addCalendarEventUI() {
         title: 'Agendar evento',
         submitLabel: 'Guardar evento',
         fields: [
-            { name: 'title', label: 'Evento academico', placeholder: 'Ej: Examen de Matematica' },
-            { name: 'day', label: 'Fecha o dia', value: 'Por definir' },
+            { name: 'title', label: 'Evento académico', placeholder: 'Ej: Examen de Matematica' },
+            { name: 'day', label: 'Fecha o día', value: 'Por definir' },
             { name: 'type', label: 'Tipo', type: 'select', options: eventTypeOptions },
             { name: 'time', label: 'Hora o detalle', value: 'Por definir' }
         ],
@@ -1819,7 +2153,7 @@ function renderCalendarSection(workspace) {
     container.innerHTML = `
         <div class="calendar-mini" id="mini-calendar"></div>
         <div class="events-list">
-            <h3>Agenda academica</h3>
+            <h3>Agenda académica</h3>
             <div id="custom-events-list">
                 ${workspace.events.length ? workspace.events.map(event => `
                     <div class="event-item event-custom">
@@ -1875,7 +2209,7 @@ function generateCalendar() {
             <button class="calendar-month-btn" type="button" onclick="changeCalendarMonth(-1)" aria-label="Mes anterior">‹</button>
             <div class="calendar-title-block">
                 <div class="calendar-title">${monthNames[month]} ${year}</div>
-                <p>Calendario academico mensual</p>
+                <p>Calendario académico mensual</p>
             </div>
             <button class="calendar-month-btn" type="button" onclick="changeCalendarMonth(1)" aria-label="Mes siguiente">›</button>
         </div>
@@ -1939,7 +2273,7 @@ function renderGrades(workspace) {
     if (!container) return;
 
     if (!workspace.grades.length) {
-        container.innerHTML = emptyStateHTML('No has registrado calificaciones.', 'Agregar calificacion', 'showAddGradeForm()');
+        container.innerHTML = emptyStateHTML('No has registrado calificaciones.', 'Agregar calificación', 'showAddGradeForm()');
         return;
     }
 
@@ -1981,7 +2315,7 @@ function renderGrades(workspace) {
         <div class="gradebook-panel">
             <div class="gradebook-header">
                 <span>Materia</span>
-                <span>Calificaciones registradas</span>
+                <span>Calificaciónes registradas</span>
                 <span>Promedio</span>
             </div>
             <div class="gradebook-body">
@@ -1989,7 +2323,7 @@ function renderGrades(workspace) {
                     <div class="gradebook-row">
                         <div class="gradebook-subject">
                             <strong>${escapeHTML(row.subject)}</strong>
-                            <small>${row.grades.length} ${row.grades.length === 1 ? 'calificacion' : 'calificaciones'}</small>
+                            <small>${row.grades.length} ${row.grades.length === 1 ? 'calificación' : 'calificaciones'}</small>
                         </div>
                         <div class="gradebook-scores">
                             ${row.grades.map(grade => {
@@ -1998,12 +2332,12 @@ function renderGrades(workspace) {
                                 const status = getGradeStatus(value).replace(' ', '-');
                                 const itemLabel = items.length === 1 ? '1 actividad' : `${items.length} actividades`;
                                 return `
-                                    <div class="gradebook-score ${status} ${items.length > 1 ? 'has-items' : ''}" title="${escapeHTML(grade.evaluation || 'Calificacion')} - ${escapeHTML(itemLabel)}">
-                                        <button class="score-action score-edit" data-grade-edit="${escapeHTML(grade.id)}" aria-label="Editar calificacion">Editar</button>
+                                    <div class="gradebook-score ${status} ${items.length > 1 ? 'has-items' : ''}" title="${escapeHTML(grade.evaluation || 'Calificación')} - ${escapeHTML(itemLabel)}">
+                                        <button class="score-action score-edit" data-grade-edit="${escapeHTML(grade.id)}" aria-label="Editar calificación">Editar</button>
                                         <span class="score-value">${formatGradeValue(value)}</span>
                                         <span class="score-label">${escapeHTML(grade.evaluation || 'Nota')}</span>
                                         <span class="score-count">${escapeHTML(itemLabel)}</span>
-                                        <button class="score-action score-delete" data-grade-delete="${escapeHTML(grade.id)}" aria-label="Eliminar calificacion">Eliminar</button>
+                                        <button class="score-action score-delete" data-grade-delete="${escapeHTML(grade.id)}" aria-label="Eliminar calificación">Eliminar</button>
                                     </div>
                                 `;
                             }).join('')}
@@ -2191,7 +2525,7 @@ function renderAttendance(workspace) {
     if (!container) return;
 
     if (!workspace.attendance.length) {
-        container.innerHTML = emptyStateHTML('Todavia no registras asistencias. Comienza agregando tu primera clase.', '+ Registrar asistencia', 'addAttendanceUI()');
+        container.innerHTML = emptyStateHTML('Todavía no registras asistencias. Comienza agregando tu primera clase.', '+ Registrar asistencia', 'addAttendanceUI()');
         return;
     }
 
@@ -2222,7 +2556,7 @@ function renderAttendance(workspace) {
         </div>
 
         <div class="attendance-alert ${lowSubject ? 'warning' : 'success'}">
-            <strong>${lowSubject ? `Tu asistencia en ${escapeHTML(lowSubject.subject)} bajo de 80%.` : 'Llevas una buena racha de asistencia.'}</strong>
+            <strong>${lowSubject ? `Tu asistencia en ${escapeHTML(lowSubject.subject)} bajó de 80%.` : 'Llevas una buena racha de asistencia.'}</strong>
             <span>${lowSubject ? 'Revisa tus faltas y registra justificaciones si corresponde.' : (bestSubject ? `Excelente avance en ${escapeHTML(bestSubject.subject)}.` : 'Sigue registrando tus clases para medir tu progreso.')}</span>
         </div>
 
@@ -2283,7 +2617,7 @@ function renderAttendance(workspace) {
                             <em>${item.percentage}%</em>
                             <div class="progress-bar"><div class="progress-fill" style="width:${item.percentage}%"></div></div>
                         </div>
-                    `).join('') : '<p class="muted-panel">Cuando registres clases, apareceran aqui.</p>'}
+                    `).join('') : '<p class="muted-panel">Cuando registres clases, aparecerán aquí.</p>'}
                 </section>
             </aside>
         </div>
@@ -2313,9 +2647,9 @@ function addResourceUI() {
         title: 'Subir apunte simulado',
         submitLabel: 'Guardar apunte',
         fields: [
-            { name: 'title', label: 'Titulo', placeholder: 'Ej: Apunte de biologia' },
+            { name: 'title', label: 'Título', placeholder: 'Ej: Apunte de biologia' },
             { name: 'subject', label: 'Materia', type: 'select', options: subjectOptions },
-            { name: 'content', label: 'Contenido del apunte', type: 'textarea', placeholder: 'Escribe aqui el contenido del apunte...' }
+            { name: 'content', label: 'Contenido del apunte', type: 'textarea', placeholder: 'Escribe aquí el contenido del apunte...' }
         ],
         onSubmit: values => {
             const fresh = loadWorkspace();
@@ -2356,7 +2690,7 @@ function renderBackpack(workspace) {
                 <button class="btn-secondary btn-small" data-resource-ai="${escapeHTML(resource.id)}">Preguntar a la IA</button>
             </div>
         </div>
-    `).join('') : emptyStateHTML('No has subido apuntes todavia.', 'Subir primer apunte', 'addResourceUI()');
+    `).join('') : emptyStateHTML('No has subido apuntes todavía.', 'Subir primer apunte', 'addResourceUI()');
 
     container.querySelectorAll('[data-resource-view]').forEach(button => {
         button.addEventListener('click', () => {
@@ -2386,7 +2720,7 @@ function askAIAboutResource(resourceId) {
     if (topic) {
         topic.value = `Analiza este apunte de ${resource.subject}: ${resource.title}\n\n${resource.content}`;
     }
-    showAIResult('Analisis IA del apunte', buildAIResponse('explicacion', topic?.value || resource.content));
+    showAIResult('Análisis IA del apunte', buildAIResponse('explicacion', topic?.value || resource.content));
     notify('El apunte fue cargado en el asistente IA.', 'success');
 }
 
@@ -2399,18 +2733,18 @@ function buildAIResponse(type, topic) {
     const prefix = topic.includes('Analiza este apunte') ? 'Usando el apunte cargado como referencia simulada' : 'Usando el tema escrito por el estudiante';
 
     if (type === 'questions') {
-        return `${prefix}:\n\n1. Cual es la idea principal?\n2. Que conceptos debes memorizar?\n3. Como se aplica en un ejemplo?\n4. Que duda le preguntarias al profesor?\n\nReferencia:\n${reference}`;
+        return `${prefix}:\n\n1. Cuál es la idea principal?\n2. Qué conceptos debes memorizar?\n3. Cómo se aplica en un ejemplo?\n4. Qué duda le preguntarias al profesor?\n\nReferencia:\n${reference}`;
     }
 
     if (type === 'flashcards') {
-        return `${prefix}:\n\nTarjeta 1\nPregunta: Que significa el contenido?\nRespuesta: Explicalo con tus palabras.\n\nTarjeta 2\nPregunta: Cual es el dato mas importante?\nRespuesta: Identifica la informacion central.\n\nTarjeta 3\nPregunta: Como lo usarias?\nRespuesta: Crea un ejemplo corto.\n\nReferencia:\n${reference}`;
+        return `${prefix}:\n\nTarjeta 1\nPregunta: Qué significa el contenido?\nRespuesta: Explicalo con tus palabras.\n\nTarjeta 2\nPregunta: Cuál es el dato mas importante?\nRespuesta: Identifica la información central.\n\nTarjeta 3\nPregunta: Cómo lo usarias?\nRespuesta: Crea un ejemplo corto.\n\nReferencia:\n${reference}`;
     }
 
     if (type === 'simple') {
-        return `${prefix}:\n\nExplicacion sencilla:\nLee el contenido, ubica la informacion mas importante y practica con un ejemplo propio.\n\nReferencia:\n${reference}`;
+        return `${prefix}:\n\nExplicación sencilla:\nLee el contenido, ubica la información mas importante y practica con un ejemplo propio.\n\nReferencia:\n${reference}`;
     }
 
-    return `${prefix}:\n\nResumen:\nEl contenido se organiza en informacion principal, ejemplos y posibles preguntas de examen.\n\nReferencia:\n${reference}`;
+    return `${prefix}:\n\nResumen:\nEl contenido se organiza en información principal, ejemplos y posibles preguntas de examen.\n\nReferencia:\n${reference}`;
 }
 
 function generateSummary() {
@@ -2428,7 +2762,7 @@ function generateQuestions() {
         notify('Ingresa un tema o carga un apunte desde la mochila digital.', 'error');
         return;
     }
-    showAIResult('Preguntas de practica', buildAIResponse('questions', topic));
+    showAIResult('Preguntas de práctica', buildAIResponse('questions', topic));
 }
 
 function generateFlashcards() {
@@ -2446,11 +2780,11 @@ function generateSimpleExplanation() {
         notify('Ingresa un tema o carga un apunte desde la mochila digital.', 'error');
         return;
     }
-    showAIResult('Explicacion sencilla', buildAIResponse('simple', topic));
+    showAIResult('Explicación sencilla', buildAIResponse('simple', topic));
 }
 
 // ============================================
-// GESTION ACADEMICA AVANZADA
+// GESTIÓN ACADÉMICA AVANZADA
 // ============================================
 
 let gradeSortMode = 'subject';
@@ -2478,12 +2812,12 @@ const subjectColorOptions = [
 
 const subjectBookOptions = [
     { value: 'math', label: 'Matematicas', iconClass: 'choice-icon-math' },
-    { value: 'chemistry', label: 'Quimica', iconClass: 'choice-icon-chemistry' },
+    { value: 'chemistry', label: 'Química', iconClass: 'choice-icon-chemistry' },
     { value: 'history', label: 'Historia', iconClass: 'choice-icon-history' },
-    { value: 'programming', label: 'Programacion', iconClass: 'choice-icon-programming' },
+    { value: 'programming', label: 'Programación', iconClass: 'choice-icon-programming' },
     { value: 'robotics', label: 'Robotica', iconClass: 'choice-icon-robotics' },
     { value: 'literature', label: 'Literatura', iconClass: 'choice-icon-literature' },
-    { value: 'sports', label: 'Educacion fisica', iconClass: 'choice-icon-sports' },
+    { value: 'sports', label: 'Educacion física', iconClass: 'choice-icon-sports' },
     { value: 'art', label: 'Arte', iconClass: 'choice-icon-art' },
     { value: 'biology', label: 'Biologia', iconClass: 'choice-icon-biology' },
     { value: 'book-blue', label: 'Libro azul', iconClass: 'choice-icon-book' }
@@ -2499,12 +2833,12 @@ let backpackSortMode = 'recent';
 const taskPriorityOptions = [
     { value: 'alta', label: 'Importante' },
     { value: 'media', label: 'Normal' },
-    { value: 'baja', label: 'Mas tarde' }
+    { value: 'baja', label: 'Más tarde' }
 ];
 
 const taskStatusOptions = [
     { value: 'pending', label: 'Pendiente ahora' },
-    { value: 'upcoming', label: 'Proxima / mas tarde' },
+    { value: 'upcoming', label: 'Próxima / más tarde' },
     { value: 'completed', label: 'Completada' }
 ];
 
@@ -2513,7 +2847,7 @@ let currentTaskFilter = 'all';
 const eventTypeOptions = [
     { value: 'examen', label: 'Examen' },
     { value: 'tarea', label: 'Tarea' },
-    { value: 'exposicion', label: 'Exposicion' },
+    { value: 'exposición', label: 'Exposición' },
     { value: 'recordatorio', label: 'Recordatorio' }
 ];
 
@@ -2541,7 +2875,7 @@ async function getCurrentSupabaseUser() {
         logSupabaseError('auth getUser', error);
         throw error;
     }
-    if (!data.user) throw new Error('Inicia sesion para guardar datos en Supabase.');
+    if (!data.user) throw new Error('Inicia sesión para guardar datos en Supabase.');
 
     if (!currentUser || currentUser.id !== data.user.id) {
         currentUser = getPublicUserFromAuth(data.user, profileState);
@@ -2576,7 +2910,7 @@ function getGradeStatus(value) {
 function getTaskStatusLabel(status) {
     if (status === 'completed') return 'Completada';
     if (status === 'overdue') return 'Vencida';
-    if (status === 'upcoming') return 'Proxima / mas tarde';
+    if (status === 'upcoming') return 'Próxima / más tarde';
     return 'Pendiente ahora';
 }
 
@@ -2624,10 +2958,10 @@ function getTaskDaysText(task) {
     const days = getTaskDaysRemaining(task);
     if (days === null) return 'Sin fecha limite';
     if (task.status === 'completed') return 'Completada';
-    if (days < 0) return `Vencio hace ${Math.abs(days)} ${Math.abs(days) === 1 ? 'dia' : 'dias'}`;
+    if (days < 0) return `Venció hace ${Math.abs(days)} ${Math.abs(days) === 1 ? 'día' : 'días'}`;
     if (days === 0) return 'Vence hoy';
-    if (days === 1) return 'Falta 1 dia';
-    return `Faltan ${days} dias`;
+    if (days === 1) return 'Falta 1 día';
+    return `Faltan ${days} días`;
 }
 
 function getTaskPriorityClass(priority) {
@@ -2671,7 +3005,7 @@ function openSubjectForm(subjectId = null) {
         title: subject ? 'Editar materia' : 'Crear materia',
         submitLabel: subject ? 'Actualizar materia' : 'Guardar materia',
         fields: [
-            { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matematica' },
+            { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matemática' },
             { name: 'icon', label: 'Icono o etiqueta', value: subject?.icon || '', placeholder: 'Ej: FIS, PROG' },
             { name: 'color', label: 'Color identificador', type: 'select', options: subjectColorOptions, value: subject?.color || 'Morado' }
         ],
@@ -2750,14 +3084,14 @@ function renderSubjects(workspace) {
                     <div class="stat"><span class="stat-name">Promedio</span><span class="stat-num">${average ? average.toFixed(2) : '--'}</span></div>
                 </div>
                 <div class="progress-bar"><div class="progress-fill" style="width:${progress}%; background:linear-gradient(90deg, ${color}, #06b6d4)"></div></div>
-                <p class="last-activity">${taskCount ? `${completed} de ${taskCount} tareas completadas` : 'Sin tareas relacionadas todavia'}</p>
+                <p class="last-activity">${taskCount ? `${completed} de ${taskCount} tareas completadas` : 'Sin tareas relacionadas todavía'}</p>
                 <div class="card-actions">
                     <button class="btn-secondary btn-small" data-subject-edit="${escapeHTML(subject.id)}">Editar</button>
                     <button class="btn-danger btn-small" data-subject-delete="${escapeHTML(subject.id)}">Eliminar</button>
                 </div>
             </div>
         `;
-    }).join('') : emptyStateHTML('No tienes materias registradas todavia.', 'Crear primera materia', 'addSubjectUI()');
+    }).join('') : emptyStateHTML('No tienes materias registradas todavía.', 'Crear primera materia', 'addSubjectUI()');
 
     grid.querySelectorAll('[data-subject-edit]').forEach(button => button.addEventListener('click', () => openSubjectForm(button.dataset.subjectEdit)));
     grid.querySelectorAll('[data-subject-delete]').forEach(button => button.addEventListener('click', () => deleteSubject(button.dataset.subjectDelete)));
@@ -2774,13 +3108,13 @@ function openTaskForm(taskId = null) {
         title: task ? 'Editar tarea' : 'Crear tarea',
         submitLabel: task ? 'Actualizar tarea' : 'Guardar tarea',
         fields: [
-            { name: 'title', label: 'Titulo', value: task?.title || '', placeholder: 'Ej: Taller de funciones' },
+            { name: 'title', label: 'Título', value: task?.title || '', placeholder: 'Ej: Taller de funciones' },
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: task?.subject || '' },
-            { name: 'description', label: 'Descripcion', type: 'textarea', value: task?.description || '', placeholder: 'Detalles de la tarea' },
-            { name: 'due', label: 'Fecha limite', type: 'date', value: normalizeDate(task?.due) },
+            { name: 'description', label: 'Descripción', type: 'textarea', value: task?.description || '', placeholder: 'Detalles de la tarea' },
+            { name: 'due', label: 'Fecha límite', type: 'date', value: normalizeDate(task?.due) },
             { name: 'priority', label: 'Prioridad', type: 'select', options: taskPriorityOptions, value: task?.priority || 'media' },
-            { name: 'emailReminder', label: 'Recordarme por Gmail', type: 'checkbox', checked: !!task?.emailReminder, required: false, help: 'Mostrar alerta visual cuando este proxima a vencer' },
-            { name: 'email', label: 'Correo para notificacion', type: 'email', value: task?.email || currentUser?.email || '', required: false, placeholder: 'usuario@gmail.com' }
+            { name: 'emailReminder', label: 'Recordarme por Gmail', type: 'checkbox', checked: !!task?.emailReminder, required: false, help: 'Mostrar alerta visual cuando esté próxima a vencer' },
+            { name: 'email', label: 'Correo para notificación', type: 'email', value: task?.email || currentUser?.email || '', required: false, placeholder: 'usuario@gmail.com' }
         ],
         onSubmit: values => {
             const fresh = loadWorkspace();
@@ -2848,7 +3182,7 @@ function getTaskGoogleCalendarUrl(task) {
     const start = toGoogleCalendarDate(date, '08:00');
     const end = toGoogleCalendarDate(date, '09:00');
     const details = [
-        task.description || 'Tarea academica creada en AC Edunity.',
+        task.description || 'Tarea académica creada en AC Edunity.',
         `Materia: ${task.subject || 'General'}`,
         `Prioridad: ${getTaskPriorityLabel(task.priority || 'media')}`
     ].join('\n');
@@ -2871,7 +3205,7 @@ function renderTasks(workspace) {
     if (!list) return;
 
     if (!workspace.tasks.length) {
-        list.innerHTML = emptyStateHTML('No tienes tareas todavia. Crea tu primera tarea para organizar tus estudios.', '+ Crear tarea', 'addTaskUI()');
+        list.innerHTML = emptyStateHTML('No tienes tareas todavía. Crea tu primera tarea para organizar tus estudios.', '+ Crear tarea', 'addTaskUI()');
         return;
     }
 
@@ -2896,7 +3230,7 @@ function renderTasks(workspace) {
     const filterTabs = [
         ['all', 'Todas'],
         ['pending', 'Pendientes'],
-        ['upcoming', 'Proximas'],
+        ['upcoming', 'Próximas'],
         ['completed', 'Completadas'],
         ['overdue', 'Vencidas']
     ];
@@ -2911,7 +3245,7 @@ function renderTasks(workspace) {
         </div>
         <div class="task-summary-strip">
             <div><strong>${counts.pending}</strong><span>Pendientes</span></div>
-            <div><strong>${counts.upcoming}</strong><span>Proximas</span></div>
+            <div><strong>${counts.upcoming}</strong><span>Próximas</span></div>
             <div><strong>${counts.completed}</strong><span>Completadas</span></div>
             <div><strong>${counts.overdue}</strong><span>Vencidas</span></div>
         </div>
@@ -2937,7 +3271,7 @@ function renderTasks(workspace) {
                                     <span class="task-status status-${escapeHTML(visualStatus)}">${escapeHTML(getTaskStatusLabel(visualStatus))}</span>
                                 </div>
                                 <p class="task-subject" style="color:${subjectColor}">${escapeHTML(task.subject || 'General')}</p>
-                                <p class="task-description">${escapeHTML(task.description || 'Sin descripcion registrada.')}</p>
+                                <p class="task-description">${escapeHTML(task.description || 'Sin descripción registrada.')}</p>
                                 <div class="task-meta-grid">
                                     <span><strong>Fecha:</strong> ${escapeHTML(task.due || 'Sin fecha')}</span>
                                     <span><strong>Tiempo:</strong> ${escapeHTML(getTaskDaysText(task))}</span>
@@ -2987,7 +3321,7 @@ function getGoogleCalendarUrl(event) {
     const end = toGoogleCalendarDate(event.date, addMinutesToTime(event.time || '08:00', 60));
     const details = [
         `Evento creado desde AC Edunity.`,
-        `Tipo: ${event.type || 'Evento academico'}.`,
+        `Tipo: ${event.type || 'Evento académico'}.`,
         event.emailReminder ? 'Activa las notificaciones de Google Calendar para recibir avisos en correo y celular.' : ''
     ].filter(Boolean).join('\n');
     const params = new URLSearchParams({
@@ -3019,15 +3353,15 @@ function openEventForm(eventId = null) {
         title: event ? 'Editar evento' : 'Crear evento',
         submitLabel: event ? 'Actualizar evento' : 'Guardar evento',
         fields: [
-            { name: 'title', label: 'Titulo del evento', value: event?.title || '', placeholder: 'Ej: Examen final' },
+            { name: 'title', label: 'Título del evento', value: event?.title || '', placeholder: 'Ej: Examen final' },
             { name: 'type', label: 'Tipo', type: 'select', options: eventTypeOptions, value: event?.type || 'recordatorio' },
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: event?.subject || 'General' },
             { name: 'date', label: 'Fecha', type: 'date', value: normalizeDate(event?.date) },
             { name: 'time', label: 'Hora', type: 'time', value: event?.time || '08:00' },
-            { name: 'description', label: 'Descripcion', type: 'textarea', rows: 3, value: event?.description || '', required: false, placeholder: 'Detalle del evento' },
+            { name: 'description', label: 'Descripción', type: 'textarea', rows: 3, value: event?.description || '', required: false, placeholder: 'Detalle del evento' },
             { name: 'email', label: 'Correo del usuario', type: 'email', value: event?.email || currentUser?.email || '', placeholder: 'usuario@email.com' },
             { name: 'emailReminder', label: 'Recordatorio por correo', type: 'checkbox', checked: Boolean(event?.emailReminder), help: 'Activar recordatorio por correo' },
-            { name: 'googleCalendar', label: 'Abrir tambien en Google Calendar', type: 'checkbox', checked: !eventId, help: 'Se abrira Google Calendar para guardar el evento y activar notificaciones reales.' }
+            { name: 'googleCalendar', label: 'Abrir también en Google Calendar', type: 'checkbox', checked: !eventId, help: 'Se abrirá Google Calendar para guardar el evento y activar notificaciones reales.' }
         ],
         onSubmit: async values => {
             const fresh = loadWorkspace();
@@ -3145,7 +3479,7 @@ function renderCalendarSection(workspace) {
             <div class="calendar-mini" id="mini-calendar"></div>
         </div>
         <div class="events-list">
-            <h3>Agenda academica</h3>
+            <h3>Agenda académica</h3>
             <div id="custom-events-list">
                 ${events.length ? events.map(event => {
                     const reminder = getReminderMessage(event);
@@ -3193,7 +3527,7 @@ function getGradeItems(grade) {
 
     if (grade && grade.value !== undefined && grade.value !== '') {
         return [{
-            activity: grade.evaluation || 'Calificacion',
+            activity: grade.evaluation || 'Calificación',
             date: grade.date || '',
             value: Number(grade.value)
         }].filter(item => !Number.isNaN(item.value));
@@ -3307,9 +3641,9 @@ function openGradeForm(gradeId = null, defaults = {}) {
     const modal = document.createElement('div');
     modal.className = 'quick-modal';
     modal.innerHTML = `
-        <div class="quick-modal-card grade-modal-card" role="dialog" aria-modal="true" aria-label="${grade ? 'Editar calificacion' : 'Registrar calificacion'}">
+        <div class="quick-modal-card grade-modal-card" role="dialog" aria-modal="true" aria-label="${grade ? 'Editar calificación' : 'Registrar calificación'}">
             <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
-            <h3>${grade ? 'Editar calificacion' : 'Registrar calificacion'}</h3>
+            <h3>${grade ? 'Editar calificación' : 'Registrar calificación'}</h3>
             <form class="quick-modal-form grade-modal-form">
                 <label>
                     <span>Materia</span>
@@ -3326,7 +3660,7 @@ function openGradeForm(gradeId = null, defaults = {}) {
                     </label>
                 </div>
                 <label>
-                    <span>Grupo de calificacion</span>
+                    <span>Grupo de calificación</span>
                     <input name="evaluation" value="${escapeHTML(grade?.evaluation || suggestedEvaluation)}" placeholder="Ej: Tarea 100% del Parcial 1" required>
                 </label>
                 <div class="grade-items-builder">
@@ -3351,7 +3685,7 @@ function openGradeForm(gradeId = null, defaults = {}) {
                     <textarea name="observation" rows="3" placeholder="Comentario opcional">${escapeHTML(grade?.observation || '')}</textarea>
                 </label>
                 <div class="quick-modal-actions">
-                    <button class="btn-primary btn-small" type="submit">${grade ? 'Actualizar calificacion' : 'Guardar calificacion'}</button>
+                    <button class="btn-primary btn-small" type="submit">${grade ? 'Actualizar calificación' : 'Guardar calificación'}</button>
                 </div>
             </form>
         </div>
@@ -3474,7 +3808,7 @@ function openGradeForm(gradeId = null, defaults = {}) {
                     logSupabaseError('grade_items delete before update', deleteItemsError);
                     throw deleteItemsError;
                 }
-                pushRecentMessage(`Editaste una calificacion de ${payload.subject}.`);
+                pushRecentMessage(`Editaste una calificación de ${payload.subject}.`);
             } else {
                 const { data, error } = await getSupabaseClient()
                     .from('grades')
@@ -3490,7 +3824,7 @@ function openGradeForm(gradeId = null, defaults = {}) {
                 savedGrade = data;
                 console.log("[GRADES] guardado correcto", data);
                 await updateProfileProgress(20, { bumpStreak: true });
-                pushRecentMessage(`Registraste una calificacion en ${payload.subject}.`);
+                pushRecentMessage(`Registraste una calificación en ${payload.subject}.`);
             }
 
             const gradeItemPayload = gradeItems.map(item => ({
@@ -3516,10 +3850,10 @@ function openGradeForm(gradeId = null, defaults = {}) {
             await syncWorkspaceFromSupabase();
             refreshWorkspaceUI();
             closeModal();
-            notify(gradeId ? 'Calificacion actualizada.' : 'Calificacion registrada.', 'success');
+            notify(gradeId ? 'Calificación actualizada.' : 'Calificación registrada.', 'success');
         } catch (error) {
             console.error("[GRADES ERROR]", error);
-            notify(error.message || 'No se pudo guardar la calificacion.', 'error');
+            notify(error.message || 'No se pudo guardar la calificación.', 'error');
         } finally {
             if (submitButton) {
                 submitButton.disabled = false;
@@ -3561,13 +3895,13 @@ async function deleteGrade(gradeId) {
             throw error;
         }
 
-        if (grade) pushRecentMessage(`Eliminaste una calificacion de ${grade.subject}.`);
+        if (grade) pushRecentMessage(`Eliminaste una calificación de ${grade.subject}.`);
         await syncWorkspaceFromSupabase();
         refreshWorkspaceUI();
-        notify('Calificacion eliminada.', 'info');
+        notify('Calificación eliminada.', 'info');
     } catch (error) {
         console.error("[GRADES ERROR]", error);
-        notify(error.message || 'No se pudo eliminar la calificacion.', 'error');
+        notify(error.message || 'No se pudo eliminar la calificación.', 'error');
     }
 }
 
@@ -3590,7 +3924,7 @@ function openGradeBucket(subject, period, category) {
     const modal = document.createElement('div');
     modal.className = 'quick-modal';
     modal.innerHTML = `
-        <div class="quick-modal-card grade-bucket-card" role="dialog" aria-modal="true" aria-label="Calificaciones registradas">
+        <div class="quick-modal-card grade-bucket-card" role="dialog" aria-modal="true" aria-label="Calificaciónes registradas">
             <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
             <div class="grade-bucket-header">
                 <div>
@@ -3606,7 +3940,7 @@ function openGradeBucket(subject, period, category) {
                     return `
                         <div class="grade-bucket-item">
                             <div>
-                                <strong>${escapeHTML(grade.evaluation || 'Calificacion')}</strong>
+                                <strong>${escapeHTML(grade.evaluation || 'Calificación')}</strong>
                                 <span>${items.length} ${items.length === 1 ? 'casillero' : 'casilleros'} - Promedio ${formatGradeValue(value)}</span>
                             </div>
                             <div class="grade-bucket-actions">
@@ -3652,7 +3986,7 @@ function renderGrades(workspace) {
     if (!container) return;
 
     if (!workspace.grades.length) {
-        container.innerHTML = emptyStateHTML('No has registrado calificaciones.', 'Agregar calificacion', 'showAddGradeForm()');
+        container.innerHTML = emptyStateHTML('No has registrado calificaciones.', 'Agregar calificación', 'showAddGradeForm()');
         return;
     }
 
@@ -3692,7 +4026,7 @@ function renderGrades(workspace) {
                 <strong>Promedio general: ${average.toFixed(2)}</strong>
                 <span class="grade-status ${getGradeStatus(average).replace(' ', '-')}">${getGradeStatus(average)}</span>
             </div>
-            <div class="grade-formula-note">Formula: promedio de parciales 70% + examen 30%.</div>
+            <div class="grade-formula-note">Fórmula: promedio de parciales 70% + examen 30%.</div>
             <select onchange="setGradeSort(this.value)">
                 <option value="subject" ${gradeSortMode === 'subject' ? 'selected' : ''}>Ordenar por materia</option>
                 <option value="high" ${gradeSortMode === 'high' ? 'selected' : ''}>Promedio mayor</option>
@@ -3712,7 +4046,7 @@ function renderGrades(workspace) {
                 ${subjectRows.map(row => `
                     <div class="period-subject-cell">
                         <strong>${escapeHTML(row.subject)}</strong>
-                        <small>${row.grades.length} ${row.grades.length === 1 ? 'calificacion' : 'calificaciones'}</small>
+                        <small>${row.grades.length} ${row.grades.length === 1 ? 'calificación' : 'calificaciones'}</small>
                     </div>
                     <div class="period-average-cell ${row.average === null ? 'empty' : getGradeStatus(row.average).replace(' ', '-')}">
                         <strong>${row.average === null ? '--' : row.average.toFixed(2)}</strong>
@@ -3748,10 +4082,10 @@ function openResourceForm(resourceId = null) {
         title: resource ? 'Editar PDF simulado' : 'Subir PDF simulado',
         submitLabel: resource ? 'Actualizar recurso' : 'Guardar recurso',
         fields: [
-            { name: 'title', label: 'Titulo del recurso', value: resource?.title || '', placeholder: 'Ej: Guia de estudio' },
+            { name: 'title', label: 'Título del recurso', value: resource?.title || '', placeholder: 'Ej: Guía de estudio' },
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: resource?.subject || '' },
             { name: 'file', label: 'Archivo PDF simulado', type: 'file', accept: '.pdf', required: !resource },
-            { name: 'description', label: 'Descripcion del apunte', type: 'textarea', value: resource?.description || resource?.content || '', placeholder: 'Describe de que trata el PDF' }
+            { name: 'description', label: 'Descripción del apunte', type: 'textarea', value: resource?.description || resource?.content || '', placeholder: 'Describe de qué trata el PDF' }
         ],
         onSubmit: values => {
             const fresh = loadWorkspace();
@@ -3821,7 +4155,7 @@ function renderBackpack(workspace) {
             ${appIconHTML('file', 'resource-icon resource-pdf-icon pdf-icon material-icon')}
             <h4>${escapeHTML(resource.title)}</h4>
             <p class="resource-type">${escapeHTML(resource.subject)}  ${escapeHTML(resource.fileName || 'PDF simulado')}</p>
-            <p class="resource-date">${escapeHTML(resource.description || resource.content || 'Sin descripcion').slice(0, 130)}${(resource.description || resource.content || '').length > 130 ? '...' : ''}</p>
+            <p class="resource-date">${escapeHTML(resource.description || resource.content || 'Sin descripción').slice(0, 130)}${(resource.description || resource.content || '').length > 130 ? '...' : ''}</p>
             <div class="resource-actions resource-actions-grid">
                 <button class="btn-secondary btn-small" data-resource-view="${escapeHTML(resource.id)}">Ver</button>
                 <button class="btn-secondary btn-small" data-resource-ai="${escapeHTML(resource.id)}">Preguntar a la IA</button>
@@ -3830,7 +4164,7 @@ function renderBackpack(workspace) {
                 <button class="btn-danger btn-small" data-resource-delete="${escapeHTML(resource.id)}">Eliminar</button>
             </div>
         </div>
-    `).join('') : emptyStateHTML('No has subido apuntes todavia.', 'Subir primer PDF', 'addResourceUI()');
+    `).join('') : emptyStateHTML('No has subido apuntes todavía.', 'Subir primer PDF', 'addResourceUI()');
 
     container.querySelectorAll('[data-resource-view]').forEach(button => button.addEventListener('click', () => viewResource(button.dataset.resourceView)));
     container.querySelectorAll('[data-resource-ai]').forEach(button => button.addEventListener('click', () => askAIAboutResource(button.dataset.resourceAi)));
@@ -3842,7 +4176,7 @@ function renderBackpack(workspace) {
 function viewResource(resourceId) {
     const resource = loadWorkspace().resources.find(item => item.id === resourceId);
     if (!resource) return;
-    showAIResult(`Vista simulada: ${resource.title}`, `Archivo: ${resource.fileName}\nMateria: ${resource.subject}\n\nDescripcion:\n${resource.description || resource.content || 'Sin descripcion'}\n\nNota: en una version real aqui se abriria el PDF desde almacenamiento en Supabase, Hostinger o un backend propio.`);
+    showAIResult(`Vista simulada: ${resource.title}`, `Archivo: ${resource.fileName}\nMateria: ${resource.subject}\n\nDescripción:\n${resource.description || resource.content || 'Sin descripción'}\n\nNota: en una versión real aquí se abriría el PDF desde almacenamiento en Supabase, Hostinger o un backend propio.`);
     navigateTo('ai-assistant');
 }
 
@@ -3867,30 +4201,30 @@ function askAIAboutResource(resourceId) {
 }
 
 function practiceWithResource(resourceId) {
-    const resource = markResourceAIUsed(resourceId, 'Iniciaste practica con un PDF.');
+    const resource = markResourceAIUsed(resourceId, 'Iniciaste práctica con un PDF.');
     if (!resource) return;
     navigateTo('ai-assistant');
     setAIContextFromResource(resource);
-    showAIResult('Zona de practica con PDF', buildResourceAIResponse(resource, 'quiz'));
+    showAIResult('Zona de práctica con PDF', buildResourceAIResponse(resource, 'quiz'));
     notify('PDF cargado en la zona de estudio IA.', 'success');
 }
 
 function setAIContextFromResource(resource) {
     const topic = document.getElementById('ai-topic');
     if (topic) {
-        topic.value = `PDF simulado: ${resource.title}\nMateria: ${resource.subject}\nArchivo: ${resource.fileName}\nDescripcion: ${resource.description || resource.content}`;
+        topic.value = `PDF simulado: ${resource.title}\nMateria: ${resource.subject}\nArchivo: ${resource.fileName}\nDescripción: ${resource.description || resource.content}`;
     }
 }
 
 function buildResourceAIResponse(resource, type) {
     const base = `Basado en tu PDF de ${resource.subject}, "${resource.title}" (${resource.fileName}), `;
-    const description = resource.description || resource.content || 'sin descripcion detallada';
+    const description = resource.description || resource.content || 'sin descripción detallada';
 
     if (type === 'quiz') {
-        return `${base}aqui tienes 5 preguntas de practica:\n\n1. Cual es la idea principal del PDF?\n2. Que concepto se repite mas en el apunte?\n3. Como explicarias este tema a un companero?\n4. Que ejemplo practico puedes crear?\n5. Que pregunta podria aparecer en un examen?\n\nReferencia simulada: ${description}`;
+        return `${base}aquí tienes 5 preguntas de practica:\n\n1. Cuál es la idea principal del PDF?\n2. Qué concepto se repite mas en el apunte?\n3. Cómo explicarias este tema a un companero?\n4. Qué ejemplo practico puedes crear?\n5. Qué pregunta podria aparecer en un examen?\n\nReferencia simulada: ${description}`;
     }
     if (type === 'open') {
-        return `${base}aqui tienes preguntas abiertas:\n\n1. Explica con tus palabras el tema central.\n2. Relaciona el contenido con una clase anterior.\n3. Escribe una conclusion corta.\n\nReferencia simulada: ${description}`;
+        return `${base}aquí tienes preguntas abiertas:\n\n1. Explica con tus palabras el tema central.\n2. Relaciona el contenido con una clase anterior.\n3. Escribe una conclusion corta.\n\nReferencia simulada: ${description}`;
     }
     if (type === 'truefalse') {
         return `${base}practica verdadero/falso:\n\n1. El apunte tiene una idea principal identificable. (V)\n2. No es necesario repasar ejemplos. (F)\n3. Las definiciones ayudan a organizar el estudio. (V)\n4. El contenido no se puede convertir en preguntas. (F)\n\nReferencia simulada: ${description}`;
@@ -3901,7 +4235,7 @@ function buildResourceAIResponse(resource, type) {
     if (type === 'simple') {
         return `${base}explicacion sencilla:\n\nEste PDF puede estudiarse separando primero el tema, luego las ideas importantes y finalmente practicando con preguntas cortas.\n\nReferencia simulada: ${description}`;
     }
-    return `${base}resumen simulado:\n\nEl recurso contiene informacion util para estudiar ${resource.subject}. Conviene convertirlo en preguntas, flashcards y ejemplos para reforzar el aprendizaje.\n\nReferencia simulada: ${description}`;
+    return `${base}resumen simulado:\n\nEl recurso contiene información util para estudiar ${resource.subject}. Conviene convertirlo en preguntas, flashcards y ejemplos para reforzar el aprendizaje.\n\nReferencia simulada: ${description}`;
 }
 
 function getResourceFromAIInput() {
@@ -3950,8 +4284,10 @@ function appendTutorMessage(type, content, title = '') {
     const message = document.createElement('div');
     message.className = `tutor-message ${type === 'user' ? 'tutor-user' : 'tutor-bot'}`;
 
-    const safeContent = escapeHTML(String(content || '')).replace(/\n/g, '<br>');
-    const safeTitle = title ? `<strong>${escapeHTML(title)}</strong>` : '';
+    const displayContent = type === 'user' ? String(content || '') : polishSpanishText(content);
+    const displayTitle = type === 'user' ? String(title || '') : polishSpanishText(title);
+    const safeContent = escapeHTML(displayContent).replace(/\n/g, '<br>');
+    const safeTitle = displayTitle ? `<strong>${escapeHTML(displayTitle)}</strong>` : '';
     message.innerHTML = `${safeTitle}<p>${safeContent}</p>`;
 
     messages.appendChild(message);
@@ -3970,16 +4306,16 @@ function appendTutorPracticeCards(topic) {
         ? [
             'Que significa que una funcion se acerque a un valor?',
             'Cuando existe un limite por izquierda y por derecha?',
-            'Como reconocerias una discontinuidad en una grafica?',
+            'Cómo reconocerias una discontinuidad en una grafica?',
             'Resuelve un ejemplo sencillo usando sustitucion directa.',
-            'Explica con tus palabras para que sirven los limites.'
+            'Explica con tus palabras para qué sirven los limites.'
         ]
         : [
             `Que es ${topic} con tus propias palabras?`,
-            `Cual es la idea principal de ${topic}?`,
+            `Cuál es la idea principal de ${topic}?`,
             `Menciona un ejemplo practico de ${topic}.`,
             `Que parte de ${topic} te parece mas dificil y por que?`,
-            `Como explicarias ${topic} a un companero en un minuto?`
+            `Cómo explicarias ${topic} a un companero en un minuto?`
         ];
 
     const message = document.createElement('div');
@@ -4035,7 +4371,7 @@ function extractStudyTopic(prompt) {
 
 function isTutorFollowUp(prompt) {
     const text = normalizeTutorText(prompt);
-    return Boolean(currentTutorTopic) && /(utilizarlo|usarlo|aplicarlo|eso|esto|lo anterior|vida cotidiana|ocasiones|ejemplo|sirve|para que|cuando se usa|donde se usa|como se usa|ejercicios|conceptos|debo aprender|tema)/.test(text);
+    return Boolean(currentTutorTopic) && /(utilizarlo|usarlo|aplicarlo|eso|esto|lo anterior|vida cotidiana|ocasiones|ejemplo|sirve|para qué|cuando se usa|donde se usa|como se usa|ejercicios|conceptos|debo aprender|tema)/.test(text);
 }
 
 function isConceptRequest(prompt) {
@@ -4055,7 +4391,7 @@ function getTutorConcepts(topic) {
 
     if (/interes compuesto|interes|compuesto/.test(plain)) {
         setTutorTopic('interes compuesto');
-        return `Conceptos que debes aprender sobre interes compuesto:\n\n1. Capital inicial:\nEs el dinero con el que empiezas una inversion, ahorro o deuda.\n\n2. Tasa de interes:\nEs el porcentaje que se aplica en cada periodo. Por ejemplo, 10% se escribe como 0.10.\n\n3. Tiempo o periodos:\nEs la cantidad de veces que se aplica el interes. Puede ser en anos, meses o dias, segun el caso.\n\n4. Monto final:\nEs el dinero total que queda despues de aplicar el interes compuesto.\n\n5. Formula:\nA = P(1 + r)^t\nP es capital inicial, r es tasa, t es tiempo y A es monto final.\n\n6. Interes sobre interes:\nEs la idea mas importante: los intereses ganados se suman al capital y luego tambien generan nuevos intereses.\n\n7. Diferencia con interes simple:\nEn interes simple, el interes siempre se calcula sobre el capital inicial. En interes compuesto, se calcula sobre el capital mas los intereses acumulados.\n\n8. Uso real:\nSe usa en ahorros, inversiones, prestamos, tarjetas de credito y planes de retiro.\n\nSi dominas esos conceptos, ya puedes resolver ejercicios basicos de interes compuesto.`;
+        return `Conceptos que debes aprender sobre interes compuesto:\n\n1. Capital inicial:\nEs el dinero con el que empiezas una inversion, ahorro o deuda.\n\n2. Tasa de interes:\nEs el porcentaje que se aplica en cada periodo. Por ejemplo, 10% se escribe como 0.10.\n\n3. Tiempo o periodos:\nEs la cantidad de veces que se aplica el interes. Puede ser en anos, meses o dias, segun el caso.\n\n4. Monto final:\nEs el dinero total que queda despues de aplicar el interes compuesto.\n\n5. Fórmula:\nA = P(1 + r)^t\nP es capital inicial, r es tasa, t es tiempo y A es monto final.\n\n6. Interes sobre interes:\nEs la idea mas importante: los intereses ganados se suman al capital y luego tambien generan nuevos intereses.\n\n7. Diferencia con interes simple:\nEn interes simple, el interes siempre se calcula sobre el capital inicial. En interes compuesto, se calcula sobre el capital mas los intereses acumulados.\n\n8. Uso real:\nSe usa en ahorros, inversiones, prestamos, tarjetas de credito y planes de retiro.\n\nSi dominas esos conceptos, ya puedes resolver ejercicios basicos de interes compuesto.`;
     }
 
     if (/limite|limites/.test(plain)) {
@@ -4087,10 +4423,10 @@ function getTutorExplanation(topic, originalPrompt) {
         const pdfPlain = normalizeTutorText(`${pdfTopic} ${prompt}`);
         if (/limite|limites/.test(pdfPlain)) {
             setTutorTopic('limites');
-            return `Ejercicios de practica basados en el PDF "${pdfName}":\n\n1. Concepto basico:\nExplica con tus palabras que significa que una funcion se acerque a un valor.\n\n2. Limite directo:\nSi f(x) = x + 3, cual es el limite cuando x se acerca a 2?\nRespuesta esperada: 5.\n\n3. Limites laterales:\nSi por la izquierda la funcion se acerca a 4 y por la derecha tambien se acerca a 4, el limite existe? Cual es?\nRespuesta esperada: Si existe, y es 4.\n\n4. Caso donde no existe:\nSi por la izquierda la funcion se acerca a 2 y por la derecha se acerca a 6, existe el limite?\nRespuesta esperada: No existe, porque los dos lados no llegan al mismo valor.\n\n5. Aplicacion grafica:\nMira una grafica y observa hacia donde se acercan los valores de y cuando x se acerca al punto indicado.\n\nConsejo:\nPara resolver limites, primero intenta sustitucion directa. Si no funciona, revisa la grafica, simplifica la expresion o analiza los lados.`;
+            return `Ejercicios de practica basados en el PDF "${pdfName}":\n\n1. Concepto basico:\nExplica con tus palabras que significa que una funcion se acerque a un valor.\n\n2. Limite directo:\nSi f(x) = x + 3, cual es el limite cuando x se acerca a 2?\nRespuesta esperada: 5.\n\n3. Limites laterales:\nSi por la izquierda la funcion se acerca a 4 y por la derecha tambien se acerca a 4, el limite existe? Cuál es?\nRespuesta esperada: Si existe, y es 4.\n\n4. Caso donde no existe:\nSi por la izquierda la funcion se acerca a 2 y por la derecha se acerca a 6, existe el limite?\nRespuesta esperada: No existe, porque los dos lados no llegan al mismo valor.\n\n5. Aplicacion grafica:\nMira una grafica y observa hacia donde se acercan los valores de y cuando x se acerca al punto indicado.\n\nConsejo:\nPara resolver limites, primero intenta sustitucion directa. Si no funciona, revisa la grafica, simplifica la expresion o analiza los lados.`;
         }
 
-        return `Ejercicios de practica basados en el PDF "${pdfName}":\n\n1. Explica el tema principal del PDF con tus palabras.\n2. Escribe tres conceptos importantes que aparezcan en el documento.\n3. Crea un ejemplo relacionado con ${pdfTopic || normalized}.\n4. Responde: para que sirve este tema en clase?\n5. Resume el contenido en cinco lineas.\n\nCuando respondas, puedo ayudarte a revisar si esta correcto.`;
+        return `Ejercicios de practica basados en el PDF "${pdfName}":\n\n1. Explica el tema principal del PDF con tus palabras.\n2. Escribe tres conceptos importantes que aparezcan en el documento.\n3. Crea un ejemplo relacionado con ${pdfTopic || normalized}.\n4. Responde: para qué sirve este tema en clase?\n5. Resume el contenido en cinco lineas.\n\nCuando respondas, puedo ayudarte a revisar si esta correcto.`;
     }
 
     if (currentTutorPdf && /explica|explicame|que es|que son|entender|no entiendo/.test(prompt)) {
@@ -4108,37 +4444,37 @@ function getTutorExplanation(topic, originalPrompt) {
             return `Resumen del PDF "${pdfName}":\n\nTema central:\nEl PDF trata sobre limites, un concepto de matematica que explica a que valor se acerca una funcion cuando la variable se aproxima a un numero.\n\nQue es un limite:\nUn limite sirve para estudiar el comportamiento de una funcion cerca de un punto. No siempre importa el valor exacto en ese punto; lo importante es hacia donde se acerca la funcion.\n\nIdea principal:\nSi x se acerca a un numero y los valores de la funcion se acercan a un mismo resultado, entonces ese resultado es el limite.\n\nLimites laterales:\n1. Limite por la izquierda: observa que pasa cuando x se acerca desde valores menores.\n2. Limite por la derecha: observa que pasa cuando x se acerca desde valores mayores.\n3. Si los dos lados llegan al mismo numero, el limite existe.\n4. Si llegan a numeros diferentes, el limite no existe.\n\nEjemplo:\nSi cuando x se acerca a 2, la funcion se acerca a 5 por ambos lados, entonces el limite es 5.\n\nPara que sirve:\nLos limites se usan para entender continuidad, cambios en funciones, derivadas, graficas y problemas donde una funcion se acerca a un valor sin tocarlo exactamente.\n\nResumen final:\nEl PDF explica que los limites ayudan a analizar tendencias. La clave es mirar que pasa cerca de un punto, comparar izquierda y derecha, y confirmar si ambos lados llegan al mismo valor.`;
         }
 
-        return `Resumen del PDF "${pdfName}":\n\nTema central:\nEl documento se enfoca en ${sourceTopic}. Presenta conceptos principales, ejemplos y puntos que el estudiante debe organizar para estudiar mejor.\n\nIdeas principales:\n1. El tema se puede dividir en definicion, caracteristicas y ejemplos.\n2. Las partes importantes son los conceptos que se repiten o que aparecen como base para ejercicios.\n3. Los ejemplos ayudan a comprobar si el contenido fue entendido.\n4. Las preguntas de repaso sirven para practicar antes de una prueba.\n\nResumen corto:\nEste PDF explica ${sourceTopic} de manera introductoria. La idea principal es entender que significa el tema, reconocer sus elementos mas importantes y aplicarlo en ejercicios o situaciones de clase.\n\nConclusiones:\n- Identifica las definiciones clave.\n- Separa ejemplos de teoria.\n- Practica con preguntas cortas.\n- Explica el tema con tus propias palabras para comprobar que lo entendiste.\n\nPregunta de practica:\nCual es la idea principal de ${sourceTopic} y que ejemplo podrias resolver para demostrarlo?`;
+        return `Resumen del PDF "${pdfName}":\n\nTema central:\nEl documento se enfoca en ${sourceTopic}. Presenta conceptos principales, ejemplos y puntos que el estudiante debe organizar para estudiar mejor.\n\nIdeas principales:\n1. El tema se puede dividir en definicion, caracteristicas y ejemplos.\n2. Las partes importantes son los conceptos que se repiten o que aparecen como base para ejercicios.\n3. Los ejemplos ayudan a comprobar si el contenido fue entendido.\n4. Las preguntas de repaso sirven para practicar antes de una prueba.\n\nResumen corto:\nEste PDF explica ${sourceTopic} de manera introductoria. La idea principal es entender que significa el tema, reconocer sus elementos mas importantes y aplicarlo en ejercicios o situaciones de clase.\n\nConclusiones:\n- Identifica las definiciones clave.\n- Separa ejemplos de teoria.\n- Practica con preguntas cortas.\n- Explica el tema con tus propias palabras para comprobar que lo entendiste.\n\nPregunta de practica:\nCuál es la idea principal de ${sourceTopic} y que ejemplo podrias resolver para demostrarlo?`;
     }
 
     if (/interes compuesto|interes|compuesto/.test(plainTopic)) {
         setTutorTopic('interes compuesto');
         if (/ejercicio|ejercicios|practica|practicar|respuesta|respuestas|comprobar|resolver/.test(prompt)) {
-            return `Claro. Aqui tienes 5 ejercicios de interes compuesto para resolver. Primero intenta hacerlos tu, y al final te dejo las respuestas para comprobar.\n\nFormula:\nA = P(1 + r)^t\n\nDonde:\nA = monto final\nP = capital inicial\nr = tasa de interes en decimal\nt = tiempo o numero de periodos\n\nEjercicios:\n\n1. Una persona deposita 100 dolares al 10% anual durante 2 anos. Cuanto dinero tendra al final?\n\n2. Si inviertes 250 dolares al 8% anual durante 3 anos, cual sera el monto final?\n\n3. Un estudiante ahorra 500 dolares en una cuenta que genera 5% anual durante 4 anos. Cuanto tendra despues de ese tiempo?\n\n4. Una deuda de 300 dolares crece con interes compuesto del 12% anual durante 2 anos. Cual sera el monto final?\n\n5. Si una inversion de 1000 dolares crece al 6% anual durante 5 anos, cual sera el monto final aproximado?\n\nRespuestas para comprobar:\n\n1. A = 100(1 + 0.10)^2 = 121.00 dolares.\n\n2. A = 250(1 + 0.08)^3 = 314.93 dolares aproximadamente.\n\n3. A = 500(1 + 0.05)^4 = 607.75 dolares aproximadamente.\n\n4. A = 300(1 + 0.12)^2 = 376.32 dolares.\n\n5. A = 1000(1 + 0.06)^5 = 1338.23 dolares aproximadamente.\n\nComo comprobarlos:\nConvierte el porcentaje a decimal, suma 1, eleva al tiempo y multiplica por el capital inicial.`;
+            return `Claro. Aqui tienes 5 ejercicios de interes compuesto para resolver. Primero intenta hacerlos tu, y al final te dejo las respuestas para comprobar.\n\nFórmula:\nA = P(1 + r)^t\n\nDonde:\nA = monto final\nP = capital inicial\nr = tasa de interes en decimal\nt = tiempo o numero de periodos\n\nEjercicios:\n\n1. Una persona deposita 100 dolares al 10% anual durante 2 anos. Cuanto dinero tendra al final?\n\n2. Si inviertes 250 dolares al 8% anual durante 3 anos, cual sera el monto final?\n\n3. Un estudiante ahorra 500 dolares en una cuenta que genera 5% anual durante 4 anos. Cuanto tendra despues de ese tiempo?\n\n4. Una deuda de 300 dolares crece con interes compuesto del 12% anual durante 2 anos. Cual sera el monto final?\n\n5. Si una inversion de 1000 dolares crece al 6% anual durante 5 anos, cual sera el monto final aproximado?\n\nRespuestas para comprobar:\n\n1. A = 100(1 + 0.10)^2 = 121.00 dolares.\n\n2. A = 250(1 + 0.08)^3 = 314.93 dolares aproximadamente.\n\n3. A = 500(1 + 0.05)^4 = 607.75 dolares aproximadamente.\n\n4. A = 300(1 + 0.12)^2 = 376.32 dolares.\n\n5. A = 1000(1 + 0.06)^5 = 1338.23 dolares aproximadamente.\n\nCómo comprobarlos:\nConvierte el porcentaje a decimal, suma 1, eleva al tiempo y multiplica por el capital inicial.`;
         }
 
         if (/vida cotidiana|ocasiones|utilizar|usar|sirve|aplicar|aplicarlo/.test(prompt)) {
             return `El interes compuesto se usa en muchas situaciones de la vida cotidiana porque explica como crece una cantidad cuando se acumulan intereses sobre intereses.\n\nOcasiones donde se utiliza:\n1. Ahorros bancarios:\nSi guardas dinero en una cuenta que genera intereses, cada periodo el banco calcula intereses sobre el dinero inicial mas lo que ya ganaste.\n\n2. Inversiones:\nCuando inviertes en fondos, certificados o planes de ahorro, el dinero puede crecer con interes compuesto si las ganancias se reinvierten.\n\n3. Prestamos:\nAlgunos prestamos calculan intereses sobre saldos acumulados. Por eso, si se deja una deuda sin abonar a tiempo, puede aumentar mas rapido.\n\n4. Tarjetas de credito:\nSi dejas una deuda pendiente, los intereses pueden sumarse al saldo y luego generar mas intereses. Esto hace que la deuda crezca.\n\n5. Planes de retiro:\nMientras mas temprano empiezas a ahorrar, mas tiempo tiene el interes compuesto para hacer crecer el dinero.\n\nEjemplo de vida diaria:\nSi ahorras 100 dolares al 10% anual y no retiras las ganancias, despues del primer ano tienes 110. En el segundo ano ya no ganas interes sobre 100, sino sobre 110. Por eso crece mas rapido.\n\nConclusion:\nEl interes compuesto sirve para entender como crece el dinero con el tiempo, tanto para ganar mas en ahorros e inversiones como para evitar que una deuda aumente demasiado.`;
         }
 
-        return `Interes compuesto\n\nQue es:\nEl interes compuesto es una forma de calcular ganancias o deudas donde los intereses se suman al capital inicial y despues tambien generan nuevos intereses. Por eso se dice que es "interes sobre interes".\n\nFormula principal:\nMonto final = Capital inicial x (1 + tasa) ^ tiempo\n\nTambien se puede escribir asi:\nA = P(1 + r)^t\n\nDonde:\nP = capital inicial, es decir, el dinero con el que empiezas.\nr = tasa de interes por periodo, escrita en decimal. Por ejemplo, 10% = 0.10.\nt = numero de periodos.\nA = monto final despues de aplicar el interes compuesto.\n\nComo funciona:\nSi inviertes 100 dolares al 10% anual durante 3 anos:\nAno 1: 100 x 1.10 = 110\nAno 2: 110 x 1.10 = 121\nAno 3: 121 x 1.10 = 133.10\n\nResultado:\nAl final tendrias 133.10 dolares. La ganancia no fue solo 30, porque cada ano el interes se calculo sobre una cantidad mas grande.\n\nEn que se usa:\n1. Ahorros e inversiones.\n2. Prestamos y deudas.\n3. Tarjetas de credito.\n4. Cuentas bancarias.\n5. Crecimiento de dinero en el tiempo.\n\nDiferencia con interes simple:\nEn el interes simple, el interes siempre se calcula sobre el capital inicial.\nEn el interes compuesto, el interes se calcula sobre el capital inicial mas los intereses acumulados.\n\nEjemplo rapido:\nSi tienes 200 dolares al 5% durante 2 anos:\nA = 200(1 + 0.05)^2\nA = 200(1.05)^2\nA = 200 x 1.1025\nA = 220.50\n\nConclusion:\nEl interes compuesto es importante porque muestra como el dinero puede crecer mas rapido con el tiempo. Mientras mayor sea la tasa o mas largo sea el tiempo, mas grande sera el monto final.`;
+        return `Interes compuesto\n\nQue es:\nEl interes compuesto es una forma de calcular ganancias o deudas donde los intereses se suman al capital inicial y despues tambien generan nuevos intereses. Por eso se dice que es "interes sobre interes".\n\nFormula principal:\nMonto final = Capital inicial x (1 + tasa) ^ tiempo\n\nTambien se puede escribir asi:\nA = P(1 + r)^t\n\nDonde:\nP = capital inicial, es decir, el dinero con el que empiezas.\nr = tasa de interes por periodo, escrita en decimal. Por ejemplo, 10% = 0.10.\nt = numero de periodos.\nA = monto final despues de aplicar el interes compuesto.\n\nCómo funciona:\nSi inviertes 100 dolares al 10% anual durante 3 anos:\nAno 1: 100 x 1.10 = 110\nAno 2: 110 x 1.10 = 121\nAno 3: 121 x 1.10 = 133.10\n\nResultado:\nAl final tendrias 133.10 dolares. La ganancia no fue solo 30, porque cada ano el interes se calculo sobre una cantidad mas grande.\n\nEn que se usa:\n1. Ahorros e inversiones.\n2. Prestamos y deudas.\n3. Tarjetas de credito.\n4. Cuentas bancarias.\n5. Crecimiento de dinero en el tiempo.\n\nDiferencia con interes simple:\nEn el interes simple, el interes siempre se calcula sobre el capital inicial.\nEn el interes compuesto, el interes se calcula sobre el capital inicial mas los intereses acumulados.\n\nEjemplo rapido:\nSi tienes 200 dolares al 5% durante 2 anos:\nA = 200(1 + 0.05)^2\nA = 200(1.05)^2\nA = 200 x 1.1025\nA = 220.50\n\nConclusion:\nEl interes compuesto es importante porque muestra como el dinero puede crecer mas rapido con el tiempo. Mientras mayor sea la tasa o mas largo sea el tiempo, mas grande sera el monto final.`;
     }
 
-    if (/termica|termodinamica|calor|temperatura/.test(plainTopic)) {
-        return `La termica es una parte de la fisica que estudia el calor, la temperatura y como la energia se transfiere entre los cuerpos.\n\nExplicacion sencilla:\nCuando un cuerpo esta caliente, sus particulas se mueven con mas energia. Cuando esta frio, se mueven con menos energia. La termica ayuda a entender como cambia esa energia y por que el calor pasa de un cuerpo caliente a uno mas frio.\n\nConceptos importantes:\n1. Temperatura: indica que tan caliente o frio esta un cuerpo.\n2. Calor: es energia que se transfiere por diferencia de temperatura.\n3. Equilibrio termico: ocurre cuando dos cuerpos llegan a la misma temperatura.\n4. Dilatacion: algunos materiales aumentan su tamano cuando se calientan.\n\nEjemplo:\nSi pones una cuchara fria dentro de una taza de cafe caliente, la cuchara se calienta porque recibe energia termica del cafe.\n\nEn resumen:\nLa termica explica como se comporta el calor y como afecta a los objetos.`;
+    if (/térmica|termodinamica|calor|temperatura/.test(plainTopic)) {
+        return `La térmica es una parte de la física que estudia el calor, la temperatura y como la energía se transfiere entre los cuerpos.\n\nExplicación sencilla:\nCuando un cuerpo esta caliente, sus particulas se mueven con mas energía. Cuando esta frio, se mueven con menos energía. La térmica ayuda a entender como cambia esa energía y por que el calor pasa de un cuerpo caliente a uno mas frio.\n\nConceptos importantes:\n1. Temperatura: indica que tan caliente o frio esta un cuerpo.\n2. Calor: es energía que se transfiere por diferencia de temperatura.\n3. Equilibrio termico: ocurre cuando dos cuerpos llegan a la misma temperatura.\n4. Dilatacion: algunos materiales aumentan su tamano cuando se calientan.\n\nEjemplo:\nSi pones una cuchara fria dentro de una taza de cafe caliente, la cuchara se calienta porque recibe energía térmica del cafe.\n\nEn resumen:\nLa térmica explica como se comporta el calor y como afecta a los objetos.`;
     }
 
     if (/limite|limites/.test(plainTopic)) {
         setTutorTopic('limites');
-        return `Un limite en matematica describe a que valor se acerca una funcion cuando la variable se aproxima a un numero.\n\nExplicacion sencilla:\nNo siempre importa el valor exacto de la funcion en un punto. A veces importa hacia donde se acerca. Eso es un limite.\n\nEjemplo:\nSi x se acerca a 2 y la funcion se acerca a 5, decimos que el limite es 5.\n\nPara entender limites:\n1. Mira a que numero se acerca x.\n2. Observa a que valor se acerca la funcion.\n3. Revisa el comportamiento por la izquierda y por la derecha.\n4. Si ambos lados llegan al mismo valor, el limite existe.\n\nEn resumen:\nLos limites sirven para estudiar continuidad, derivadas y cambios en funciones.`;
+        return `Un limite en matematica describe a que valor se acerca una funcion cuando la variable se aproxima a un numero.\n\nExplicación sencilla:\nNo siempre importa el valor exacto de la funcion en un punto. A veces importa hacia donde se acerca. Eso es un limite.\n\nEjemplo:\nSi x se acerca a 2 y la funcion se acerca a 5, decimos que el limite es 5.\n\nPara entender limites:\n1. Mira a que numero se acerca x.\n2. Observa a que valor se acerca la funcion.\n3. Revisa el comportamiento por la izquierda y por la derecha.\n4. Si ambos lados llegan al mismo valor, el limite existe.\n\nEn resumen:\nLos limites sirven para estudiar continuidad, derivadas y cambios en funciones.`;
     }
 
-    if (/fisica/.test(plainTopic)) {
-        return `La fisica es la ciencia que estudia la materia, la energia, el movimiento, las fuerzas y los fenomenos naturales.\n\nExplicacion sencilla:\nLa fisica intenta responder preguntas como: por que cae un objeto, como se mueve un carro, como viaja la luz o como se transfiere el calor.\n\nRamas importantes:\n1. Mecanica: estudia movimiento y fuerzas.\n2. Termica: estudia calor y temperatura.\n3. Electricidad: estudia cargas y corriente electrica.\n4. Optica: estudia la luz.\n\nEjemplo:\nCuando lanzas una pelota, la fisica explica su velocidad, su trayectoria y por que vuelve a caer.\n\nEn resumen:\nLa fisica ayuda a entender como funciona el mundo que nos rodea.`;
+    if (/física/.test(plainTopic)) {
+        return `La física es la ciencia que estudia la materia, la energía, el movimiento, las fuerzas y los fenomenos naturales.\n\nExplicación sencilla:\nLa física intenta responder preguntas como: por que cae un objeto, como se mueve un carro, como viaja la luz o como se transfiere el calor.\n\nRamas importantes:\n1. Mecanica: estudia movimiento y fuerzas.\n2. Termica: estudia calor y temperatura.\n3. Electricidad: estudia cargas y corriente electrica.\n4. Optica: estudia la luz.\n\nEjemplo:\nCuando lanzas una pelota, la física explica su velocidad, su trayectoria y por que vuelve a caer.\n\nEn resumen:\nLa física ayuda a entender como funciona el mundo que nos rodea.`;
     }
 
     if (isEmptyTutorTopic(normalized)) {
-        return `Necesito que me digas el tema exacto para responder bien.\n\nPor ejemplo:\n- Que es el interes compuesto?\n- Dame conceptos de limites\n- Explicame la fotosintesis\n- Dame ejercicios de ecuaciones\n\nAsi puedo darte una respuesta real sobre el tema, no una plantilla generica.`;
+        return `Necesito que me digas el tema exacto para responder bien.\n\nPor ejemplo:\n- Qué es el interes compuesto?\n- Dame conceptos de limites\n- Explicame la fotosintesis\n- Dame ejercicios de ecuaciones\n\nAsi puedo darte una respuesta real sobre el tema, no una plantilla generica.`;
     }
 
     setTutorTopic(normalized);
@@ -4170,7 +4506,7 @@ function buildAIResponse(type, topic) {
         return getTutorExplanation(extractStudyTopic(reference), reference);
     }
     if (type === 'quiz') {
-        return `Cuestionario simulado sobre ${reference}:\n\n1. Explica el tema con tus palabras.\n2. Que ejemplo puedes resolver?\n3. Cual es el error mas comun?\n4. Como lo explicarias en clase?\n5. Que debes repasar antes del examen?`;
+        return `Cuestionario simulado sobre ${reference}:\n\n1. Explica el tema con tus palabras.\n2. Qué ejemplo puedes resolver?\n3. Cuál es el error mas comun?\n4. Cómo lo explicarias en clase?\n5. Qué debes repasar antes del examen?`;
     }
     if (type === 'open') {
         return `Preguntas abiertas:\n\n1. Explica ${reference} con tus palabras.\n2. Crea un ejemplo propio.\n3. Relaciona el tema con una situacion real.`;
@@ -4179,10 +4515,10 @@ function buildAIResponse(type, topic) {
         return `Verdadero/Falso:\n\n1. El tema tiene conceptos clave que se pueden resumir. (V)\n2. No hace falta practicar. (F)\n3. Crear preguntas ayuda a estudiar. (V)\n4. Las flashcards sirven para repasar rapido. (V)`;
     }
     if (type === 'flashcards') {
-        return `Flashcards:\n\nTarjeta 1\nPregunta: Que es ${reference}?\nRespuesta: Escribe una definicion corta.\n\nTarjeta 2\nPregunta: Cual es un ejemplo?\nRespuesta: Crea un caso practico.\n\nTarjeta 3\nPregunta: Que debo recordar?\nRespuesta: La informacion principal y sus aplicaciones.`;
+        return `Flashcards:\n\nTarjeta 1\nPregunta: Qué es ${reference}?\nRespuesta: Escribe una definicion corta.\n\nTarjeta 2\nPregunta: Cuál es un ejemplo?\nRespuesta: Crea un caso practico.\n\nTarjeta 3\nPregunta: Qué debo recordar?\nRespuesta: La información principal y sus aplicaciones.`;
     }
     if (type === 'simple') {
-        return `Explicacion sencilla:\n\nPiensa en este tema como una idea principal con varias piezas alrededor. Primero entiende la definicion, luego mira ejemplos y finalmente practica respondiendo preguntas.`;
+        return `Explicación sencilla:\n\nPiensa en este tema como una idea principal con varias piezas alrededor. Primero entiende la definicion, luego mira ejemplos y finalmente practica respondiendo preguntas.`;
     }
     return `Resumen:\n\nEl contenido sobre ${reference} puede organizarse en definiciones, ideas clave, ejemplos y preguntas de practica. Para estudiar mejor, conviertelo en una lista corta y repasala con flashcards.`;
 }
@@ -4421,7 +4757,7 @@ function normalizeTutorTopic(topic) {
     const mappedTopics = [
         { pattern: /(calor especifico)/, topic: 'calor especifico' },
         { pattern: /(calor latente)/, topic: 'calor latente' },
-        { pattern: /(fisica termica|termica|termodinamica|calor y temperatura|calor|temperatura|calorimetria)/, topic: 'fisica termica' },
+        { pattern: /(física térmica|térmica|termodinamica|calor y temperatura|calor|temperatura|calorimetria)/, topic: 'física térmica' },
         { pattern: /(funciones geometricas|funcion geometrica|geometria con funciones)/, topic: 'funciones geometricas' },
         { pattern: /(funciones cuadraticas|funcion cuadratica|parabola|parabolas)/, topic: 'funciones cuadraticas' },
         { pattern: /(funciones lineales|funcion lineal|recta|rectas)/, topic: 'funciones lineales' },
@@ -4435,7 +4771,7 @@ function normalizeTutorTopic(topic) {
         { pattern: /(javascript|java script|\bjs\b)/, topic: 'JavaScript' },
         { pattern: /(porcentaje|porcentajes)/, topic: 'porcentajes' },
         { pattern: /(movimiento rectilineo|mru|movimiento)/, topic: 'movimiento rectilineo' },
-        { pattern: /(energia|energia mecanica|energia cinetica|energia potencial)/, topic: 'energia' },
+        { pattern: /(energía|energía mecanica|energía cinetica|energía potencial)/, topic: 'energía' },
         { pattern: /(fuerza|leyes de newton)/, topic: 'fuerza' },
         { pattern: /(redes|red informatica|internet)/, topic: 'redes' }
     ];
@@ -4468,7 +4804,7 @@ function detectTutorTopic(message) {
 
 function isTutorFollowUp(message) {
     const text = normalizeTutorText(message);
-    return /(eso|esto|lo anterior|sobre eso|de eso|ese tema|este tema|lo que dijiste|lo puedo usar|en que situaciones|vida cotidiana|dame ejemplos|otro ejemplo|explicame mejor|hazme ejercicios|dame ejercicios|como se usa|para que sirve|cuando se usa|aplicaciones|usos|y ejemplos|ahora dame|tambien dame|continua|sigue)/.test(text);
+    return /(eso|esto|lo anterior|sobre eso|de eso|ese tema|este tema|lo que dijiste|lo puedo usar|en que situaciones|vida cotidiana|dame ejemplos|otro ejemplo|explicame mejor|hazme ejercicios|dame ejercicios|como se usa|para qué sirve|cuando se usa|aplicaciones|usos|y ejemplos|ahora dame|tambien dame|continua|sigue)/.test(text);
 }
 
 function isFollowUpQuestion(message) {
@@ -4496,12 +4832,12 @@ function updateTutorDemoContext(message) {
 function buildTutorFlashcards(topic) {
     const cleanTopic = topic || 'tu tema';
     if (normalizeTutorText(cleanTopic).includes('multiplic')) {
-        return `Flashcards de multiplicaciones:\n\n1. Pregunta: Que significa multiplicar?\nRespuesta: Sumar varias veces el mismo numero.\n\n2. Pregunta: Cuanto es 6 x 4?\nRespuesta: 24.\n\n3. Pregunta: Que estrategia ayuda?\nRespuesta: Separar decenas y unidades para calcular mejor.`;
+        return `Flashcards de multiplicaciones:\n\n1. Pregunta: Qué significa multiplicar?\nRespuesta: Sumar varias veces el mismo numero.\n\n2. Pregunta: Cuanto es 6 x 4?\nRespuesta: 24.\n\n3. Pregunta: Qué estrategia ayuda?\nRespuesta: Separar decenas y unidades para calcular mejor.`;
     }
-    if (normalizeTutorText(cleanTopic).includes('fisica')) {
-        return `Flashcards de fisica termica:\n\n1. Pregunta: Que es calor?\nRespuesta: Energia que se transfiere por diferencia de temperatura.\n\n2. Pregunta: Que mide la temperatura?\nRespuesta: Que tan caliente o frio esta un cuerpo.\n\n3. Pregunta: Que es equilibrio termico?\nRespuesta: Cuando dos cuerpos alcanzan la misma temperatura.`;
+    if (normalizeTutorText(cleanTopic).includes('física')) {
+        return `Flashcards de física térmica:\n\n1. Pregunta: Qué es calor?\nRespuesta: Energía que se transfiere por diferencia de temperatura.\n\n2. Pregunta: Qué mide la temperatura?\nRespuesta: Qué tan caliente o frio esta un cuerpo.\n\n3. Pregunta: Qué es equilibrio térmico?\nRespuesta: Cuando dos cuerpos alcanzan la misma temperatura.`;
     }
-    return `Flashcards de ${cleanTopic}:\n\n1. Pregunta: Que es ${cleanTopic}?\nRespuesta: Es el concepto principal que debes comprender.\n\n2. Pregunta: Para que sirve?\nRespuesta: Para resolver actividades, explicar ideas y aplicar el tema en ejemplos.\n\n3. Pregunta: Como lo estudio?\nRespuesta: Lee la definicion, revisa un ejemplo y practica con preguntas.`;
+    return `Flashcards de ${cleanTopic}:\n\n1. Pregunta: Qué es ${cleanTopic}?\nRespuesta: Es el concepto principal que debes comprender.\n\n2. Pregunta: Para que sirve?\nRespuesta: Para resolver actividades, explicar ideas y aplicar el tema en ejemplos.\n\n3. Pregunta: Cómo lo estudio?\nRespuesta: Lee la definicion, revisa un ejemplo y practica con preguntas.`;
 }
 
 function buildTutorExam(topic) {
@@ -4509,10 +4845,10 @@ function buildTutorExam(topic) {
     if (normalizeTutorText(cleanTopic).includes('multiplic')) {
         return `Mini examen de multiplicaciones:\n\n1. Resuelve 12 x 4.\n2. Resuelve 25 x 3.\n3. Explica por que 5 x 6 es igual a 6 x 5.\n4. Resuelve 18 x 5.\n5. Escribe un problema cotidiano que use multiplicacion.`;
     }
-    if (normalizeTutorText(cleanTopic).includes('fisica')) {
-        return `Mini examen de fisica termica:\n\n1. Cual es la diferencia entre calor y temperatura?\n2. Que significa equilibrio termico?\n3. Da un ejemplo de transferencia de calor en casa.\n4. Que pasa cuando el hielo recibe calor?\n5. Para que sirve estudiar los cambios de estado?`;
+    if (normalizeTutorText(cleanTopic).includes('física')) {
+        return `Mini examen de física térmica:\n\n1. Cuál es la diferencia entre calor y temperatura?\n2. Qué significa equilibrio térmico?\n3. Da un ejemplo de transferencia de calor en casa.\n4. Qué pasa cuando el hielo recibe calor?\n5. Para que sirve estudiar los cambios de estado?`;
     }
-    return `Mini examen de ${cleanTopic}:\n\n1. Define el tema con tus palabras.\n2. Menciona dos conceptos importantes.\n3. Da un ejemplo sencillo.\n4. Explica para que sirve.\n5. Crea una pregunta que podria salir en clase.`;
+    return `Mini examen de ${cleanTopic}:\n\n1. Define el tema con tus palabras.\n2. Menciona dos conceptos importantes.\n3. Da un ejemplo sencillo.\n4. Explica para qué sirve.\n5. Crea una pregunta que podria salir en clase.`;
 }
 
 function handleTutorModeAction(mode) {
@@ -4579,7 +4915,7 @@ function extractTutorTopic(message, intent) {
         if (findTutorSubtopic(text, currentProfile)) return tutorState.topic;
     }
 
-    const followUp = /(eso|esto|lo anterior|del tema|este tema|utilizarlo|usarlo|aplicarlo|dame conceptos tema|conceptos tema|dame ejemplos|hazme preguntas|ahora ejercicios|resumelo|resumen|conceptos|ejemplos|ejercicios|flashcards|en que casos|cuando se usa|para que sirve)/.test(text);
+    const followUp = /(eso|esto|lo anterior|del tema|este tema|utilizarlo|usarlo|aplicarlo|dame conceptos tema|conceptos tema|dame ejemplos|hazme preguntas|ahora ejercicios|resumelo|resumen|conceptos|ejemplos|ejercicios|flashcards|en que casos|cuando se usa|para qué sirve)/.test(text);
     if (followUp && tutorState.topic) return tutorState.topic;
 
     const clean = text
@@ -4595,52 +4931,52 @@ function extractTutorTopic(message, intent) {
 }
 
 const knowledgeBase = {
-    'fisica termica': {
-        aliases: ['fisica termica', 'termica', 'termodinamica', 'calor y temperatura', 'cambio de estado', 'equilibrio termico', 'conduccion', 'conveccion', 'radiacion'],
-        title: 'fisica termica',
-        definition: 'La fisica termica es la rama de la fisica que estudia el calor, la temperatura y los cambios de energia termica entre los cuerpos.',
-        explanation: 'La temperatura indica que tan caliente o frio esta un cuerpo. El calor es energia que se transfiere de un cuerpo a otro por diferencia de temperatura. El equilibrio termico ocurre cuando dos cuerpos alcanzan la misma temperatura. En algunos procesos puede haber cambio de temperatura y en otros puede haber cambio de estado.',
-        characteristics: ['La temperatura mide el estado termico de un cuerpo', 'El calor se transfiere por diferencia de temperatura', 'El equilibrio termico ocurre cuando dos cuerpos llegan a la misma temperatura', 'Puede existir cambio de temperatura o cambio de estado', 'Relaciona masa, calor especifico y calor latente'],
-        concepts: ['Calor', 'Temperatura', 'Equilibrio termico', 'Energia termica', 'Calor especifico', 'Calor latente', 'Cambio de estado'],
+    'física térmica': {
+        aliases: ['física térmica', 'térmica', 'termodinamica', 'calor y temperatura', 'cambio de estado', 'equilibrio térmico', 'conduccion', 'conveccion', 'radiacion'],
+        title: 'física térmica',
+        definition: 'La física térmica es la rama de la física que estudia el calor, la temperatura y los cambios de energía térmica entre los cuerpos.',
+        explanation: 'La temperatura indica que tan caliente o frio esta un cuerpo. El calor es energía que se transfiere de un cuerpo a otro por diferencia de temperatura. El equilibrio térmico ocurre cuando dos cuerpos alcanzan la misma temperatura. En algunos procesos puede haber cambio de temperatura y en otros puede haber cambio de estado.',
+        characteristics: ['La temperatura mide el estado termico de un cuerpo', 'El calor se transfiere por diferencia de temperatura', 'El equilibrio térmico ocurre cuando dos cuerpos llegan a la misma temperatura', 'Puede existir cambio de temperatura o cambio de estado', 'Relaciona masa, calor especifico y calor latente'],
+        concepts: ['Calor', 'Temperatura', 'Equilibrio termico', 'Energía térmica', 'Calor especifico', 'Calor latente', 'Cambio de estado'],
         formula: 'Q = m * c * DeltaT\nQ = m * L\n\nDonde:\nQ es el calor.\nm es la masa.\nc es el calor especifico.\nDeltaT es el cambio de temperatura.\nL es el calor latente.',
-        example: 'Si calientas agua en una olla, la energia del fuego pasa al agua como calor. Por eso aumenta su temperatura. Si sigue recibiendo calor, puede llegar a hervir y cambiar de liquido a vapor.',
-        uses: 'Sirve para explicar calentamiento, enfriamiento, cambios de estado, equilibrio termico, cocina, clima, motores, refrigeracion y procesos industriales.',
-        exercises: ['Cual es la diferencia entre calor y temperatura?', 'Que significa equilibrio termico?', 'Para que sirve la formula Q = m * c * DeltaT?', 'Que ocurre cuando una sustancia cambia de estado?', 'Que representa el calor latente?'],
-        answers: ['La temperatura mide que tan caliente o frio esta un cuerpo; el calor es energia transferida.', 'Que dos cuerpos alcanzan la misma temperatura.', 'Para calcular calor cuando cambia la temperatura.', 'La sustancia cambia de fase, por ejemplo de liquido a vapor.', 'La energia necesaria para cambiar de estado sin cambiar temperatura.'],
-        flashcards: [['Que estudia la fisica termica?', 'Calor, temperatura y energia termica entre cuerpos.'], ['Que es calor?', 'Energia que se transfiere por diferencia de temperatura.'], ['Formula con cambio de temperatura', 'Q = m * c * DeltaT'], ['Formula con cambio de estado', 'Q = m * L']],
+        example: 'Si calientas agua en una olla, la energía del fuego pasa al agua como calor. Por eso aumenta su temperatura. Si sigue recibiendo calor, puede llegar a hervir y cambiar de liquido a vapor.',
+        uses: 'Sirve para explicar calentamiento, enfriamiento, cambios de estado, equilibrio térmico, cocina, clima, motores, refrigeracion y procesos industriales.',
+        exercises: ['Cuál es la diferencia entre calor y temperatura?', 'Que significa equilibrio térmico?', 'Para que sirve la formula Q = m * c * DeltaT?', 'Que ocurre cuando una sustancia cambia de estado?', 'Que representa el calor latente?'],
+        answers: ['La temperatura mide que tan caliente o frio esta un cuerpo; el calor es energía transferida.', 'Que dos cuerpos alcanzan la misma temperatura.', 'Para calcular calor cuando cambia la temperatura.', 'La sustancia cambia de fase, por ejemplo de liquido a vapor.', 'La energía necesaria para cambiar de estado sin cambiar temperatura.'],
+        flashcards: [['Que estudia la física térmica?', 'Calor, temperatura y energía térmica entre cuerpos.'], ['Que es calor?', 'Energía que se transfiere por diferencia de temperatura.'], ['Formula con cambio de temperatura', 'Q = m * c * DeltaT'], ['Formula con cambio de estado', 'Q = m * L']],
         subtopics: {
             calor: {
-                definition: 'El calor es energia que se transfiere de un cuerpo a otro por diferencia de temperatura.',
-                explanation: 'El calor siempre fluye espontaneamente del cuerpo con mayor temperatura al de menor temperatura hasta acercarse al equilibrio termico.',
+                definition: 'El calor es energía que se transfiere de un cuerpo a otro por diferencia de temperatura.',
+                explanation: 'El calor siempre fluye espontaneamente del cuerpo con mayor temperatura al de menor temperatura hasta acercarse al equilibrio térmico.',
                 example: 'Si tocas una taza caliente, el calor pasa de la taza a tu mano.',
-                question: 'Cual es la diferencia entre calor y temperatura?'
+                question: 'Cuál es la diferencia entre calor y temperatura?'
             },
             temperatura: {
                 definition: 'La temperatura indica que tan caliente o frio esta un cuerpo.',
-                explanation: 'Esta relacionada con la energia de movimiento de las particulas de una sustancia.',
+                explanation: 'Esta relacionada con la energía de movimiento de las particulas de una sustancia.',
                 example: 'Un vaso con agua a 80 grados Celsius tiene mayor temperatura que uno a 20 grados Celsius.',
                 question: 'Que mide la temperatura en un cuerpo?'
             },
-            'equilibrio termico': {
-                definition: 'El equilibrio termico ocurre cuando dos cuerpos en contacto alcanzan la misma temperatura.',
-                explanation: 'Cuando se llega al equilibrio termico, deja de haber transferencia neta de calor entre los cuerpos.',
+            'equilibrio térmico': {
+                definition: 'El equilibrio térmico ocurre cuando dos cuerpos en contacto alcanzan la misma temperatura.',
+                explanation: 'Cuando se llega al equilibrio térmico, deja de haber transferencia neta de calor entre los cuerpos.',
                 example: 'Una cuchara fria dentro de sopa caliente se calienta hasta acercarse a la temperatura de la sopa.',
-                question: 'Que ocurre cuando dos cuerpos alcanzan equilibrio termico?'
+                question: 'Que ocurre cuando dos cuerpos alcanzan equilibrio térmico?'
             },
             'cambio de estado': {
                 definition: 'El cambio de estado es la transformacion de una sustancia de solido a liquido, liquido a gas, gas a liquido u otro estado por ganancia o perdida de calor.',
-                explanation: 'Durante el cambio de estado, la energia recibida o liberada se usa para cambiar la estructura de la sustancia, no necesariamente para aumentar o disminuir la temperatura.',
+                explanation: 'Durante el cambio de estado, la energía recibida o liberada se usa para cambiar la estructura de la sustancia, no necesariamente para aumentar o disminuir la temperatura.',
                 example: 'Cuando el hielo recibe calor, se derrite y pasa de solido a liquido. Cuando el agua hierve, pasa de liquido a vapor.',
                 question: 'Que ocurre con la temperatura durante un cambio de estado?'
             },
             'calor especifico': {
                 definition: 'El calor especifico es la cantidad de calor necesaria para aumentar en un grado la temperatura de una unidad de masa de una sustancia.',
-                explanation: 'Un material con calor especifico alto necesita mas energia para calentarse.',
+                explanation: 'Un material con calor especifico alto necesita mas energía para calentarse.',
                 example: 'El agua tiene calor especifico alto, por eso tarda mas en calentarse que algunos metales.',
                 question: 'Que representa c en Q = m * c * DeltaT?'
             },
             'calor latente': {
-                definition: 'El calor latente es la energia necesaria para que una sustancia cambie de estado sin cambiar su temperatura.',
+                definition: 'El calor latente es la energía necesaria para qué una sustancia cambie de estado sin cambiar su temperatura.',
                 explanation: 'Se usa en procesos como fusion, vaporizacion, condensacion y solidificacion.',
                 example: 'El agua puede seguir recibiendo calor mientras hierve, pero su temperatura se mantiene casi constante durante el cambio a vapor.',
                 question: 'Que representa L en Q = m * L?'
@@ -4649,7 +4985,7 @@ const knowledgeBase = {
                 definition: 'La conduccion es la transferencia de calor por contacto directo entre particulas.',
                 explanation: 'Ocurre con facilidad en solidos, especialmente en metales.',
                 example: 'Una cuchara metalica se calienta cuando queda dentro de una olla caliente.',
-                question: 'Por que los metales conducen bien el calor?'
+                question: 'Por qué los metales conducen bien el calor?'
             },
             conveccion: {
                 definition: 'La conveccion es la transferencia de calor por movimiento de un fluido, como liquidos o gases.',
@@ -4658,10 +4994,10 @@ const knowledgeBase = {
                 question: 'En que estados de la materia ocurre principalmente la conveccion?'
             },
             radiacion: {
-                definition: 'La radiacion es la transferencia de energia termica mediante ondas, sin necesitar contacto directo.',
+                definition: 'La radiacion es la transferencia de energía térmica mediante ondas, sin necesitar contacto directo.',
                 explanation: 'Puede ocurrir incluso en el vacio.',
                 example: 'El Sol calienta la Tierra por radiacion.',
-                question: 'Por que la radiacion no necesita contacto directo?'
+                question: 'Por qué la radiacion no necesita contacto directo?'
             }
         }
     },
@@ -4669,29 +5005,29 @@ const knowledgeBase = {
         aliases: ['calor especifico'],
         title: 'calor especifico',
         definition: 'El calor especifico es la cantidad de calor que necesita una unidad de masa de una sustancia para aumentar su temperatura en un grado.',
-        explanation: 'Cada material necesita distinta energia para calentarse. Por eso el agua tarda mas en calentarse que otros materiales: tiene calor especifico alto.',
+        explanation: 'Cada material necesita distinta energía para calentarse. Por eso el agua tarda mas en calentarse que otros materiales: tiene calor especifico alto.',
         characteristics: ['Depende del material', 'Se relaciona con cambios de temperatura', 'Aparece en la formula Q = m * c * DeltaT', 'Mientras mayor es c, mas calor se necesita'],
-        concepts: ['Calor', 'Masa', 'Cambio de temperatura', 'Material', 'Energia termica'],
+        concepts: ['Calor', 'Masa', 'Cambio de temperatura', 'Material', 'Energía térmica'],
         formula: 'Q = m * c * DeltaT',
-        example: 'Para calentar una masa de agua se necesita mas energia que para calentar una masa similar de metal, porque el agua tiene mayor calor especifico.',
-        uses: 'Se usa para calcular energia necesaria al calentar o enfriar sustancias.',
+        example: 'Para calentar una masa de agua se necesita mas energía que para calentar una masa similar de metal, porque el agua tiene mayor calor especifico.',
+        uses: 'Se usa para calcular energía necesaria al calentar o enfriar sustancias.',
         exercises: ['Que representa c en Q = m * c * DeltaT?', 'Si c aumenta, se necesita mas o menos calor?', 'En que procesos se usa el calor especifico?'],
         answers: ['El calor especifico.', 'Mas calor.', 'En calentamiento o enfriamiento con cambio de temperatura.'],
-        flashcards: [['c', 'Calor especifico'], ['Formula', 'Q = m * c * DeltaT'], ['Idea clave', 'Materiales distintos requieren distinta energia']]
+        flashcards: [['c', 'Calor especifico'], ['Formula', 'Q = m * c * DeltaT'], ['Idea clave', 'Materiales distintos requieren distinta energía']]
     },
     'calor latente': {
         aliases: ['calor latente'],
         title: 'calor latente',
-        definition: 'El calor latente es la energia que una sustancia absorbe o libera para cambiar de estado sin cambiar su temperatura.',
-        explanation: 'Durante un cambio de estado, como hielo a agua o agua a vapor, la energia se usa para romper o formar enlaces, no para subir la temperatura.',
+        definition: 'El calor latente es la energía que una sustancia absorbe o libera para cambiar de estado sin cambiar su temperatura.',
+        explanation: 'Durante un cambio de estado, como hielo a agua o agua a vapor, la energía se usa para romper o formar enlaces, no para subir la temperatura.',
         characteristics: ['Ocurre en cambios de estado', 'No cambia la temperatura durante el proceso', 'Depende de la sustancia', 'Puede ser de fusion o vaporizacion'],
-        concepts: ['Cambio de estado', 'Fusion', 'Vaporizacion', 'Energia', 'Masa'],
+        concepts: ['Cambio de estado', 'Fusion', 'Vaporizacion', 'Energía', 'Masa'],
         formula: 'Q = m * L',
         example: 'Cuando el agua hierve, sigue recibiendo calor, pero su temperatura se mantiene cerca de 100 grados Celsius mientras cambia a vapor.',
         uses: 'Se usa para estudiar ebullicion, fusion, evaporacion, refrigeracion y cambios de fase.',
-        exercises: ['Que representa L?', 'Por que no cambia la temperatura durante el cambio de estado?', 'Que formula usa calor latente?'],
-        answers: ['El calor latente.', 'Porque la energia se usa para cambiar de estado.', 'Q = m * L.'],
-        flashcards: [['Calor latente', 'Energia para cambiar de estado'], ['Formula', 'Q = m * L'], ['Ejemplo', 'Agua hirviendo que pasa a vapor']]
+        exercises: ['Que representa L?', 'Por qué no cambia la temperatura durante el cambio de estado?', 'Que formula usa calor latente?'],
+        answers: ['El calor latente.', 'Porque la energía se usa para cambiar de estado.', 'Q = m * L.'],
+        flashcards: [['Calor latente', 'Energía para cambiar de estado'], ['Formula', 'Q = m * L'], ['Ejemplo', 'Agua hirviendo que pasa a vapor']]
     },
     'funciones geometricas': {
         aliases: ['funciones geometricas', 'funcion geometrica', 'geometricas', 'geometria con funciones'],
@@ -4709,7 +5045,7 @@ const knowledgeBase = {
             ['Que son funciones geometricas?', 'Relaciones matematicas que representan figuras, medidas o graficas.'],
             ['Que funcion representa una recta?', 'Una funcion lineal: y = mx + b.'],
             ['Que funcion representa una parabola?', 'Una funcion cuadratica: y = ax^2 + bx + c.'],
-            ['Como se representa el area de un cuadrado?', 'A(x) = x^2.']
+            ['Cómo se representa el area de un cuadrado?', 'A(x) = x^2.']
         ]
     },
     'funciones cuadraticas': {
@@ -4721,7 +5057,7 @@ const knowledgeBase = {
         concepts: ['Parabola', 'Vertice', 'Eje de simetria', 'Raices', 'Concavidad'],
         formula: 'f(x) = ax^2 + bx + c, con a diferente de 0.',
         example: 'f(x) = x^2 - 4 tiene una parabola que corta al eje x en x = -2 y x = 2.',
-        uses: 'Se usa en fisica para trayectorias, en economia para ganancias y en geometria para areas.',
+        uses: 'Se usa en física para trayectorias, en economia para ganancias y en geometria para areas.',
         exercises: ['Identifica a, b y c en f(x)=2x^2+3x-1.', 'Que forma tiene la grafica de una cuadratica?', 'Si a es positivo, hacia donde abre la parabola?'],
         answers: ['a=2, b=3, c=-1.', 'Una parabola.', 'Hacia arriba.'],
         flashcards: [['Formula general', 'f(x)=ax^2+bx+c'], ['Grafica', 'Parabola'], ['Vertice', 'Punto minimo o maximo de la parabola']]
@@ -4757,16 +5093,16 @@ const knowledgeBase = {
     'logica matematica': {
         aliases: ['logica matematica', 'logica', 'proposiciones'],
         title: 'logica matematica',
-        definition: 'La logica matematica estudia razonamientos, proposiciones y reglas para determinar si un argumento es valido.',
+        definition: 'La lógica matemática estudia razonamientos, proposiciones y reglas para determinar si un argumento es válido.',
         explanation: 'Ayuda a analizar enunciados verdaderos o falsos usando conectores como y, o, no, entonces y si y solo si.',
-        characteristics: ['Usa proposiciones', 'Trabaja con valores de verdad', 'Usa conectores logicos', 'Permite construir tablas de verdad'],
-        concepts: ['Proposicion', 'Negacion', 'Conjuncion', 'Disyuncion', 'Implicacion', 'Tabla de verdad'],
+        characteristics: ['Usa proposiciones', 'Trabaja con valores de verdad', 'Usa conectores lógicos', 'Permite construir tablas de verdad'],
+        concepts: ['Proposición', 'Negacion', 'Conjuncion', 'Disyuncion', 'Implicacion', 'Tabla de verdad'],
         formula: 'Ejemplo: p -> q significa si p entonces q.',
         example: 'p: estudio. q: apruebo. p -> q significa: si estudio, entonces apruebo.',
-        uses: 'Se usa en matematica, programacion, circuitos y pensamiento critico.',
-        exercises: ['Niega la proposicion: hoy llueve.', 'Que significa p y q?', 'Crea una tabla de verdad para p o q.'],
+        uses: 'Se usa en matematica, programación, circuitos y pensamiento critico.',
+        exercises: ['Niega la proposición: hoy llueve.', 'Que significa p y q?', 'Crea una tabla de verdad para p o q.'],
         answers: ['Hoy no llueve.', 'Que p y q son verdaderas al mismo tiempo.', 'Es falsa solo cuando p y q son falsas.'],
-        flashcards: [['Proposicion', 'Enunciado verdadero o falso'], ['Negacion', 'Cambia el valor de verdad'], ['Implicacion', 'Si p entonces q']]
+        flashcards: [['Proposición', 'Enunciado verdadero o falso'], ['Negacion', 'Cambia el valor de verdad'], ['Implicacion', 'Si p entonces q']]
     },
     porcentajes: {
         aliases: ['porcentajes', 'porcentaje', 'tanto por ciento'],
@@ -4791,7 +5127,7 @@ const knowledgeBase = {
         concepts: ['Calor', 'Masa', 'Calor especifico', 'Temperatura', 'Equilibrio termico'],
         formula: 'Q = m c DeltaT.',
         example: 'Si calientas agua, el calor necesario depende de la masa del agua y cuanto sube su temperatura.',
-        uses: 'Laboratorio, cocina, fisica termica e ingenieria.',
+        uses: 'Laboratorio, cocina, física térmica e ingenieria.',
         exercises: ['Identifica m, c y DeltaT en Q=mcDeltaT.', 'Que pasa si aumenta la masa?', 'Que mide Q?'],
         answers: ['Masa, calor especifico y cambio de temperatura.', 'Se necesita mas calor.', 'Cantidad de calor.'],
         flashcards: [['Q', 'Calor'], ['c', 'Calor especifico'], ['DeltaT', 'Cambio de temperatura']]
@@ -4810,19 +5146,19 @@ const knowledgeBase = {
         answers: ['10 m/s.', 'Que se mueve en linea recta.', 'MRU velocidad constante; MRUA aceleracion.'],
         flashcards: [['MRU', 'Movimiento rectilineo uniforme'], ['Velocidad', 'Distancia / tiempo'], ['Aceleracion', 'Cambio de velocidad']]
     },
-    energia: {
-        aliases: ['energia'],
-        title: 'energia',
-        definition: 'La energia es la capacidad de realizar trabajo o producir cambios.',
-        explanation: 'Puede aparecer como energia cinetica, potencial, termica, electrica, quimica y mas.',
+    energía: {
+        aliases: ['energía'],
+        title: 'energía',
+        definition: 'La energía es la capacidad de realizar trabajo o producir cambios.',
+        explanation: 'Puede aparecer como energía cinetica, potencial, térmica, electrica, quimica y mas.',
         characteristics: ['Se transforma', 'No se crea ni se destruye', 'Puede almacenarse', 'Puede transferirse'],
-        concepts: ['Trabajo', 'Energia cinetica', 'Energia potencial', 'Transformacion', 'Conservacion'],
-        formula: 'Energia cinetica: Ec = 1/2 mv^2. Energia potencial: Ep = mgh.',
-        example: 'Una pelota en altura tiene energia potencial; al caer, se transforma en energia cinetica.',
+        concepts: ['Trabajo', 'Energía cinetica', 'Energía potencial', 'Transformacion', 'Conservacion'],
+        formula: 'Energía cinetica: Ec = 1/2 mv^2. Energía potencial: Ep = mgh.',
+        example: 'Una pelota en altura tiene energía potencial; al caer, se transforma en energía cinetica.',
         uses: 'Fisica, electricidad, maquinas, movimiento y vida diaria.',
-        exercises: ['Da un ejemplo de energia cinetica.', 'Que energia tiene un objeto elevado?', 'Que dice la conservacion de energia?'],
-        answers: ['Un carro en movimiento.', 'Energia potencial.', 'La energia se transforma, no desaparece.'],
-        flashcards: [['Energia', 'Capacidad de producir cambios'], ['Cinetica', 'Energia por movimiento'], ['Potencial', 'Energia por posicion']]
+        exercises: ['Da un ejemplo de energía cinetica.', 'Que energía tiene un objeto elevado?', 'Que dice la conservacion de energía?'],
+        answers: ['Un carro en movimiento.', 'Energía potencial.', 'La energía se transforma, no desaparece.'],
+        flashcards: [['Energía', 'Capacidad de producir cambios'], ['Cinetica', 'Energía por movimiento'], ['Potencial', 'Energía por posición']]
     },
     fuerza: {
         aliases: ['fuerza', 'newton', 'ley de newton'],
@@ -4841,9 +5177,9 @@ const knowledgeBase = {
     'base de datos': {
         aliases: ['base de datos', 'bases de datos', 'database'],
         title: 'base de datos',
-        definition: 'Una base de datos es un sistema organizado para almacenar, consultar y administrar informacion.',
+        definition: 'Una base de datos es un sistema organizado para almacenar, consultar y administrar información.',
         explanation: 'Permite guardar usuarios, tareas, calificaciones, recursos y otros datos de forma estructurada.',
-        characteristics: ['Organiza datos', 'Usa tablas o colecciones', 'Permite consultas', 'Puede relacionar informacion'],
+        characteristics: ['Organiza datos', 'Usa tablas o colecciones', 'Permite consultas', 'Puede relacionar información'],
         concepts: ['Tabla', 'Registro', 'Campo', 'Clave primaria', 'Consulta', 'Relacion'],
         formula: 'Ejemplo SQL: SELECT * FROM usuarios;',
         example: 'AC Edunity podria tener tablas de usuarios, materias, tareas, notas y recursos.',
@@ -4857,14 +5193,14 @@ const knowledgeBase = {
         title: 'HTML',
         definition: 'HTML es el lenguaje de marcado que estructura el contenido de una pagina web.',
         explanation: 'Define titulos, parrafos, botones, formularios, imagenes, enlaces y secciones.',
-        characteristics: ['Usa etiquetas', 'Estructura contenido', 'No es lenguaje de programacion', 'Trabaja junto a CSS y JavaScript'],
+        characteristics: ['Usa etiquetas', 'Estructura contenido', 'No es lenguaje de programación', 'Trabaja junto a CSS y JavaScript'],
         concepts: ['Etiqueta', 'Atributo', 'Elemento', 'Formulario', 'Enlace'],
-        formula: '<h1>Titulo</h1>',
+        formula: '<h1>Título</h1>',
         example: '<button>Enviar</button> crea un boton.',
         uses: 'Crear la estructura de sitios y aplicaciones web.',
-        exercises: ['Que etiqueta crea un titulo principal?', 'Para que sirve <a>?', 'Crea un parrafo HTML.'],
+        exercises: ['Qué etiqueta crea un título principal?', 'Para que sirve <a>?', 'Crea un parrafo HTML.'],
         answers: ['<h1>.', 'Para enlaces.', '<p>Texto</p>.'],
-        flashcards: [['HTML', 'Estructura web'], ['Etiqueta', 'Marca contenido'], ['Atributo', 'Agrega informacion']]
+        flashcards: [['HTML', 'Estructura web'], ['Etiqueta', 'Marca contenido'], ['Atributo', 'Agrega información']]
     },
     css: {
         aliases: ['css'],
@@ -4883,7 +5219,7 @@ const knowledgeBase = {
     javascript: {
         aliases: ['javascript', 'js'],
         title: 'JavaScript',
-        definition: 'JavaScript es un lenguaje de programacion que permite agregar interactividad a paginas web.',
+        definition: 'JavaScript es un lenguaje de programación que permite agregar interactividad a paginas web.',
         explanation: 'Sirve para responder clics, guardar datos locales, cambiar contenido, validar formularios y crear logica.',
         characteristics: ['Es dinamico', 'Manipula el DOM', 'Responde eventos', 'Puede guardar datos en localStorage'],
         concepts: ['Variable', 'Funcion', 'Evento', 'DOM', 'Array', 'Objeto'],
@@ -4897,7 +5233,7 @@ const knowledgeBase = {
     redes: {
         aliases: ['redes', 'redes informaticas', 'internet'],
         title: 'redes informaticas',
-        definition: 'Una red informatica conecta dispositivos para compartir informacion y recursos.',
+        definition: 'Una red informatica conecta dispositivos para compartir información y recursos.',
         explanation: 'Permite comunicacion entre computadoras, servidores, celulares e internet.',
         characteristics: ['Conecta dispositivos', 'Usa protocolos', 'Puede ser local o global', 'Comparte datos'],
         concepts: ['IP', 'Router', 'Servidor', 'Cliente', 'Protocolo', 'LAN', 'WAN'],
@@ -4970,13 +5306,13 @@ function buildSubtopicReply(profile, subtopic, intent) {
         return `Vamos a practicar ${subtopic}.\n\nPregunta:\n${data.question}\n\nResponde con tus palabras y te dire si esta bien.`;
     }
     if (intent === 'flashcards') {
-        return `Flashcards de ${subtopic}:\n\nTarjeta 1\nPregunta: Que es ${subtopic}?\nRespuesta: ${data.definition}\n\nTarjeta 2\nPregunta: Dame un ejemplo.\nRespuesta: ${data.example}\n\nTarjeta 3\nPregunta: Que debo recordar?\nRespuesta: ${data.explanation}`;
+        return `Flashcards de ${subtopic}:\n\nTarjeta 1\nPregunta: Qué es ${subtopic}?\nRespuesta: ${data.definition}\n\nTarjeta 2\nPregunta: Dame un ejemplo.\nRespuesta: ${data.example}\n\nTarjeta 3\nPregunta: Qué debo recordar?\nRespuesta: ${data.explanation}`;
     }
     if (intent === 'review' || intent === 'summary') {
         return `Resumen de ${subtopic}:\n\n${data.definition}\n\n${data.explanation}\n\nEjemplo:\n${data.example}`;
     }
 
-    return `${subtopic} en ${profile.title}:\n\nDefinicion:\n${data.definition}\n\nExplicacion sencilla:\n${data.explanation}\n\nEjemplo:\n${data.example}\n\nPregunta de practica:\n${data.question}`;
+    return `${subtopic} en ${profile.title}:\n\nDefinicion:\n${data.definition}\n\nExplicación sencilla:\n${data.explanation}\n\nEjemplo:\n${data.example}\n\nPregunta de practica:\n${data.question}`;
 }
 
 function fallbackInteligente(topic, intent = 'explain') {
@@ -4984,11 +5320,11 @@ function fallbackInteligente(topic, intent = 'explain') {
     rememberTutorTopic(cleanTopic);
 
     if (intent === 'practice' || intent === 'exercises') {
-        return `Practica sobre ${cleanTopic}:\n\n1. Explica con tus palabras que significa ${cleanTopic}.\n2. Menciona una situacion donde se use ${cleanTopic}.\n3. Identifica una ventaja o utilidad de ${cleanTopic}.\n4. Crea un ejemplo corto relacionado con ${cleanTopic}.\n5. Escribe una duda que todavia tengas sobre ${cleanTopic}.\n\nResponde la pregunta 1 y te ayudo a revisar tu respuesta.`;
+        return `Practica sobre ${cleanTopic}:\n\n1. Explica con tus palabras que significa ${cleanTopic}.\n2. Menciona una situacion donde se use ${cleanTopic}.\n3. Identifica una ventaja o utilidad de ${cleanTopic}.\n4. Crea un ejemplo corto relacionado con ${cleanTopic}.\n5. Escribe una duda que todavía tengas sobre ${cleanTopic}.\n\nResponde la pregunta 1 y te ayudo a revisar tu respuesta.`;
     }
 
     if (intent === 'flashcards') {
-        return `Flashcards sobre ${cleanTopic}:\n\nTarjeta 1\nPregunta: Que es ${cleanTopic}?\nRespuesta: Es un concepto que representa una idea, proceso o medida importante dentro de su materia y permite analizar una situacion concreta.\n\nTarjeta 2\nPregunta: Para que sirve ${cleanTopic}?\nRespuesta: Sirve para interpretar datos, tomar decisiones, resolver actividades o explicar un fenomeno segun el contexto.\n\nTarjeta 3\nPregunta: Como se estudia ${cleanTopic}?\nRespuesta: Primero se entiende la definicion, luego se revisa un ejemplo y finalmente se practica con ejercicios o preguntas.`;
+        return `Flashcards sobre ${cleanTopic}:\n\nTarjeta 1\nPregunta: Qué es ${cleanTopic}?\nRespuesta: Es un concepto que representa una idea, proceso o medida importante dentro de su materia y permite analizar una situacion concreta.\n\nTarjeta 2\nPregunta: Para que sirve ${cleanTopic}?\nRespuesta: Sirve para interpretar datos, tomar decisiones, resolver actividades o explicar un fenomeno segun el contexto.\n\nTarjeta 3\nPregunta: Cómo se estudia ${cleanTopic}?\nRespuesta: Primero se entiende la definicion, luego se revisa un ejemplo y finalmente se practica con ejercicios o preguntas.`;
     }
 
     if (intent === 'review') {
@@ -4999,7 +5335,7 @@ function fallbackInteligente(topic, intent = 'explain') {
         return `Ejemplo de ${cleanTopic}:\n\nImagina que estas analizando ${cleanTopic} en una actividad de clase. Primero identificas el dato principal, luego revisas que significa y finalmente lo usas para tomar una decision o resolver una pregunta.\n\nEjemplo aplicado:\nSi el tema se relaciona con emprendimiento, puede ayudarte a comparar costos, beneficios, riesgos o resultados. Si se relaciona con ciencias, puede ayudarte a explicar una causa y una consecuencia. Si se relaciona con matematica, puede ayudarte a calcular o interpretar un valor.`;
     }
 
-    return `${cleanTopic}:\n\nDefinicion:\n${buildProbableDefinition(cleanTopic)}\n\nExplicacion sencilla:\nPiensa en ${cleanTopic} como una idea que ayuda a entender, medir o explicar una situacion. Para estudiarlo bien, conviene separar que significa, donde aparece y como se usa en un caso real.\n\nEjemplo:\nSi hablamos de ${cleanTopic} en una actividad academica, puedes tomar una situacion concreta, identificar los datos importantes y explicar que resultado o decision se obtiene a partir de ese concepto.\n\nPara que sirve:\nSirve para comprender mejor el tema, resolver tareas, preparar exposiciones, responder preguntas de examen y conectar la teoria con situaciones practicas.\n\nPreguntas de practica:\n1. Que significa ${cleanTopic} con tus propias palabras?\n2. En que situacion real se puede usar ${cleanTopic}?\n3. Que dato o idea es mas importante para entender ${cleanTopic}?\n4. Como explicarias ${cleanTopic} a un companero?\n5. Que ejemplo sencillo podrias crear sobre ${cleanTopic}?`;
+    return `${cleanTopic}:\n\nDefinición:\n${buildProbableDefinition(cleanTopic)}\n\nExplicación sencilla:\nPiensa en ${cleanTopic} como una idea que ayuda a entender, medir o explicar una situación. Para estudiarlo bien, conviene separar qué significa, dónde aparece y cómo se usa en un caso real.\n\nEjemplo:\nSi hablamos de ${cleanTopic} en una actividad académica, puedes tomar una situación concreta, identificar los datos importantes y explicar qué resultado o decisión se obtiene a partir de ese concepto.\n\nPara qué sirve:\nSirve para comprender mejor el tema, resolver tareas, preparar exposiciones, responder preguntas de examen y conectar la teoría con situaciones prácticas.\n\nPreguntas de práctica:\n1. ¿Qué significa ${cleanTopic} con tus propias palabras?\n2. ¿En qué situación real se puede usar ${cleanTopic}?\n3. ¿Qué dato o idea es más importante para entender ${cleanTopic}?\n4. ¿Cómo explicarías ${cleanTopic} a un compañero?\n5. ¿Qué ejemplo sencillo podrías crear sobre ${cleanTopic}?`;
 }
 
 function isFallbackFollowUpMessage(message) {
@@ -5026,13 +5362,13 @@ function buildProbableDefinition(topic) {
     if (/emprendimiento|negocio|empresa|ventas|mercado/.test(topic)) {
         return `${topic} se relaciona con la forma de organizar, evaluar o mejorar una idea de negocio para tomar mejores decisiones.`;
     }
-    if (/fisica|calor|energia|movimiento|fuerza/.test(topic)) {
-        return `${topic} es un concepto de fisica que ayuda a explicar como ocurre un fenomeno natural y que variables participan en el proceso.`;
+    if (/física|calor|energía|movimiento|fuerza/.test(topic)) {
+        return `${topic} es un concepto de física que ayuda a explicar como ocurre un fenomeno natural y que variables participan en el proceso.`;
     }
     if (/matematica|funcion|ecuacion|numero|porcentaje/.test(topic)) {
         return `${topic} es un concepto matematico que permite representar, calcular o comparar cantidades para resolver problemas.`;
     }
-    if (/html|css|javascript|programacion|base de datos|redes|software/.test(topic)) {
+    if (/html|css|javascript|programación|base de datos|redes|software/.test(topic)) {
         return `${topic} es un concepto de informatica que sirve para crear, organizar o hacer funcionar sistemas digitales.`;
     }
     return `${topic} es un concepto que se estudia para comprender una idea principal, aplicarla en ejemplos y usarla para resolver preguntas o actividades.`;
@@ -5101,7 +5437,7 @@ function buildTutorSimulatedReply(message) {
         return `${pdfIntro}ejemplo de ${profile.title}:\n\n${profile.example}\n\nUso en la vida cotidiana:\n${profile.uses}`;
     }
     if (intent === 'formula' || intent === 'formulas') {
-        return `${pdfIntro}formula o regla de ${profile.title}:\n\n${profile.formula}\n\nComo interpretarla:\n${profile.explanation}\n\nEjemplo:\n${profile.example}`;
+        return `${pdfIntro}formula o regla de ${profile.title}:\n\n${profile.formula}\n\nCómo interpretarla:\n${profile.explanation}\n\nEjemplo:\n${profile.example}`;
     }
     if (intent === 'steps') {
         return `Pasos para trabajar ${profile.title}:\n\n1. Lee la definicion: ${profile.definition}\n2. Identifica los conceptos clave: ${profile.concepts.slice(0, 4).join(', ')}.\n3. Revisa la regla o formula: ${profile.formula}\n4. Mira un ejemplo: ${profile.example}\n5. Practica con un ejercicio parecido.`;
@@ -5113,7 +5449,7 @@ function buildTutorSimulatedReply(message) {
     if (intent === 'flashcards') {
         const cards = profile.flashcards || [
             [`Que es ${profile.title}?`, profile.definition],
-            ['Cuales son conceptos clave?', profile.concepts.slice(0, 4).join(', ')],
+            ['Cuáles son conceptos clave?', profile.concepts.slice(0, 4).join(', ')],
             ['Donde se usa?', profile.uses]
         ];
         return `Flashcards de ${profile.title}:\n\n${cards.map((card, index) => `Tarjeta ${index + 1}\nPregunta: ${card[0]}\nRespuesta: ${card[1]}`).join('\n\n')}`;
@@ -5131,7 +5467,7 @@ function buildTutorSimulatedReply(message) {
             keywords: profile.concepts.concat(profile.title.split(' ')).map(normalizeTutorText)
         };
         saveTutorPendingQuestion();
-        return `Vamos a practicar ${profile.title}.\n\nPreguntas:\n${questions.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nResponde la pregunta 1 con tus palabras y te dire si esta bien. No te muestro respuestas todavia para que puedas practicar.`;
+        return `Vamos a practicar ${profile.title}.\n\nPreguntas:\n${questions.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nResponde la pregunta 1 con tus palabras y te dire si esta bien. No te muestro respuestas todavía para qué puedas practicar.`;
     }
 
     return `${pdfIntro}te explico ${profile.title}:\n\nDefinicion:\n${profile.definition}\n\nExplicacion:\n${profile.explanation}\n\nCaracteristicas:\n${profile.characteristics.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nFormula o regla:\n${profile.formula}\n\nEjemplo:\n${profile.example}\n\nPara que sirve:\n${profile.uses}\n\nPuedes pedirme: ejemplos, ejercicios, resumen, flashcards o preguntas para practicar.`;
@@ -5169,7 +5505,7 @@ async function requestTutorAI(userMessage) {
     const { data: sessionData, error: sessionError } = await sb.auth.getSession();
 
     if (sessionError || !sessionData?.session) {
-        console.error("[TUTOR IA SESSION ERROR]", sessionError || "Sin sesion activa");
+        console.error("[TUTOR IA SESSION ERROR]", sessionError || "Sin sesión activa");
         return {
             ok: false,
             answer: "Debes iniciar sesión para usar el Tutor IA."
@@ -5256,7 +5592,7 @@ function generateTutorDemoAnswer(message) {
     const text = normalizeTutorText(message);
     const context = updateTutorDemoContext(message);
     const currentTopic = normalizeTutorText(context.topic || tutorState.lastTopic || tutorState.topic);
-    const wantsDailyUse = /(situaciones|vida cotidiana|usar|utilizar|aplicar|sirve|para que|como se usa|cuando se usa)/.test(text) || (context.isFollowUp && /(uso|usar|utilizar|aplicar|situacion|ejemplo)/.test(text));
+    const wantsDailyUse = /(situaciones|vida cotidiana|usar|utilizar|aplicar|sirve|para qué|como se usa|cuando se usa)/.test(text) || (context.isFollowUp && /(uso|usar|utilizar|aplicar|situacion|ejemplo)/.test(text));
     const wantsExercises = /(ejercicios|practicar|practica|problemas|resolver)/.test(text) || context.intent === 'exercises' || context.intent === 'practice';
     const wantsFlashcards = /(flashcards|tarjetas)/.test(text) || context.intent === 'flashcards';
     const wantsExam = /(examen|cuestionario|evaluacion)/.test(text) || context.intent === 'exam';
@@ -5270,19 +5606,19 @@ function generateTutorDemoAnswer(message) {
         return buildTutorExam(context.topic || tutorState.lastTopic || tutorState.topic || 'tu tema');
     }
 
-    if (currentTopic === 'fisica termica') {
+    if (currentTopic === 'física térmica') {
         if (wantsDailyUse) {
-            return "La fisica termica se usa en muchas situaciones diarias. Por ejemplo, cuando hierves agua, cuando una cuchara metalica se calienta dentro de una sopa, cuando el hielo se derrite o cuando usas un termo para conservar una bebida caliente. En todos esos casos aparecen conceptos como calor, temperatura, transferencia de energia y equilibrio termico.";
+            return "La física térmica se usa en muchas situaciones diarias. Por ejemplo, cuando hierves agua, cuando una cuchara metalica se calienta dentro de una sopa, cuando el hielo se derrite o cuando usas un termo para conservar una bebida caliente. En todos esos casos aparecen conceptos como calor, temperatura, transferencia de energía y equilibrio térmico.";
         }
         if (wantsExercises) {
-            return "Aqui tienes ejercicios sencillos sobre fisica termica:\n\n1. Explica que diferencia hay entre calor y temperatura.\n2. Menciona 3 ejemplos de transferencia de calor en casa.\n3. Por que el hielo se derrite cuando lo dejamos fuera del congelador?\n4. Que pasa con la temperatura del agua cuando recibe calor?\n5. Explica que es el equilibrio termico con un ejemplo.";
+            return "Aqui tienes ejercicios sencillos sobre física térmica:\n\n1. Explica que diferencia hay entre calor y temperatura.\n2. Menciona 3 ejemplos de transferencia de calor en casa.\n3. Por qué el hielo se derrite cuando lo dejamos fuera del congelador?\n4. Qué pasa con la temperatura del agua cuando recibe calor?\n5. Explica que es el equilibrio térmico con un ejemplo.";
         }
         return "La física térmica estudia el calor, la temperatura y cómo la energía se transfiere entre los cuerpos. Por ejemplo, cuando calientas agua, aumenta su temperatura porque recibe energía. También incluye temas como calor específico, equilibrio térmico y cambios de estado.";
     }
 
     if (currentTopic === 'multiplicaciones') {
         if (wantsExercises || context.isFollowUp) {
-            return "Claro, aqui tienes ejercicios de multiplicaciones:\n\n1. 12 x 4 = ____\n2. 25 x 3 = ____\n3. 18 x 5 = ____\n4. 36 x 2 = ____\n5. 14 x 6 = ____\n\nConsejo: multiplica primero las unidades y luego las decenas.";
+            return "Claro, aquí tienes ejercicios de multiplicaciones:\n\n1. 12 x 4 = ____\n2. 25 x 3 = ____\n3. 18 x 5 = ____\n4. 36 x 2 = ____\n5. 14 x 6 = ____\n\nConsejo: multiplica primero las unidades y luego las decenas.";
         }
         return "La multiplicacion es una suma repetida. Por ejemplo, 4 x 3 significa sumar 4 tres veces: 4 + 4 + 4 = 12.";
     }
@@ -5296,16 +5632,16 @@ function generateTutorDemoAnswer(message) {
 
     if (currentTopic === 'matrices') {
         if (wantsExercises) {
-            return "Ejercicios de matrices:\n\n1. Escribe una matriz de 2 filas y 3 columnas.\n2. Suma dos matrices 2x2 con valores sencillos.\n3. Identifica la posicion del elemento a23.\n4. Explica para que sirve una matriz en organizacion de datos.\n5. Crea una matriz con notas de 3 estudiantes.";
+            return "Ejercicios de matrices:\n\n1. Escribe una matriz de 2 filas y 3 columnas.\n2. Suma dos matrices 2x2 con valores sencillos.\n3. Identifica la posición del elemento a23.\n4. Explica para qué sirve una matriz en organización de datos.\n5. Crea una matriz con notas de 3 estudiantes.";
         }
-        return "Una matriz es una tabla de numeros organizada en filas y columnas. Sirve para ordenar datos, resolver sistemas de ecuaciones y representar informacion de forma compacta.";
+        return "Una matriz es una tabla de numeros organizada en filas y columnas. Sirve para ordenar datos, resolver sistemas de ecuaciones y representar información de forma compacta.";
     }
 
     if (currentTopic === 'sql y bases de datos') {
         if (wantsExercises) {
-            return "Practica de SQL y bases de datos:\n\n1. Que es una tabla?\n2. Para que sirve una clave primaria?\n3. Escribe una consulta SELECT sencilla.\n4. Explica la diferencia entre fila y columna.\n5. Que dato guardarias en una tabla de estudiantes?";
+            return "Practica de SQL y bases de datos:\n\n1. Qué es una tabla?\n2. Para que sirve una clave primaria?\n3. Escribe una consulta SELECT sencilla.\n4. Explica la diferencia entre fila y columna.\n5. Qué dato guardarias en una tabla de estudiantes?";
         }
-        return "SQL es un lenguaje para consultar y administrar bases de datos. Una base de datos organiza informacion en tablas, filas y columnas para guardar, buscar y relacionar datos.";
+        return "SQL es un lenguaje para consultar y administrar bases de datos. Una base de datos organiza información en tablas, filas y columnas para guardar, buscar y relacionar datos.";
     }
 
     if (wantsReview) {
@@ -5365,7 +5701,7 @@ function normalizeTutorDemoIntent(intent, message) {
     if (/ejercicio|ejercicios|resolver|problema|problemas|practicar|practica/.test(text) || intent === 'exercises') return 'practice';
     if (/resumen|resume|resumir|repasar|repaso/.test(text) || intent === 'review') return 'summary';
     if (/ejemplo|ejemplos/.test(text) || intent === 'example') return 'examples';
-    if (/vida cotidiana|utilizar|usar|aplicar|sirve|uso|para que|cuando se usa|como se usa|situaciones|casos/.test(text)) return 'uses';
+    if (/vida cotidiana|utilizar|usar|aplicar|sirve|uso|para qué|cuando se usa|como se usa|situaciones|casos/.test(text)) return 'uses';
     if (/formula|formulas|ecuacion|regla/.test(text) || intent === 'formula') return 'formula';
     if (/paso|pasos|procedimiento|como se resuelve/.test(text) || intent === 'steps') return 'clarify';
     if (/concepto|conceptos|ideas clave|puntos clave|debo aprender/.test(text) || intent === 'concepts') return 'summary';
@@ -5378,11 +5714,11 @@ function buildTutorAnswerByIntent(topic, intent, message) {
     if (knownAnswer) return knownAnswer;
 
     if (intent === 'practice' || intent === 'quiz') {
-        return `Practiquemos ${topic} sin mostrar respuestas todavia:\n\n1. Explica que significa ${topic} con tus palabras.\n2. Menciona dos ideas importantes del tema.\n3. Escribe un ejemplo donde se pueda aplicar.\n4. Que duda te queda sobre ${topic}?\n5. Como lo explicarias en una exposicion corta?\n\nResponde la pregunta 1 y te ayudo a revisarla.`;
+        return `Practiquemos ${topic} sin mostrar respuestas todavía:\n\n1. Explica que significa ${topic} con tus palabras.\n2. Menciona dos ideas importantes del tema.\n3. Escribe un ejemplo donde se pueda aplicar.\n4. Qué duda te queda sobre ${topic}?\n5. Cómo lo explicarias en una exposición corta?\n\nResponde la pregunta 1 y te ayudo a revisarla.`;
     }
 
     if (intent === 'flashcards') {
-        return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Que es ${topic}?\nRespuesta: Es la idea principal que debes comprender para explicar el tema.\n\nTarjeta 2\nPregunta: Para que sirve ${topic}?\nRespuesta: Sirve para resolver actividades, interpretar situaciones y conectar teoria con ejemplos.\n\nTarjeta 3\nPregunta: Como se practica ${topic}?\nRespuesta: Con una definicion propia, un ejemplo y una pregunta de comprobacion.`;
+        return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Qué es ${topic}?\nRespuesta: Es la idea principal que debes comprender para explicar el tema.\n\nTarjeta 2\nPregunta: Para que sirve ${topic}?\nRespuesta: Sirve para resolver actividades, interpretar situaciones y conectar teoria con ejemplos.\n\nTarjeta 3\nPregunta: Cómo se practica ${topic}?\nRespuesta: Con una definicion propia, un ejemplo y una pregunta de comprobacion.`;
     }
 
     if (intent === 'summary') {
@@ -5390,14 +5726,14 @@ function buildTutorAnswerByIntent(topic, intent, message) {
     }
 
     if (intent === 'examples' || intent === 'uses') {
-        return `${topic} en situaciones reales:\n\n${buildProbableDefinition(topic)}\n\nEjemplo sencillo:\nImagina que debes resolver una actividad de clase relacionada con ${topic}. Primero identificas el dato principal, luego revisas que significa y finalmente explicas como se aplica para obtener una respuesta.\n\nPara que sirve:\nSirve para entender mejor el contenido, resolver tareas, preparar examenes y explicar el tema con ejemplos propios.`;
+        return `${topic} en situaciones reales:\n\n${buildProbableDefinition(topic)}\n\nEjemplo sencillo:\nImagina que debes resolver una actividad de clase relacionada con ${topic}. Primero identificas el dato principal, luego revisas qué significa y finalmente explicas cómo se aplica para obtener una respuesta.\n\nPara qué sirve:\nSirve para entender mejor el contenido, resolver tareas, preparar exámenes y explicar el tema con ejemplos propios.`;
     }
 
     if (intent === 'formula') {
-        return `${topic} puede tener reglas, pasos o formulas segun la materia.\n\nComo estudiarlo:\n1. Identifica que representa cada dato.\n2. Escribe la regla o formula que dio el profesor.\n3. Reemplaza valores con orden.\n4. Comprueba si el resultado tiene sentido.\n\nSi me escribes la formula exacta, te ayudo a aplicarla paso a paso.`;
+        return `${topic} puede tener reglas, pasos o formulas segun la materia.\n\nCómo estudiarlo:\n1. Identifica que representa cada dato.\n2. Escribe la regla o formula que dio el profesor.\n3. Reemplaza valores con orden.\n4. Comprueba si el resultado tiene sentido.\n\nSi me escribes la formula exacta, te ayudo a aplicarla paso a paso.`;
     }
 
-    return `${topic}:\n\n${buildProbableDefinition(topic)}\n\nExplicacion sencilla:\nPara entender ${topic}, empieza por identificar que representa, donde aparece y como se usa. Luego conecta la definicion con un ejemplo concreto para que no se quede solo como teoria.\n\nEjemplo:\nSi el tema aparece en una tarea, busca los datos principales, explica que significan y relaciona cada parte con la pregunta que debes responder.\n\nPuedes pedirme ejemplos, ejercicios, resumen o flashcards sobre ${topic}.`;
+    return `${topic}:\n\n${buildProbableDefinition(topic)}\n\nExplicación sencilla:\nPara entender ${topic}, empieza por identificar que representa, donde aparece y como se usa. Luego conecta la definicion con un ejemplo concreto para qué no se quede solo como teoria.\n\nEjemplo:\nSi el tema aparece en una tarea, busca los datos principales, explica que significan y relaciona cada parte con la pregunta que debes responder.\n\nPuedes pedirme ejemplos, ejercicios, resumen o flashcards sobre ${topic}.`;
 }
 
 function getKnownTopicAnswer(topic, intent, message) {
@@ -5419,7 +5755,7 @@ function getKnownTopicAnswer(topic, intent, message) {
         : ['Tiene una idea principal', 'Se puede explicar con ejemplos', 'Se aplica en actividades de clase'];
 
     if (intent === 'practice') {
-        return `${intro}Preguntas para practicar ${title}:\n\n${exercises.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nResponde la pregunta 1 y te doy retroalimentacion. No te muestro respuestas todavia para que puedas practicar.`;
+        return `${intro}Preguntas para practicar ${title}:\n\n${exercises.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nResponde la pregunta 1 y te doy retroalimentacion. No te muestro respuestas todavía para qué puedas practicar.`;
     }
 
     if (intent === 'quiz') {
@@ -5429,7 +5765,7 @@ function getKnownTopicAnswer(topic, intent, message) {
     if (intent === 'flashcards') {
         const cards = profile.flashcards || [
             [`Que es ${title}?`, profile.definition],
-            ['Cuales son ideas clave?', concepts.slice(0, 4).join(', ')],
+            ['Cuáles son ideas clave?', concepts.slice(0, 4).join(', ')],
             ['Donde se usa?', profile.uses]
         ];
         return `${intro}Flashcards de ${title}:\n\n${cards.map((card, index) => `Tarjeta ${index + 1}\nPregunta: ${card[0]}\nRespuesta: ${card[1]}`).join('\n\n')}`;
@@ -5448,11 +5784,11 @@ function getKnownTopicAnswer(topic, intent, message) {
     }
 
     if (intent === 'formula') {
-        return `${intro}Formula o regla de ${title}:\n\n${profile.formula}\n\nComo interpretarla:\n${profile.explanation}\n\nEjemplo:\n${profile.example}`;
+        return `${intro}Formula o regla de ${title}:\n\n${profile.formula}\n\nCómo interpretarla:\n${profile.explanation}\n\nEjemplo:\n${profile.example}`;
     }
 
     if (intent === 'clarify') {
-        return `${intro}Te lo explico paso a paso sobre ${title}:\n\n1. Idea central: ${profile.definition}\n2. Como funciona: ${profile.explanation}\n3. Que debes recordar: ${concepts.slice(0, 4).join(', ')}.\n4. Ejemplo: ${profile.example}`;
+        return `${intro}Te lo explico paso a paso sobre ${title}:\n\n1. Idea central: ${profile.definition}\n2. Cómo funciona: ${profile.explanation}\n3. Qué debes recordar: ${concepts.slice(0, 4).join(', ')}.\n4. Ejemplo: ${profile.example}`;
     }
 
     return `${intro}${title}:\n\nDefinicion:\n${profile.definition}\n\nExplicacion clara:\n${profile.explanation}\n\nCaracteristicas:\n${characteristics.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\nEjemplo:\n${profile.example}\n\nPuedes seguir preguntando: "dame ejemplos", "hazme preguntas" o "dame flashcards".`;
@@ -5470,10 +5806,10 @@ function buildAlternativeTutorAnswer(topic, intent, message) {
     }
 
     if (intent === 'flashcards') {
-        return `Flashcards nuevas de ${cleanTopic}:\n\nTarjeta 1\nPregunta: Cual es la idea principal de ${cleanTopic}?\nRespuesta: Entender que representa y como se aplica.\n\nTarjeta 2\nPregunta: Que ejemplo puedo usar?\nRespuesta: Un caso sencillo de clase o de la vida diaria.\n\nTarjeta 3\nPregunta: Como se comprueba que lo entendi?\nRespuesta: Explicandolo con tus palabras y resolviendo una pregunta corta.`;
+        return `Flashcards nuevas de ${cleanTopic}:\n\nTarjeta 1\nPregunta: Cuál es la idea principal de ${cleanTopic}?\nRespuesta: Entender que representa y como se aplica.\n\nTarjeta 2\nPregunta: Qué ejemplo puedo usar?\nRespuesta: Un caso sencillo de clase o de la vida diaria.\n\nTarjeta 3\nPregunta: Cómo se comprueba que lo entendi?\nRespuesta: Explicandolo con tus palabras y resolviendo una pregunta corta.`;
     }
 
-    return `Lo vemos de otra forma sobre ${cleanTopic}:\n\nEn vez de memorizar, intenta responder tres cosas:\n\n1. Que significa ${cleanTopic}?\n2. Para que se usa?\n3. Como se aplicaria en un ejemplo?\n\nSi puedes responder esas tres, ya tienes una base fuerte. Ahora dime si quieres ejercicios o ejemplos mas concretos.`;
+    return `Lo vemos de otra forma sobre ${cleanTopic}:\n\nEn vez de memorizar, intenta responder tres cosas:\n\n1. Qué significa ${cleanTopic}?\n2. Para que se usa?\n3. Cómo se aplicaria en un ejemplo?\n\nSi puedes responder esas tres, ya tienes una base fuerte. Ahora dime si quieres ejercicios o ejemplos mas concretos.`;
 }
 
 // Capa final del Tutor demo: distingue operaciones, formulas y teoria escolar.
@@ -5491,7 +5827,7 @@ function detectTutorIntent(message) {
     if (/(pregunta|preguntas|examen|cuestionario|evaluacion|prueba)/.test(text)) return 'quiz';
     if (/(flashcard|flashcards|tarjeta|tarjetas)/.test(text)) return 'flashcards';
     if (/(que es|que son|explica|explicame|concepto|definicion|define|no entiendo|ayuda)/.test(text)) return 'explain';
-    if (/(vida cotidiana|situaciones|sirve|usar|utilizar|aplica|aplicar|uso|usos|para que|cuando se usa|como se usa)/.test(text)) return 'uses';
+    if (/(vida cotidiana|situaciones|sirve|usar|utilizar|aplica|aplicar|uso|usos|para qué|cuando se usa|como se usa)/.test(text)) return 'uses';
 
     if (tutorState.mode === 'practice') return 'practice';
     if (tutorState.mode === 'review') return 'summary';
@@ -5503,7 +5839,7 @@ function detectTutorIntent(message) {
 function normalizeTutorTopic(topic) {
     const text = normalizeTutorText(topic);
 
-    if (/(fisica termica|termica|termodinamica|calor|temperatura|calorimetria)/.test(text)) return 'fisica';
+    if (/(física térmica|térmica|termodinamica|calor|temperatura|calorimetria)/.test(text)) return 'física';
     if (/multiplic/.test(text)) return 'multiplicaciones';
     if (/divisi/.test(text)) return 'divisiones';
     if (/(suma|sumas)/.test(text)) return 'sumas';
@@ -5516,7 +5852,7 @@ function normalizeTutorTopic(topic) {
     if (/(sql|base de datos|bases de datos)/.test(text)) return 'SQL';
     if (/quim/.test(text)) return 'quimica';
     if (/bio/.test(text)) return 'biologia';
-    if (/program/.test(text)) return 'programacion';
+    if (/program/.test(text)) return 'programación';
     if (/historia/.test(text)) return 'historia';
     if (/emprendimiento/.test(text)) return 'emprendimiento';
     if (/contabilidad/.test(text)) return 'contabilidad';
@@ -5530,14 +5866,14 @@ function normalizeTutorTopic(topic) {
 function detectTutorTopic(message) {
     const text = normalizeTutorText(message);
     const directTopics = [
-        'fisica termica', 'fisica', 'calor', 'temperatura',
+        'física térmica', 'física', 'calor', 'temperatura',
         'multiplicaciones', 'multiplicacion', 'divisiones', 'division',
         'sumas', 'suma', 'restas', 'resta', 'operaciones',
         'fracciones', 'fraccion', 'ecuaciones', 'ecuacion',
         'funciones inversas', 'funcion inversa', 'funciones geometricas',
         'matrices', 'sql', 'base de datos', 'quimica', 'biologia',
         'historia', 'emprendimiento', 'contabilidad', 'lengua',
-        'literatura', 'programacion', 'porcentajes'
+        'literatura', 'programación', 'porcentajes'
     ];
 
     const direct = directTopics.find(topic => text.includes(normalizeTutorText(topic)));
@@ -5576,8 +5912,8 @@ function detectSubjectType(message, topic = '') {
         'calculo', 'matematica', 'algebra'
     ];
     const formulaKeywords = [
-        'fisica', 'quimica', 'calor', 'temperatura', 'velocidad',
-        'fuerza', 'energia', 'densidad', 'presion', 'movimiento',
+        'física', 'quimica', 'calor', 'temperatura', 'velocidad',
+        'fuerza', 'energía', 'densidad', 'presion', 'movimiento',
         'formula', 'formulas'
     ];
     const theoryKeywords = [
@@ -5653,14 +5989,14 @@ function buildSmartTutorAnswer(topic, intent, subjectType, message) {
 
 function buildSubjectFlashcards(topic, subjectType) {
     if (subjectType === 'numeric') {
-        return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Que debo hacer primero?\nRespuesta: Identificar la operacion y ordenar los numeros.\n\nTarjeta 2\nPregunta: Como reviso el resultado?\nRespuesta: Compruebo si tiene sentido y repito el calculo si hay duda.\n\nTarjeta 3\nPregunta: Como practico mejor?\nRespuesta: Resuelvo ejercicios cortos y luego aumento la dificultad.`;
+        return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Qué debo hacer primero?\nRespuesta: Identificar la operacion y ordenar los numeros.\n\nTarjeta 2\nPregunta: Cómo reviso el resultado?\nRespuesta: Compruebo si tiene sentido y repito el calculo si hay duda.\n\nTarjeta 3\nPregunta: Cómo practico mejor?\nRespuesta: Resuelvo ejercicios cortos y luego aumento la dificultad.`;
     }
 
     if (subjectType === 'formula') {
-        return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Que debo identificar antes de usar una formula?\nRespuesta: Los datos, las unidades y la magnitud que se busca.\n\nTarjeta 2\nPregunta: Que formula comun puedo recordar?\nRespuesta: v = d / t para velocidad, F = m * a para fuerza o Q = m * c * DeltaT para calor.\n\nTarjeta 3\nPregunta: Como evito errores?\nRespuesta: Revisando unidades y reemplazando datos paso a paso.`;
+        return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Qué debo identificar antes de usar una formula?\nRespuesta: Los datos, las unidades y la magnitud que se busca.\n\nTarjeta 2\nPregunta: Qué formula comun puedo recordar?\nRespuesta: v = d / t para velocidad, F = m * a para fuerza o Q = m * c * DeltaT para calor.\n\nTarjeta 3\nPregunta: Cómo evito errores?\nRespuesta: Revisando unidades y reemplazando datos paso a paso.`;
     }
 
-    return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Que es ${topic}?\nRespuesta: Es el concepto central que debes explicar con tus palabras.\n\nTarjeta 2\nPregunta: Que debo recordar?\nRespuesta: Su definicion, caracteristicas y ejemplos principales.\n\nTarjeta 3\nPregunta: Como lo estudio?\nRespuesta: Leo el resumen, subrayo ideas clave y respondo preguntas de practica.`;
+    return `Flashcards de ${topic}:\n\nTarjeta 1\nPregunta: Qué es ${topic}?\nRespuesta: Es el concepto central que debes explicar con tus palabras.\n\nTarjeta 2\nPregunta: Qué debo recordar?\nRespuesta: Su definicion, caracteristicas y ejemplos principales.\n\nTarjeta 3\nPregunta: Cómo lo estudio?\nRespuesta: Leo el resumen, subrayo ideas clave y respondo preguntas de practica.`;
 }
 
 function buildNumericAnswer(topic, intent) {
@@ -5696,19 +6032,19 @@ function buildNumericAnswer(topic, intent) {
 
 function buildFormulaAnswer(topic, intent) {
     if (intent === 'formulas') {
-        return `Formulas utiles para ${topic}:\n\n1. Calor sensible: Q = m * c * DeltaT\n2. Densidad: d = m / V\n3. Velocidad: v = d / t\n4. Fuerza: F = m * a\n5. Energia cinetica: Ec = 1/2 * m * v^2\n\nRecuerda revisar las unidades antes de reemplazar datos.`;
+        return `Fórmulas utiles para ${topic}:\n\n1. Calor sensible: Q = m * c * DeltaT\n2. Densidad: d = m / V\n3. Velocidad: v = d / t\n4. Fuerza: F = m * a\n5. Energía cinetica: Ec = 1/2 * m * v^2\n\nRecuerda revisar las unidades antes de reemplazar datos.`;
     }
 
     if (intent === 'practice' || intent === 'quiz') {
         return `Ejercicios de ${topic}:\n\n1. Calcula el calor necesario para calentar 2 kg de agua de 20 C a 40 C.\n2. Halla la densidad de un objeto de 500 g y volumen 250 cm3.\n3. Calcula la velocidad si un cuerpo recorre 100 m en 20 s.\n4. Halla la fuerza de un objeto de 4 kg con aceleracion de 3 m/s2.\n5. Explica que datos necesitas antes de usar una formula.`;
     }
 
-    return `Resumen de ${topic}:\n\nConcepto: ${topic} estudia fenomenos que se pueden explicar con magnitudes, leyes y formulas.\n\nPuntos clave:\n- Identifica las magnitudes del problema.\n- Usa la formula correcta.\n- Reemplaza los datos con unidades.\n- Calcula y revisa el resultado.\n\nFormulas comunes:\n- Calor: Q = m * c * DeltaT\n- Densidad: d = m / V\n- Velocidad: v = d / t\n- Fuerza: F = m * a\n\nEjemplo: si conoces distancia y tiempo, puedes calcular velocidad con v = d / t.`;
+    return `Resumen de ${topic}:\n\nConcepto: ${topic} estudia fenomenos que se pueden explicar con magnitudes, leyes y formulas.\n\nPuntos clave:\n- Identifica las magnitudes del problema.\n- Usa la formula correcta.\n- Reemplaza los datos con unidades.\n- Calcula y revisa el resultado.\n\nFórmulas comunes:\n- Calor: Q = m * c * DeltaT\n- Densidad: d = m / V\n- Velocidad: v = d / t\n- Fuerza: F = m * a\n\nEjemplo: si conoces distancia y tiempo, puedes calcular velocidad con v = d / t.`;
 }
 
 function buildTheoryAnswer(topic, intent) {
     if (intent === 'practice' || intent === 'quiz') {
-        return `Preguntas para practicar ${topic}:\n\n1. Que es ${topic}?\n2. Cuales son sus caracteristicas principales?\n3. Por que es importante?\n4. Escribe un ejemplo relacionado.\n5. Explica ${topic} con tus propias palabras.`;
+        return `Preguntas para practicar ${topic}:\n\n1. Qué es ${topic}?\n2. Cuáles son sus caracteristicas principales?\n3. Por qué es importante?\n4. Escribe un ejemplo relacionado.\n5. Explica ${topic} con tus propias palabras.`;
     }
 
     if (intent === 'examples') {
@@ -5731,14 +6067,14 @@ function buildGeneralAcademicAnswer(topic, intent) {
 }
 
 function getKnownTopicAnswer(topic, intent, subjectType) {
-    if (topic === 'fisica') {
+    if (topic === 'física') {
         if (intent === 'practice' || intent === 'quiz') {
-            return "Ejercicios de fisica:\n\n1. Calcula la velocidad si un objeto recorre 80 m en 10 s.\n2. Calcula la fuerza si una masa de 5 kg acelera a 2 m/s2.\n3. Explica la diferencia entre calor y temperatura.\n4. Da un ejemplo de energia en la vida diaria.\n5. Escribe una situacion donde actue una fuerza.";
+            return "Ejercicios de física:\n\n1. Calcula la velocidad si un objeto recorre 80 m en 10 s.\n2. Calcula la fuerza si una masa de 5 kg acelera a 2 m/s2.\n3. Explica la diferencia entre calor y temperatura.\n4. Da un ejemplo de energía en la vida diaria.\n5. Escribe una situacion donde actue una fuerza.";
         }
         if (intent === 'formulas') {
-            return "Formulas de fisica:\n\n1. Velocidad: v = d / t\n2. Fuerza: F = m * a\n3. Calor: Q = m * c * DeltaT\n4. Densidad: d = m / V\n5. Energia cinetica: Ec = 1/2 * m * v^2";
+            return "Fórmulas de física:\n\n1. Velocidad: v = d / t\n2. Fuerza: F = m * a\n3. Calor: Q = m * c * DeltaT\n4. Densidad: d = m / V\n5. Energía cinetica: Ec = 1/2 * m * v^2";
         }
-        return "Resumen de fisica:\n\nLa fisica estudia la materia, la energia, el movimiento, las fuerzas, el calor, la luz y otros fenomenos naturales.\n\nConceptos importantes:\n- Movimiento\n- Fuerza\n- Energia\n- Calor y temperatura\n- Electricidad\n\nFormulas comunes:\n- Velocidad: v = d / t\n- Fuerza: F = m * a\n- Calor: Q = m * c * DeltaT\n\nEjemplo: cuando un objeto cae, se puede estudiar su movimiento y la fuerza de gravedad.";
+        return "Resumen de física:\n\nLa física estudia la materia, la energía, el movimiento, las fuerzas, el calor, la luz y otros fenomenos naturales.\n\nConceptos importantes:\n- Movimiento\n- Fuerza\n- Energía\n- Calor y temperatura\n- Electricidad\n\nFórmulas comunes:\n- Velocidad: v = d / t\n- Fuerza: F = m * a\n- Calor: Q = m * c * DeltaT\n\nEjemplo: cuando un objeto cae, se puede estudiar su movimiento y la fuerza de gravedad.";
     }
 
     if (topic === 'multiplicaciones') {
@@ -5757,7 +6093,7 @@ function buildAlternativeTutorAnswer(topic, intent, subjectType) {
     }
 
     if (subjectType === 'formula') {
-        return `Veamos ${topic} de otra forma:\n\n1. Concepto: entiende que fenomeno estudia.\n2. Formula: identifica que ecuacion se usa.\n3. Datos: reemplaza valores con unidades.\n4. Resultado: calcula y revisa.\n\nEjemplo general: primero anotas datos, luego formula y al final reemplazas.`;
+        return `Veamos ${topic} de otra forma:\n\n1. Concepto: entiende que fenomeno estudia.\n2. Fórmula: identifica que ecuacion se usa.\n3. Datos: reemplaza valores con unidades.\n4. Resultado: calcula y revisa.\n\nEjemplo general: primero anotas datos, luego formula y al final reemplazas.`;
     }
 
     return `Lo vemos de otra manera: para estudiar ${topic}, separa el tema en concepto, caracteristicas, ejemplos y una pregunta de practica. Asi no solo memorizas, sino que entiendes mejor.`;
@@ -5892,7 +6228,7 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-// Inicializar la aplicacion cuando se carga la pagina
+// Inicializar la aplicación cuando se carga la página
 // Dashboard limpio sin emojis para evitar caracteres rotos por codificacion.
 function renderDashboard(workspace) {
     const section = document.getElementById('dashboard');
@@ -5931,18 +6267,18 @@ function renderDashboard(workspace) {
         { label: 'Agrega una tarea', done: workspace.tasks.length > 0, action: "navigateTo('tasks')", hint: 'Anota pendientes, deberes y entregas.' },
         { label: 'Agenda un evento', done: workspace.events.length > 0, action: "navigateTo('calendar')", hint: 'Planifica pruebas, exposiciones y entregas.' },
         { label: 'Sube un apunte', done: workspace.resources.length > 0, action: "navigateTo('backpack')", hint: 'Guarda tus PDFs y recursos importantes.' },
-        { label: 'Pregunta a Tutor', done: workspace.resources.some(resource => resource.usedAI), action: "navigateTo('ai-assistant')", hint: 'Practica con resumenes, preguntas y flashcards.' }
+        { label: 'Pregunta a Tutor', done: workspace.resources.some(resource => resource.usedAI), action: "navigateTo('ai-assistant')", hint: 'Practica con resúmenes, preguntas y flashcards.' }
     ];
 
     section.innerHTML = `
         <div class="dashboard-hero dashboard-student-hero">
             <div class="dashboard-hero-copy">
-                <span class="dashboard-eyebrow">Panel academico</span>
+                <span class="dashboard-eyebrow">Panel académico</span>
                 <h1>Hola, ${escapeHTML(firstName)} <span aria-hidden="true">&#128075;</span></h1>
-                <p>${isEmpty ? 'Empieza configurando tu espacio academico.' : 'Listo para seguir aprendiendo hoy.'}</p>
+                <p>${isEmpty ? 'Empieza configurando tu espacio académico.' : 'Listo para seguir aprendiendo hoy.'}</p>
                 <div class="dashboard-hero-meta">
                     <span>${escapeHTML(readableDate)}</span>
-                    <span>Un avance pequeno tambien cuenta.</span>
+                    <span>Un avance pequeño también cuenta.</span>
                 </div>
                 <div class="quick-actions-bar dashboard-hero-actions">
                     <button type="button" onclick="navigateTo('subjects')">+ Nueva materia</button>
@@ -5963,8 +6299,8 @@ function renderDashboard(workspace) {
 
         <div class="dashboard-grid">
             ${dashboardCard('subjects', 'Materias activas', workspace.subjects.length, workspace.subjects.length ? 'Materias creadas por ti' : 'Crea tu primera materia', workspace.subjects.length ? 100 : 0)}
-            ${dashboardCard('tasks', 'Tareas pendientes', pending, workspace.tasks.length ? `${taskCounts.upcoming} proximas - ${taskCounts.overdue} vencidas - ${completed} completadas` : 'Agrega tu primer pendiente', taskProgress)}
-            ${dashboardCard('calendar', 'Proximo evento', nextEvent ? nextEvent.title : 'Sin eventos', nextEvent ? `${nextEvent.day || nextEvent.date || 'Sin fecha'} - ${nextEvent.type || 'Evento'}` : 'Agenda tu primer examen', nextEvent ? 70 : 0)}
+            ${dashboardCard('tasks', 'Tareas pendientes', pending, workspace.tasks.length ? `${taskCounts.upcoming} próximas - ${taskCounts.overdue} vencidas - ${completed} completadas` : 'Agrega tu primer pendiente', taskProgress)}
+            ${dashboardCard('calendar', 'Próximo evento', nextEvent ? nextEvent.title : 'Sin eventos', nextEvent ? `${nextEvent.day || nextEvent.date || 'Sin fecha'} - ${nextEvent.type || 'Evento'}` : 'Agenda tu primer examen', nextEvent ? 70 : 0)}
             ${dashboardCard('grades', 'Promedio actual', average ? average.toFixed(2) : '--', workspace.grades.length ? `${workspace.grades.length} calificaciones registradas` : 'Registra tus calificaciones', gradeProgress)}
         </div>
 
@@ -5999,7 +6335,7 @@ function renderDashboard(workspace) {
                     <div class="panel-title">
                         ${appIconHTML('clock', 'panel-icon panel-icon-day dashboard-icon')}
                         <div>
-                            <h3>Mi dia</h3>
+                            <h3>Mi día</h3>
                             <p>Tareas, eventos y recordatorios importantes.</p>
                         </div>
                     </div>
@@ -6027,8 +6363,8 @@ function renderDashboard(workspace) {
                     <div class="panel-title">
                         ${appIconHTML('list', 'panel-icon panel-icon-steps dashboard-icon')}
                         <div>
-                            <h3>${isEmpty ? 'Empieza configurando tu espacio academico' : 'Centro del estudiante'}</h3>
-                            <p>${isEmpty ? 'Sigue estos pasos para construir tu plataforma desde cero.' : 'Completa estos pasos para mantener tu espacio al dia.'}</p>
+                            <h3>${isEmpty ? 'Empieza configurando tu espacio académico' : 'Centro del estudiante'}</h3>
+                            <p>${isEmpty ? 'Sigue estos pasos para construir tu plataforma desde cero.' : 'Completa estos pasos para mantener tu espacio al día.'}</p>
                         </div>
                     </div>
                     <ol class="starter-list dashboard-steps">
@@ -6056,7 +6392,7 @@ function renderDashboard(workspace) {
                     <div class="weekly-chart" aria-label="Progreso semanal simulado">
                         ${[15, 20, 25, 30, 35, 40, Math.min(95, 20 + completed * 12)].map(value => `<span class="week-day" style="height:${value}%"></span>`).join('')}
                     </div>
-                    <p class="chart-caption">${completed ? `Has completado ${completed} tarea(s).` : 'Tu grafico crecera cuando completes actividades.'}</p>
+                    <p class="chart-caption">${completed ? `Has completado ${completed} tarea(s).` : 'Tu gráfico crecerá cuando completes actividades.'}</p>
             </div>
         </div>
     `;
@@ -6106,11 +6442,11 @@ function openSubjectForm(subjectId = null) {
         title: subject ? 'Editar materia' : 'Crear materia',
         submitLabel: subject ? 'Actualizar materia' : 'Guardar materia',
         fields: [
-            { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matematica' },
+            { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matemática' },
             { name: 'icon', label: 'Icono de la materia', type: 'choice-grid', options: subjectBookOptions, value: normalizeSubjectIcon(subject?.icon) },
             { name: 'customIcon', label: 'Icono personalizado opcional', value: subject?.customIcon || '', required: false, placeholder: 'Ej: MAT, BIO, AI' },
             { name: 'color', label: 'Color identificador', type: 'choice-grid', options: subjectColorOptions, value: subject?.color || 'Azul' },
-            { name: 'description', label: 'Descripcion corta', type: 'textarea', rows: 3, value: subject?.description || '', required: false, placeholder: 'Ej: Algebra, geometria y resolucion de problemas.' },
+            { name: 'description', label: 'Descripción corta', type: 'textarea', rows: 3, value: subject?.description || '', required: false, placeholder: 'Ej: Álgebra, geometría y resolución de problemas.' },
             { name: 'goal', label: 'Objetivo de la materia', type: 'textarea', rows: 3, value: subject?.goal || '', required: false, placeholder: 'Ej: Subir mi promedio y entregar tareas a tiempo.' }
         ],
         onSubmit: values => {
@@ -6206,7 +6542,7 @@ function ensureSubjectsToolbar(grid) {
                     <option value="name" ${subjectSortMode === 'name' ? 'selected' : ''}>Nombre</option>
                     <option value="progress" ${subjectSortMode === 'progress' ? 'selected' : ''}>Progreso</option>
                     <option value="average" ${subjectSortMode === 'average' ? 'selected' : ''}>Mejor promedio</option>
-                    <option value="tasks" ${subjectSortMode === 'tasks' ? 'selected' : ''}>Mas tareas</option>
+                    <option value="tasks" ${subjectSortMode === 'tasks' ? 'selected' : ''}>Más tareas</option>
                 </select>
             </label>
         </div>
@@ -6260,7 +6596,7 @@ function renderSubjects(workspace) {
                         ${getSubjectIconMarkup(subject)}
                         <div>
                             <h3>${escapeHTML(subject.name)}</h3>
-                            <p>${escapeHTML(subject.description || 'Espacio academico personalizado')}</p>
+                            <p>${escapeHTML(subject.description || 'Espacio académico personalizado')}</p>
                         </div>
                     </div>
                     <span class="subject-chip">${escapeHTML(subject.color || 'Morado')}</span>
@@ -6276,7 +6612,7 @@ function renderSubjects(workspace) {
                     <div><span>Apuntes</span><strong>${metrics.resources.length}</strong></div>
                 </div>
                 <div class="subject-card-footer">
-                    <p><strong>Proxima entrega:</strong> ${metrics.nextEvent ? escapeHTML(`${metrics.nextEvent.title} - ${metrics.nextEvent.date || metrics.nextEvent.day || 'Sin fecha'}`) : 'Sin entregas programadas'}</p>
+                    <p><strong>Próxima entrega:</strong> ${metrics.nextEvent ? escapeHTML(`${metrics.nextEvent.title} - ${metrics.nextEvent.date || metrics.nextEvent.day || 'Sin fecha'}`) : 'Sin entregas programadas'}</p>
                     <p><strong>Ultima actividad:</strong> ${escapeHTML(metrics.recentText)}</p>
                 </div>
                 <div class="card-actions">
@@ -6286,7 +6622,7 @@ function renderSubjects(workspace) {
                 </div>
             </div>
         `;
-    }).join('') : emptyStateHTML('No se encontraron materias con esa busqueda.', 'Limpiar busqueda', "clearSubjectSearch()")) : emptyStateHTML('No tienes materias todavia. Organiza tu aprendizaje creando tu primera materia.', '+ Crear materia', 'addSubjectUI()');
+    }).join('') : emptyStateHTML('No se encontraron materias con esa búsqueda.', 'Limpiar búsqueda', "clearSubjectSearch()")) : emptyStateHTML('No tienes materias todavía. Organiza tu aprendizaje creando tu primera materia.', '+ Crear materia', 'addSubjectUI()');
 
     bindSubjectsToolbar();
     grid.querySelectorAll('[data-subject-open]').forEach(button => button.addEventListener('click', () => openSubjectDetails(button.dataset.subjectOpen)));
@@ -6333,7 +6669,7 @@ function openSubjectDetails(subjectId) {
                     ${metrics.tasks.length ? metrics.tasks.slice(0, 5).map(task => `<p><strong>${escapeHTML(task.title)}</strong><span>${escapeHTML(getTaskStatusLabel(task.status))} - ${escapeHTML(task.due || 'Sin fecha')}</span></p>`).join('') : '<p class="muted-panel">Sin tareas relacionadas.</p>'}
                 </section>
                 <section>
-                    <h4>Calificaciones</h4>
+                    <h4>Calificaciónes</h4>
                     ${metrics.grades.length ? metrics.grades.slice(0, 5).map(grade => `<p><strong>${escapeHTML(grade.activity || 'Actividad')}</strong><span>${escapeHTML(String(grade.value || '--'))}</span></p>`).join('') : '<p class="muted-panel">Sin calificaciones registradas.</p>'}
                 </section>
                 <section>
@@ -6343,7 +6679,7 @@ function openSubjectDetails(subjectId) {
                 <section>
                     <h4>Actividad</h4>
                     <p><strong>Ultimo movimiento</strong><span>${escapeHTML(metrics.recentText)}</span></p>
-                    <p><strong>Proximo evento</strong><span>${metrics.nextEvent ? escapeHTML(metrics.nextEvent.title) : 'Sin eventos programados'}</span></p>
+                    <p><strong>Próximo evento</strong><span>${metrics.nextEvent ? escapeHTML(metrics.nextEvent.title) : 'Sin eventos programados'}</span></p>
                 </section>
             </div>
         </div>
@@ -6365,7 +6701,7 @@ function renderBackpack(workspace) {
     }
 
     container.innerHTML = workspace.resources.length ? workspace.resources.map(resource => {
-        const description = resource.description || resource.content || 'Sin descripcion';
+        const description = resource.description || resource.content || 'Sin descripción';
         const shortDescription = description.length > 130 ? `${description.slice(0, 130)}...` : description;
         return `
             <div class="resource-card">
@@ -6386,7 +6722,7 @@ function renderBackpack(workspace) {
                 </div>
             </div>
         `;
-    }).join('') : emptyStateHTML('No has subido apuntes todavia.', 'Subir primer PDF', 'addResourceUI()');
+    }).join('') : emptyStateHTML('No has subido apuntes todavía.', 'Subir primer PDF', 'addResourceUI()');
 
     container.querySelectorAll('[data-resource-view]').forEach(button => button.addEventListener('click', () => viewResource(button.dataset.resourceView)));
     container.querySelectorAll('[data-resource-ai]').forEach(button => button.addEventListener('click', () => askAIAboutResource(button.dataset.resourceAi)));
@@ -6414,11 +6750,11 @@ function renderProgress(workspace) {
         { name: 'Tarea completada', detail: 'Marca una tarea como lista', icon: 'done', unlocked: completedTasks > 0 },
         { name: 'Primer apunte', detail: 'Sube un PDF o recurso', icon: 'note', unlocked: workspace.resources.length > 0 },
         { name: 'Uso de Tutor', detail: 'Pregunta con un apunte', icon: 'ai', unlocked: workspace.resources.some(resource => resource.usedAI) },
-        { name: 'Primera racha', detail: 'Registra tu primer dia activo', icon: 'streak', unlocked: (workspace.streak || 0) > 0 },
-        { name: '7 dias de racha', detail: 'Mantente constante', icon: 'streak', unlocked: (workspace.streak || 0) >= 7 },
+        { name: 'Primera racha', detail: 'Registra tu primer día activo', icon: 'streak', unlocked: (workspace.streak || 0) > 0 },
+        { name: '7 días de racha', detail: 'Mantente constante', icon: 'streak', unlocked: (workspace.streak || 0) >= 7 },
         { name: 'Nivel 5 alcanzado', detail: 'Acumula suficiente XP', icon: 'level', unlocked: level >= 5 },
         { name: 'Estudiante constante', detail: 'Registra asistencia', icon: 'constant', unlocked: attendancePositive >= 5 },
-        { name: 'Buen promedio', detail: 'Alcanza 8.00 o mas', icon: 'average', unlocked: average >= 8 },
+        { name: 'Buen promedio', detail: 'Alcanza 8.00 o más', icon: 'average', unlocked: average >= 8 },
         { name: 'Primer PDF', detail: 'Guarda tu primer recurso', icon: 'pdf', unlocked: workspace.resources.length > 0 }
     ];
     const unlocked = achievements.filter(item => item.unlocked).length;
@@ -6427,9 +6763,9 @@ function renderProgress(workspace) {
     container.innerHTML = `
         <div class="progress-hero premium-border">
             <div class="progress-hero-copy">
-                <span class="progress-eyebrow">Camino academico</span>
+                <span class="progress-eyebrow">Camino académico</span>
                 <h2>Nivel ${level}</h2>
-                <p>${xp ? 'Estas cerca del siguiente nivel.' : 'Completa actividades para desbloquear logros.'}</p>
+                <p>${xp ? 'Estás cerca del siguiente nivel.' : 'Completa actividades para desbloquear logros.'}</p>
                 <div class="progress-xp-meta">
                     <span>${xp} XP acumulado</span>
                     <span>${xpToNext} XP para nivel ${level + 1}</span>
@@ -6446,10 +6782,10 @@ function renderProgress(workspace) {
         </div>
 
         <div class="progress-stat-grid">
-            ${progressStatCard('streak', 'Racha actual', `${workspace.streak || 0}`, 'dias activos')}
+            ${progressStatCard('streak', 'Racha actual', `${workspace.streak || 0}`, 'días activos')}
             ${progressStatCard('trophy', 'Logros desbloqueados', `${unlocked}/${achievements.length}`, 'insignias premium')}
             ${progressStatCard('status', 'Estado', xp ? 'En progreso' : 'Inicial', xp ? 'sigue avanzando' : 'empieza desde cero')}
-            ${progressStatCard('activity', 'Actividad academica', workspace.subjects.length + workspace.tasks.length + workspace.resources.length, 'acciones registradas')}
+            ${progressStatCard('activity', 'Actividad académica', workspace.subjects.length + workspace.tasks.length + workspace.resources.length, 'acciones registradas')}
             ${progressStatCard('tasks', 'Tareas completadas', completedTasks, 'retos terminados')}
         </div>
 
@@ -6527,11 +6863,11 @@ function openResourceForm(resourceId = null) {
         title: resource ? 'Editar recurso' : 'Subir PDF',
         submitLabel: resource ? 'Actualizar recurso' : 'Guardar recurso',
         fields: [
-            { name: 'title', label: 'Titulo del recurso', value: resource?.title || '', placeholder: 'Ej: Guia de estudio' },
+            { name: 'title', label: 'Título del recurso', value: resource?.title || '', placeholder: 'Ej: Guía de estudio' },
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: resource?.subject || '' },
             { name: 'file', label: 'Archivo PDF', type: 'file', accept: '.pdf,application/pdf', required: !resource },
-            { name: 'description', label: 'Descripcion corta', type: 'textarea', value: resource?.description || resource?.content || '', placeholder: 'Describe de que trata el PDF' },
-            { name: 'tag', label: 'Etiqueta', type: 'select', options: ['Apunte', 'Guia', 'Informe', 'Proyecto', 'Tarea'], value: resource?.tag || 'Apunte' },
+            { name: 'description', label: 'Descripción corta', type: 'textarea', value: resource?.description || resource?.content || '', placeholder: 'Describe de qué trata el PDF' },
+            { name: 'tag', label: 'Etiqueta', type: 'select', options: ['Apunte', 'Guía', 'Informe', 'Proyecto', 'Tarea'], value: resource?.tag || 'Apunte' },
             { name: 'useWithTutor', label: 'Tutor', type: 'checkbox', checked: resource?.useWithTutor !== false, help: 'Usar con Tutor' }
         ],
         onSubmit: async values => {
@@ -6633,8 +6969,8 @@ function getRelativeResourceDate(dateValue) {
     if (Number.isNaN(date.getTime())) return 'Recien agregado';
     const diffDays = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000));
     if (diffDays === 0) return 'Hoy';
-    if (diffDays === 1) return 'Hace 1 dia';
-    return `Hace ${diffDays} dias`;
+    if (diffDays === 1) return 'Hace 1 día';
+    return `Hace ${diffDays} días`;
 }
 
 function getResourceStatus(resource) {
@@ -6666,10 +7002,10 @@ function ensureBackpackToolbar(section, workspace) {
             <label>
                 <span>Tipo</span>
                 <select id="backpack-type-filter">
-                    <option value="all">PDF / Apunte / Guia / Proyecto</option>
+                    <option value="all">PDF / Apunte / Guía / Proyecto</option>
                     <option value="PDF">PDF</option>
                     <option value="Apunte">Apunte</option>
-                    <option value="Guia">Guia</option>
+                    <option value="Guia">Guía</option>
                     <option value="Informe">Informe</option>
                     <option value="Proyecto">Proyecto</option>
                     <option value="Tarea">Tarea</option>
@@ -6678,10 +7014,10 @@ function ensureBackpackToolbar(section, workspace) {
             <label>
                 <span>Ordenar</span>
                 <select id="backpack-sort">
-                    <option value="recent">Mas reciente</option>
-                    <option value="oldest">Mas antiguo</option>
+                    <option value="recent">Más reciente</option>
+                    <option value="oldest">Más antiguo</option>
                     <option value="subject">Materia</option>
-                    <option value="title">Titulo</option>
+                    <option value="title">Título</option>
                 </select>
             </label>
             <button class="btn-primary btn-small" type="button" onclick="addResourceUI()">+ Subir PDF</button>
@@ -6768,7 +7104,7 @@ function renderBackpack(workspace) {
 
     const resources = getBackpackResourcesForView(workspace);
     container.innerHTML = workspace.resources.length ? (resources.length ? resources.map(resource => {
-        const description = resource.description || resource.content || 'Sin descripcion';
+        const description = resource.description || resource.content || 'Sin descripción';
         const shortDescription = description.length > 120 ? `${description.slice(0, 120)}...` : description;
         const color = getAcademicColorValue(getResourceColor(workspace, resource));
         const status = getResourceStatus(resource);
@@ -6801,7 +7137,7 @@ function renderBackpack(workspace) {
                 </div>
             </article>
         `;
-    }).join('') : emptyStateHTML('No encontramos recursos con esos filtros.', 'Limpiar busqueda', 'resetBackpackFilters()')) : emptyStateHTML('No tienes apuntes todavia 🎒', 'Subir primer PDF', 'addResourceUI()');
+    }).join('') : emptyStateHTML('No encontramos recursos con esos filtros.', 'Limpiar búsqueda', 'resetBackpackFilters()')) : emptyStateHTML('No tienes apuntes todavía 🎒', 'Subir primer PDF', 'addResourceUI()');
 
     container.querySelectorAll('[data-resource-view]').forEach(button => button.addEventListener('click', () => viewResource(button.dataset.resourceView)));
     container.querySelectorAll('[data-resource-ai]').forEach(button => button.addEventListener('click', () => askAIAboutResource(button.dataset.resourceAi)));
@@ -6826,7 +7162,7 @@ function viewResource(resourceId) {
         return;
     }
 
-    showAIResult(`Vista del recurso: ${resource.title}`, `Materia: ${resource.subject || 'General'}\nArchivo: ${resource.fileName || 'PDF'}\nTipo: ${resource.tag || resource.type || 'PDF'}\n\nDescripcion:\n${resource.description || resource.content || 'Sin descripcion'}\n\nCuando conectes Google Drive o Supabase Storage, esta vista podra abrir el archivo real desde la nube.`);
+    showAIResult(`Vista del recurso: ${resource.title}`, `Materia: ${resource.subject || 'General'}\nArchivo: ${resource.fileName || 'PDF'}\nTipo: ${resource.tag || resource.type || 'PDF'}\n\nDescripción:\n${resource.description || resource.content || 'Sin descripción'}\n\nCuando conectes Google Drive o Supabase Storage, esta vista podra abrir el archivo real desde la nube.`);
 }
 
 function createPdfObjectUrl(dataUrl, fallbackMime = 'application/pdf') {
@@ -6880,7 +7216,7 @@ function openPdfResource(resource, recentText = 'Abriste un PDF desde Mochila Di
     link.rel = 'noopener';
     link.click();
     markResourceAIUsed(resource.id, recentText);
-    notify('PDF abierto. Si no aparece, permite ventanas emergentes para esta pagina.', 'info');
+    notify('PDF abierto. Si no aparece, permite ventanas emergentes para esta página.', 'info');
     return true;
 }
 
@@ -6892,7 +7228,7 @@ function askAIAboutResource(resourceId) {
     // Futuro: enviar metadata y contenido extraido del recurso a una IA real.
     setAIContextFromResource(updated);
     navigateTo('ai-assistant');
-    appendTutorMessage('bot', `Vamos a estudiar tu recurso de ${updated.subject || 'General'}: ${updated.title}.\n\nTrabajare con el titulo, la materia y la descripcion guardada. Puedes pedirme un resumen, una explicacion sencilla, preguntas abiertas, verdadero/falso, flashcards o un cuestionario.`, 'Tutor');
+    appendTutorMessage('bot', `Vamos a estudiar tu recurso de ${updated.subject || 'General'}: ${updated.title}.\n\nTrabajaré con el título, la materia y la descripción guardada. Puedes pedirme un resumen, una explicacion sencilla, preguntas abiertas, verdadero/falso, flashcards o un cuestionario.`, 'Tutor');
     notify('Recurso abierto en Tutor.', 'success');
 }
 
@@ -6900,7 +7236,7 @@ function practiceWithResource(resourceId) {
     const resource = loadWorkspace().resources.find(item => item.id === resourceId);
     if (!resource) return;
 
-    const updated = markResourceAIUsed(resourceId, `Iniciaste practica con ${resource.title}.`) || resource;
+    const updated = markResourceAIUsed(resourceId, `Iniciaste práctica con ${resource.title}.`) || resource;
     setAIContextFromResource(updated);
     navigateTo('ai-assistant');
     appendTutorMessage('bot', `Vamos a practicar con tu recurso de ${updated.subject || 'General'}: ${updated.title}.\n\nElige que quieres generar:\n1. Resumen\n2. Preguntas abiertas\n3. Verdadero/falso\n4. Flashcards\n5. Cuestionario\n\nTambien puedes escribir tu propia duda sobre este material.`, 'Tutor');
@@ -6983,13 +7319,13 @@ function openProfileForm() {
         fields: [
             { name: 'name', label: 'Nombre', value: profile.name, placeholder: 'Tu nombre' },
             { name: 'career', label: 'Carrera o area de estudio', value: profile.career, placeholder: 'Ej: Informatica' },
-            { name: 'bio', label: 'Descripcion personal', type: 'textarea', rows: 3, value: profile.bio, placeholder: 'Ej: Construyendo mi camino de aprendizaje.' },
-            { name: 'interests', label: 'Intereses', value: profile.interests, placeholder: 'Ej: IA educativa, programacion, robotica' },
+            { name: 'bio', label: 'Descripción personal', type: 'textarea', rows: 3, value: profile.bio, placeholder: 'Ej: Construyendo mi camino de aprendizaje.' },
+            { name: 'interests', label: 'Intereses', value: profile.interests, placeholder: 'Ej: IA educativa, programación, robótica' },
             { name: 'avatarStyle', label: 'Avatar', type: 'select', options: [
                 { value: 'initials', label: 'Iniciales' },
                 { value: 'rocket', label: 'Cohete' },
                 { value: 'book', label: 'Libros' },
-                { value: 'code', label: 'Programacion' },
+                { value: 'code', label: 'Programación' },
                 { value: 'star', label: 'Estrella' },
                 { value: 'photo', label: 'URL de foto' },
                 { value: 'custom', label: 'Texto o emoji propio' }
@@ -7078,8 +7414,8 @@ function renderProfile(workspace) {
                 </div>
                 <button class="btn-primary btn-small" type="button" onclick="openProfileForm()">Editar perfil</button>
             </div>
-            <div class="profile-academic-box" aria-label="Resumen academico">
-                <h3 class="profile-academic-title">Resumen academico</h3>
+            <div class="profile-academic-box" aria-label="Resumen académico">
+                <h3 class="profile-academic-title">Resumen académico</h3>
                 <div class="profile-academic-list">
                     <div class="profile-academic-row">
                         ${appIconHTML('trend', 'profile-academic-icon')}
@@ -7094,7 +7430,7 @@ function renderProfile(workspace) {
                     <div class="profile-academic-row">
                         ${appIconHTML('calendar', 'profile-academic-icon')}
                         <span class="profile-academic-label">Racha</span>
-                        <strong class="profile-academic-value">${escapeHTML(streak)} ${streak === 1 ? 'dia' : 'dias'}</strong>
+                        <strong class="profile-academic-value">${escapeHTML(streak)} ${streak === 1 ? 'día' : 'días'}</strong>
                     </div>
                 </div>
             </div>
@@ -7127,7 +7463,7 @@ function renderProfile(workspace) {
                 </ul>
             ` : `
                 <div class="profile-empty-note">
-                    <strong>Tu actividad aparecera aqui cuando empieces.</strong>
+                    <strong>Tu actividad aparecerá aquí cuando empieces.</strong>
                     <span>Crea materias, completa tareas, usa Tutor o sube PDFs.</span>
                 </div>
             `}
@@ -7280,7 +7616,8 @@ const VALID_APP_VIEWS = new Set([
     'ai-assistant',
     'progress',
     'backpack',
-    'profile'
+    'profile',
+    'settings'
 ]);
 
 function normalizeAppView(view) {
@@ -7370,13 +7707,13 @@ function openPasswordResetModal(prefillEmail = '') {
     modal.id = 'password-reset-modal';
     modal.className = 'quick-modal password-modal';
     modal.innerHTML = `
-        <div class="quick-modal-card password-modal-card" role="dialog" aria-modal="true" aria-label="Restablecer contrasena">
+        <div class="quick-modal-card password-modal-card" role="dialog" aria-modal="true" aria-label="Restablecer contraseña">
             <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
-            <h3>Restablecer contrasena</h3>
-            <p class="password-modal-text">Ingresa tu correo y te enviaremos un enlace para cambiar tu contrasena.</p>
+            <h3>Restablecer contraseña</h3>
+            <p class="password-modal-text">Ingresa tu correo y te enviaremos un enlace para cambiar tu contraseña.</p>
             <form class="quick-modal-form password-reset-form">
                 <label>
-                    <span>Correo electronico</span>
+                    <span>Correo electrónico</span>
                     <input type="email" name="email" placeholder="tu@email.com" value="${escapeHTML(emailValue)}" required>
                 </label>
                 <div class="quick-modal-actions password-modal-actions">
@@ -7411,22 +7748,22 @@ function openPasswordUpdateModal() {
     modal.id = 'password-update-modal';
     modal.className = 'quick-modal password-modal';
     modal.innerHTML = `
-        <div class="quick-modal-card password-modal-card" role="dialog" aria-modal="true" aria-label="Crear nueva contrasena">
+        <div class="quick-modal-card password-modal-card" role="dialog" aria-modal="true" aria-label="Crear nueva contraseña">
             <button class="quick-modal-close" type="button" aria-label="Cerrar">x</button>
-            <h3>Crear nueva contrasena</h3>
-            <p class="password-modal-text">Escribe tu nueva contrasena para volver a entrar a AC Edunity.</p>
+            <h3>Crear nueva contraseña</h3>
+            <p class="password-modal-text">Escribe tu nueva contraseña para volver a entrar a AC Edunity.</p>
             <form class="quick-modal-form password-update-form">
                 <label>
-                    <span>Nueva contrasena</span>
+                    <span>Nueva contraseña</span>
                     <input type="password" name="newPassword" placeholder="Minimo 6 caracteres" required>
                 </label>
                 <label>
-                    <span>Confirmar contrasena</span>
-                    <input type="password" name="confirmPassword" placeholder="Repite la contrasena" required>
+                    <span>Confirmar contraseña</span>
+                    <input type="password" name="confirmPassword" placeholder="Repite la contraseña" required>
                 </label>
                 <div class="quick-modal-actions password-modal-actions">
                     <button class="btn-secondary btn-small" type="button" data-cancel>Cancelar</button>
-                    <button class="btn-primary btn-small" type="submit">Actualizar contrasena</button>
+                    <button class="btn-primary btn-small" type="submit">Actualizar contraseña</button>
                 </div>
             </form>
         </div>
@@ -7470,7 +7807,7 @@ async function handlePasswordReset(email) {
             return;
         }
 
-        showToast("Te enviamos un enlace para restablecer tu contrasena. Revisa tu correo o spam.", "success");
+        showToast("Te enviamos un enlace para restablecer tu contraseña. Revisa tu correo o spam.", "success");
         closePasswordResetModal();
     } catch (error) {
         console.error("[PASSWORD RESET ERROR]", error);
@@ -7480,18 +7817,18 @@ async function handlePasswordReset(email) {
 
 async function handleUpdatePassword(newPassword, confirmPassword) {
     if (!newPassword || String(newPassword).length < 6) {
-        showToast("La contrasena debe tener minimo 6 caracteres.", "error");
+        showToast("La contraseña debe tener mínimo 6 caracteres.", "error");
         return;
     }
 
     if (newPassword !== confirmPassword) {
-        showToast("Las contrasenas no coinciden.", "error");
+        showToast("Las contraseñas no coinciden.", "error");
         return;
     }
 
     try {
         const sb = getSupabaseClient();
-        console.log("[PASSWORD UPDATE] Actualizando contrasena");
+        console.log("[PASSWORD UPDATE] Actualizando contraseña");
 
         const { error } = await sb.auth.updateUser({
             password: newPassword
@@ -7500,11 +7837,11 @@ async function handleUpdatePassword(newPassword, confirmPassword) {
         if (error) {
             console.error("[PASSWORD UPDATE ERROR]", error);
             logSupabaseError('auth updateUser password', error);
-            showToast("No se pudo actualizar la contrasena.", "error");
+            showToast("No se pudo actualizar la contraseña.", "error");
             return;
         }
 
-        showToast("Contrasena actualizada correctamente. Ya puedes iniciar sesion.", "success");
+        showToast("Contraseña actualizada correctamente. Ya puedes iniciar sesión.", "success");
         closePasswordUpdateModal();
         await sb.auth.signOut();
         currentUser = null;
@@ -7515,7 +7852,7 @@ async function handleUpdatePassword(newPassword, confirmPassword) {
         window.history.replaceState({}, document.title, window.location.pathname);
     } catch (error) {
         console.error("[PASSWORD UPDATE ERROR]", error);
-        showToast("No se pudo actualizar la contrasena.", "error");
+        showToast("No se pudo actualizar la contraseña.", "error");
     }
 }
 
@@ -8001,7 +8338,7 @@ async function syncWorkspaceFromSupabase() {
             subject: subjectMap.get(grade.subject_id) || 'General',
             period: grade.period || 'p1',
             category: grade.category || 'partial1',
-            evaluation: grade.evaluation || 'Calificacion',
+            evaluation: grade.evaluation || 'Calificación',
             value: Number(grade.final_value || 0),
             finalValue: Number(grade.final_value || 0),
             date: getFirstGradeItemDate(items),
@@ -8024,6 +8361,7 @@ async function syncWorkspaceFromSupabase() {
 }
 
 async function bootstrapAuthenticatedApp(user, fallbackName = '') {
+    loadInterfaceSoundPreferenceFromUser(user);
     const profile = await ensureProfileRow(user, fallbackName);
     currentUser = getPublicUserFromAuth(user, profile);
     console.log('[Supabase] Usuario actual autenticado', currentUser);
@@ -8097,7 +8435,7 @@ async function uploadProfileAvatar(file) {
     if (!currentUser?.id) throw new Error('No hay usuario activo.');
     if (!(file instanceof File) || file.size === 0) return '';
     if (!file.type || !file.type.startsWith('image/')) {
-        throw new Error('Selecciona un archivo de imagen valido.');
+        throw new Error('Selecciona un archivo de imagen válido.');
     }
     if (file.size > 2 * 1024 * 1024) {
         throw new Error('La imagen debe pesar maximo 2MB.');
@@ -8167,7 +8505,7 @@ async function saveCurrentUserProfile(profileUpdates = {}) {
         throw userError;
     }
     const user = userData?.user;
-    if (!user?.id) throw new Error('No hay sesion activa para guardar el perfil.');
+    if (!user?.id) throw new Error('No hay sesión activa para guardar el perfil.');
 
     let avatarUrl = profileUpdates.avatarText ?? currentProfile.avatarUrl ?? currentProfile.avatarText ?? '';
     let avatarType = profileUpdates.avatarStyle ?? currentProfile.avatarStyle ?? 'initials';
@@ -8238,7 +8576,7 @@ async function removeCustomProfileAvatar() {
         }
 
         const user = userData?.user;
-        if (!user?.id) throw new Error('No hay sesion activa para borrar el avatar.');
+        if (!user?.id) throw new Error('No hay sesión activa para borrar el avatar.');
 
         console.log('[PROFILE AVATAR] borrando avatar personalizado', { id: user.id });
         const { data, error } = await sb
@@ -8327,8 +8665,8 @@ function openProfileForm() {
         fields: [
             { name: 'name', label: 'Nombre', value: profile.name, placeholder: 'Tu nombre' },
             { name: 'career', label: 'Carrera o area de estudio', value: profile.career, placeholder: 'Ej: Informatica' },
-            { name: 'bio', label: 'Descripcion personal', type: 'textarea', rows: 3, value: profile.bio, placeholder: 'Ej: Construyendo mi camino de aprendizaje.' },
-            { name: 'interests', label: 'Intereses', value: profile.interests, placeholder: 'Ej: IA educativa, programacion, robotica' },
+            { name: 'bio', label: 'Descripción personal', type: 'textarea', rows: 3, value: profile.bio, placeholder: 'Ej: Construyendo mi camino de aprendizaje.' },
+            { name: 'interests', label: 'Intereses', value: profile.interests, placeholder: 'Ej: IA educativa, programación, robótica' },
             { name: 'avatarFile', label: 'Subir foto o imagen personalizada', type: 'file', accept: 'image/*', required: false }
         ],
         onSubmit: async values => {
@@ -8423,7 +8761,7 @@ async function handleRegister(event) {
     const password = document.getElementById('register-password').value.trim();
 
     if (!name || !email || !password) {
-        setAuthMessage('register', 'Completa nombre, email y contrasena para crear tu cuenta.', 'error');
+        setAuthMessage('register', 'Completa nombre, correo y contraseña para crear tu cuenta.', 'error');
         return;
     }
 
@@ -8444,8 +8782,8 @@ async function handleRegister(event) {
         if (!data.user) throw new Error('No se pudo crear el usuario en Auth.');
 
         if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-            setAuthMessage('register', 'Este correo ya esta registrado. Inicia sesion o usa otro correo.', 'error', {
-                label: 'Iniciar sesion con este correo',
+            setAuthMessage('register', 'Este correo ya está registrado. Inicia sesión o usa otro correo.', 'error', {
+                label: 'Iniciar sesión con este correo',
                 onClick: () => showLoginWithEmail(email)
             });
             return;
@@ -8482,8 +8820,8 @@ async function handleRegister(event) {
         document.getElementById('register-password').value = '';
 
         if (!data.session) {
-            setAuthMessage('register', 'Cuenta creada. Ahora inicia sesion.', 'success', {
-                label: 'Iniciar sesion con este correo',
+            setAuthMessage('register', 'Cuenta creada. Ahora inicia sesión.', 'success', {
+                label: 'Iniciar sesión con este correo',
                 onClick: () => showLoginWithEmail(email)
             });
             return;
@@ -8491,12 +8829,13 @@ async function handleRegister(event) {
 
         await bootstrapAuthenticatedApp(data.user, name);
 
-        notify('Cuenta creada correctamente. Tu espacio academico empieza vacio.', 'success');
+        notify('Cuenta creada correctamente. Tu espacio académico empieza vacío.', 'success');
+        playInterfaceSound();
         showApp();
     } catch (error) {
         const message = translateSupabaseError(error.message);
         const action = isAlreadyRegisteredError(error.message) ? {
-            label: 'Iniciar sesion con este correo',
+            label: 'Iniciar sesión con este correo',
             onClick: () => showLoginWithEmail(email)
         } : null;
         setAuthMessage('register', message, 'error', action);
@@ -8522,7 +8861,7 @@ async function handleLogin(event) {
     const password = document.getElementById('login-password').value.trim();
 
     if (!email || !password) {
-        setAuthMessage('login', 'Escribe tu correo y contrasena para iniciar sesion.', 'error');
+        setAuthMessage('login', 'Escribe tu correo y contraseña para iniciar sesión.', 'error');
         loginInProgress = false;
         if (loginButton) {
             loginButton.disabled = false;
@@ -8576,7 +8915,7 @@ async function handleLogin(event) {
                 xp: 0,
                 streak: 0
             });
-            notify('Sesion iniciada. No se pudieron cargar algunos datos de Supabase.', 'info');
+            notify('Sesión iniciada. No se pudieron cargar algunos datos de Supabase.', 'info');
             showDashboard();
         }
 
@@ -8584,7 +8923,8 @@ async function handleLogin(event) {
         document.getElementById('login-password').value = '';
 
         console.log("[LOGIN] Entrando al dashboard");
-        notify('Sesion iniciada correctamente.', 'success');
+        notify('Sesión iniciada correctamente.', 'success');
+        playInterfaceSound();
         showApp();
     } catch (error) {
         console.error("[LOGIN] Error Supabase:", error);
@@ -8628,6 +8968,7 @@ async function handleLogout(event) {
 
         console.log("[LOGOUT] Sesión cerrada");
         console.log("[APP] Mostrando landing");
+        playInterfaceSound();
         showLanding();
         notify("Sesión cerrada.", "info");
     } catch (error) {
@@ -8684,7 +9025,7 @@ function openSubjectForm(subjectId = null) {
         title: subject ? 'Editar materia' : 'Crear materia',
         submitLabel: subject ? 'Actualizar materia' : 'Guardar materia',
         fields: [
-            { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matematica' },
+            { name: 'name', label: 'Nombre de la materia', value: subject?.name || '', placeholder: 'Ej: Matemática' },
             { name: 'icon', label: 'Icono de la materia', type: 'choice-grid', options: subjectBookOptions, value: normalizeSubjectIcon(subject?.icon) },
             {
                 name: 'customIcon',
@@ -8694,7 +9035,7 @@ function openSubjectForm(subjectId = null) {
                 placeholder: 'Ej: MAT, BIO, IA'
             },
             { name: 'color', label: 'Color identificador', type: 'choice-grid', options: subjectColorOptions, value: normalizeSubjectColor(subject?.color || 'Azul') },
-            { name: 'description', label: 'Descripcion corta', type: 'textarea', rows: 3, value: subject?.description || '', required: false, placeholder: 'Ej: Algebra, geometria y resolucion de problemas.' },
+            { name: 'description', label: 'Descripción corta', type: 'textarea', rows: 3, value: subject?.description || '', required: false, placeholder: 'Ej: Álgebra, geometría y resolución de problemas.' },
             { name: 'goal', label: 'Objetivo de la materia', type: 'textarea', rows: 3, value: subject?.goal || '', required: false, placeholder: 'Ej: Subir mi promedio y entregar tareas a tiempo.' }
         ],
         onSubmit: async values => {
@@ -8828,7 +9169,7 @@ function renderSubjects(workspace) {
                         ${getSubjectIconMarkup(subject)}
                         <div>
                             <h3>${escapeHTML(subject.name)}</h3>
-                            <p>${escapeHTML(subject.description || 'Espacio academico personalizado')}</p>
+                            <p>${escapeHTML(subject.description || 'Espacio académico personalizado')}</p>
                         </div>
                     </div>
                     <span class="subject-chip">${escapeHTML(subject.color || 'Morado')}</span>
@@ -8844,7 +9185,7 @@ function renderSubjects(workspace) {
                     <div><span>Apuntes</span><strong>${metrics.resources.length}</strong></div>
                 </div>
                 <div class="subject-card-footer">
-                    <p><strong>Proxima entrega:</strong> ${metrics.nextEvent ? escapeHTML(`${metrics.nextEvent.title} - ${metrics.nextEvent.date || metrics.nextEvent.day || 'Sin fecha'}`) : 'Sin entregas programadas'}</p>
+                    <p><strong>Próxima entrega:</strong> ${metrics.nextEvent ? escapeHTML(`${metrics.nextEvent.title} - ${metrics.nextEvent.date || metrics.nextEvent.day || 'Sin fecha'}`) : 'Sin entregas programadas'}</p>
                     <p><strong>Ultima actividad:</strong> ${escapeHTML(metrics.recentText)}</p>
                 </div>
                 <div class="card-actions">
@@ -8854,7 +9195,7 @@ function renderSubjects(workspace) {
                 </div>
             </div>
         `;
-    }).join('') : emptyStateHTML('No se encontraron materias con esa busqueda.', 'Limpiar busqueda', "clearSubjectSearch()")) : emptyStateHTML('No tienes materias todavia. Organiza tu aprendizaje creando tu primera materia.', '+ Crear materia', 'addSubjectUI()');
+    }).join('') : emptyStateHTML('No se encontraron materias con esa búsqueda.', 'Limpiar búsqueda', "clearSubjectSearch()")) : emptyStateHTML('No tienes materias todavía. Organiza tu aprendizaje creando tu primera materia.', '+ Crear materia', 'addSubjectUI()');
 
     bindSubjectsToolbar();
     grid.querySelectorAll('[data-subject-open]').forEach(button => button.addEventListener('click', () => openSubjectDetails(button.dataset.subjectOpen)));
@@ -8870,13 +9211,13 @@ function openTaskForm(taskId = null) {
         title: task ? 'Editar tarea' : 'Crear tarea',
         submitLabel: task ? 'Actualizar tarea' : 'Guardar tarea',
         fields: [
-            { name: 'title', label: 'Titulo', value: task?.title || '', placeholder: 'Ej: Taller de funciones' },
+            { name: 'title', label: 'Título', value: task?.title || '', placeholder: 'Ej: Taller de funciones' },
             { name: 'subject', label: 'Materia', type: 'select', options: getSubjectOptions(workspace), value: task?.subject || '' },
-            { name: 'description', label: 'Descripcion', type: 'textarea', value: task?.description || '', placeholder: 'Detalles de la tarea' },
-            { name: 'due', label: 'Fecha limite', type: 'date', value: normalizeDate(task?.due) },
+            { name: 'description', label: 'Descripción', type: 'textarea', value: task?.description || '', placeholder: 'Detalles de la tarea' },
+            { name: 'due', label: 'Fecha límite', type: 'date', value: normalizeDate(task?.due) },
             { name: 'priority', label: 'Prioridad', type: 'select', options: taskPriorityOptions, value: task?.priority || 'media' },
-            { name: 'emailReminder', label: 'Recordarme por Gmail', type: 'checkbox', checked: !!task?.emailReminder, required: false, help: 'Mostrar alerta visual cuando este proxima a vencer' },
-            { name: 'email', label: 'Correo para notificacion', type: 'email', value: task?.email || currentUser?.email || '', required: false, placeholder: 'usuario@gmail.com' }
+            { name: 'emailReminder', label: 'Recordarme por Gmail', type: 'checkbox', checked: !!task?.emailReminder, required: false, help: 'Mostrar alerta visual cuando esté próxima a vencer' },
+            { name: 'email', label: 'Correo para notificación', type: 'email', value: task?.email || currentUser?.email || '', required: false, placeholder: 'usuario@gmail.com' }
         ],
         onSubmit: async values => {
             const title = values.title.trim();
@@ -8885,7 +9226,7 @@ function openTaskForm(taskId = null) {
             let savedTaskId = taskId;
 
             if (!title || !subject) {
-                notify('Selecciona una materia valida y escribe el titulo.', 'error');
+                notify('Selecciona una materia válida y escribe el título.', 'error');
                 return;
             }
 
@@ -9039,6 +9380,9 @@ async function initializeApp() {
     document.body.classList.remove('is-dashboard', 'student-active');
 
     bindAuthForms();
+    initInterfaceSound();
+    bindInterfaceSoundEvents();
+    updateInterfaceSoundControls();
 
     if (isDarkTheme) {
         document.body.classList.remove('light-theme');
@@ -9055,7 +9399,7 @@ async function initializeApp() {
     initLandingWheelControl();
 
     const shouldRestoreStudentApp = shouldRestoreAppFromSession();
-    console.log(shouldRestoreStudentApp ? "[APP] Restauracion de panel pendiente" : "[APP] Landing inicial");
+    console.log(shouldRestoreStudentApp ? "[APP] Restauración de panel pendiente" : "[APP] Landing inicial");
     currentUser = null;
     profileState = null;
     workspaceState = mergeWorkspaceState();
@@ -9069,7 +9413,7 @@ async function initializeApp() {
         if (!authListenerReady) {
             sb.auth.onAuthStateChange(async (authEvent, session) => {
                 if (authEvent === 'PASSWORD_RECOVERY') {
-                    console.log('[PASSWORD UPDATE] Modo recuperacion detectado');
+                    console.log('[PASSWORD UPDATE] Modo recuperación detectado');
                     currentUser = null;
                     profileState = null;
                     workspaceState = mergeWorkspaceState();
@@ -9095,7 +9439,7 @@ async function initializeApp() {
         const { data: sessionData, error } = await sb.auth.getSession();
         if (error) throw error;
         if (isPasswordRecoveryUrl()) {
-            console.log('[PASSWORD UPDATE] Link de recuperacion detectado en URL');
+            console.log('[PASSWORD UPDATE] Link de recuperación detectado en URL');
             window.setTimeout(openPasswordUpdateModal, 250);
             clearAppViewSession();
             showLanding();
@@ -9137,6 +9481,7 @@ window.openPasswordResetModal = openPasswordResetModal;
 window.closePasswordResetModal = closePasswordResetModal;
 window.handlePasswordReset = handlePasswordReset;
 window.handleUpdatePassword = handleUpdatePassword;
+window.toggleInterfaceSounds = toggleInterfaceSounds;
 window.openSubjectForm = openSubjectForm;
 window.openTaskForm = openTaskForm;
 window.toggleTask = toggleTask;

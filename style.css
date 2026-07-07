@@ -26981,3 +26981,168 @@ html:not(.is-landing):not(.landing-mode) {
     overflow-x: hidden !important;
     overflow-y: auto !important;
 }
+
+/* ============================================
+   SONIDOS DE INTERFAZ Y CONFIGURACION
+   ============================================ */
+.ui-press-feedback {
+    animation: uiPressFeedback 170ms ease-out;
+}
+
+@keyframes uiPressFeedback {
+    0% { transform: scale(1); }
+    45% { transform: scale(0.98); }
+    100% { transform: scale(1); }
+}
+
+.sidebar-icon-settings {
+    --sidebar-icon-a: #0ea5e9;
+    --sidebar-icon-b: #8b5cf6;
+    --sidebar-icon-c: #38bdf8;
+}
+
+.settings-layout {
+    display: grid;
+    gap: 22px;
+    width: 100%;
+}
+
+.settings-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 28px;
+    padding: 28px;
+    border-radius: 28px;
+    background:
+        linear-gradient(135deg, rgba(56, 189, 248, 0.10), rgba(236, 72, 153, 0.08)),
+        rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.18);
+}
+
+.settings-kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-bottom: 10px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    color: #38bdf8;
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.settings-card h2 {
+    margin: 0 0 8px;
+    color: var(--text-primary);
+    font-size: 1.45rem;
+    font-weight: 950;
+}
+
+.settings-card p {
+    max-width: 620px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+
+.settings-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.settings-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.settings-switch-track {
+    position: relative;
+    width: 76px;
+    height: 40px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.26);
+    box-shadow: inset 0 1px 8px rgba(0, 0, 0, 0.22);
+    transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.settings-switch-thumb {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f8fafc, #cbd5e1);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+    transition: transform 180ms ease, background 180ms ease;
+}
+
+.settings-switch input:checked + .settings-switch-track {
+    background: linear-gradient(135deg, #6366f1, #38bdf8, #ec4899);
+    border-color: rgba(56, 189, 248, 0.56);
+    box-shadow: 0 12px 28px rgba(56, 189, 248, 0.20);
+}
+
+.settings-switch input:checked + .settings-switch-track .settings-switch-thumb {
+    transform: translateX(36px);
+    background: #ffffff;
+}
+
+.settings-switch input:focus-visible + .settings-switch-track {
+    outline: 3px solid rgba(56, 189, 248, 0.35);
+    outline-offset: 3px;
+}
+
+.settings-switch-label {
+    color: var(--text-primary);
+    font-size: 0.86rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+body.light-theme .settings-card,
+body.light-mode .settings-card,
+[data-theme="light"] .settings-card {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+}
+
+body.light-theme .settings-card p,
+body.light-mode .settings-card p,
+[data-theme="light"] .settings-card p {
+    color: #475569;
+}
+
+body.light-theme .settings-switch-track,
+body.light-mode .settings-switch-track,
+[data-theme="light"] .settings-switch-track {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    box-shadow: inset 0 1px 6px rgba(15, 23, 42, 0.08);
+}
+
+body.light-theme .settings-switch-label,
+body.light-mode .settings-switch-label,
+[data-theme="light"] .settings-switch-label {
+    color: #0f172a;
+}
+
+@media (max-width: 760px) {
+    .settings-card {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+}
+
