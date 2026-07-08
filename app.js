@@ -16,6 +16,7 @@ let isTabletOrSmaller = window.innerWidth <= 768;
 let calendarViewDate = new Date(2026, 5, 1);
 let sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
 const INTERFACE_SOUND_STORAGE_KEY = 'ac_interface_sounds_enabled';
+const INTERFACE_SOUND_SRC = 'assets/click.mp3';
 let interfaceSoundsEnabled = localStorage.getItem(INTERFACE_SOUND_STORAGE_KEY) !== 'false';
 let interfaceSoundAudio = null;
 let lastInterfaceSoundAt = 0;
@@ -87,56 +88,11 @@ function showToast(message, type = 'info') {
     notify(message, type);
 }
 
-function createInterfaceSoundDataUri() {
-    const sampleRate = 44100;
-    const duration = 0.075;
-    const samples = Math.floor(sampleRate * duration);
-    const buffer = new ArrayBuffer(44 + samples * 2);
-    const view = new DataView(buffer);
-
-    const writeString = (offset, value) => {
-        for (let index = 0; index < value.length; index += 1) {
-            view.setUint8(offset + index, value.charCodeAt(index));
-        }
-    };
-
-    writeString(0, 'RIFF');
-    view.setUint32(4, 36 + samples * 2, true);
-    writeString(8, 'WAVE');
-    writeString(12, 'fmt ');
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 2, true);
-    view.setUint16(32, 2, true);
-    view.setUint16(34, 16, true);
-    writeString(36, 'data');
-    view.setUint32(40, samples * 2, true);
-
-    for (let index = 0; index < samples; index += 1) {
-        const progress = index / samples;
-        const envelope = Math.pow(1 - progress, 3.2);
-        const frequency = 760 + (progress * 280);
-        const shimmer = Math.sin(2 * Math.PI * frequency * index / sampleRate);
-        const body = Math.sin(2 * Math.PI * 380 * index / sampleRate) * 0.18;
-        const sample = Math.max(-1, Math.min(1, (shimmer + body) * envelope * 0.32));
-        view.setInt16(44 + index * 2, sample * 32767, true);
-    }
-
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    for (let index = 0; index < bytes.length; index += 1) {
-        binary += String.fromCharCode(bytes[index]);
-    }
-    return `data:audio/wav;base64,${btoa(binary)}`;
-}
-
 function initInterfaceSound() {
     if (interfaceSoundAudio) return interfaceSoundAudio;
-    interfaceSoundAudio = new Audio(createInterfaceSoundDataUri());
+    interfaceSoundAudio = new Audio(INTERFACE_SOUND_SRC);
     interfaceSoundAudio.preload = 'auto';
-    interfaceSoundAudio.volume = 0.16;
+    interfaceSoundAudio.volume = 0.17;
     interfaceSoundAudio.load();
     return interfaceSoundAudio;
 }
@@ -194,7 +150,7 @@ function playInterfaceSound() {
     lastInterfaceSoundAt = now;
     audio.pause();
     audio.currentTime = 0;
-    audio.volume = 0.16;
+    audio.volume = 0.17;
     const playPromise = audio.play();
     if (playPromise?.catch) {
         playPromise.catch(() => {});
