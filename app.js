@@ -6230,7 +6230,7 @@ function renderDashboard(workspace) {
         <div class="dashboard-hero dashboard-student-hero">
             <div class="dashboard-hero-copy">
                 <span class="dashboard-eyebrow">Panel académico</span>
-                <h1>Hola, ${escapeHTML(firstName)} <span aria-hidden="true">&#128075;</span></h1>
+                <h1>Hola, ${escapeHTML(firstName)}</h1>
                 <p>${isEmpty ? 'Empieza configurando tu espacio académico.' : 'Listo para seguir aprendiendo hoy.'}</p>
                 <div class="dashboard-hero-meta">
                     <span>${escapeHTML(readableDate)}</span>
@@ -6244,8 +6244,18 @@ function renderDashboard(workspace) {
                 </div>
             </div>
             <div class="dashboard-hero-widget">
-                ${appIconHTML('bot', 'hero-widget-icon stat-icon stat-icon-assistant dashboard-icon')}
-                <div>
+                <div class="dashboard-tutor-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="5" y="7" width="14" height="11" rx="4"></rect>
+                        <path d="M12 3v4"></path>
+                        <path d="M8.5 12h.01"></path>
+                        <path d="M15.5 12h.01"></path>
+                        <path d="M9.5 15h5"></path>
+                        <path d="M4 11H2.5"></path>
+                        <path d="M21.5 11H20"></path>
+                    </svg>
+                </div>
+                <div class="dashboard-tutor-copy">
                     <strong>Tutor IA</strong>
                     <p>Pregunta, resume apuntes o prepara un examen.</p>
                 </div>
