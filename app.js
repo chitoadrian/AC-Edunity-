@@ -6249,24 +6249,26 @@ function renderDashboard(workspace) {
         <div class="dashboard-hero dashboard-student-hero">
             <div class="dashboard-hero-copy">
                 <span class="dashboard-eyebrow">Panel académico</span>
-                <h1>Hola, ${escapeHTML(firstName)} <span aria-hidden="true">&#128075;</span></h1>
+                <h1>Hola, ${escapeHTML(firstName)}</h1>
                 <p>${isEmpty ? 'Empieza configurando tu espacio académico.' : 'Listo para seguir aprendiendo hoy.'}</p>
                 <div class="dashboard-hero-meta">
                     <span>${escapeHTML(readableDate)}</span>
                     <span>Un avance pequeño también cuenta.</span>
                 </div>
                 <div class="quick-actions-bar dashboard-hero-actions">
-                    <button type="button" onclick="navigateTo('subjects')">+ Nueva materia</button>
-                    <button type="button" onclick="navigateTo('tasks')">+ Nueva tarea</button>
-                    <button type="button" onclick="navigateTo('calendar')">+ Nuevo evento</button>
-                    <button type="button" onclick="navigateTo('backpack')">+ Subir apunte</button>
+                    <button type="button" onclick="navigateTo('subjects')"><span>+</span> Nueva materia</button>
+                    <button type="button" onclick="navigateTo('tasks')"><span>+</span> Nueva tarea</button>
+                    <button type="button" onclick="navigateTo('calendar')"><span>+</span> Nuevo evento</button>
+                    <button type="button" onclick="navigateTo('backpack')"><span>+</span> Subir apunte</button>
                 </div>
             </div>
             <div class="dashboard-hero-widget">
-                ${appIconHTML('bot', 'hero-widget-icon stat-icon stat-icon-assistant dashboard-icon')}
-                <div>
-                    <strong>Tutor IA</strong>
-                    <p>Pregunta, resume apuntes o prepara un examen.</p>
+                <div class="dashboard-hero-widget-main">
+                    ${appIconHTML('bot', 'hero-widget-icon stat-icon stat-icon-assistant dashboard-icon')}
+                    <div>
+                        <strong>Tutor IA</strong>
+                        <p>Pregunta, resume apuntes o prepara un examen.</p>
+                    </div>
                 </div>
                 <button class="btn-primary btn-small" type="button" onclick="navigateTo('ai-assistant')">Abrir Tutor</button>
             </div>

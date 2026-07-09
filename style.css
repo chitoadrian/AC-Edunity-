@@ -27154,3 +27154,286 @@ body.light-mode .settings-switch-label,
     }
 }
 
+/* Dashboard hero final: panel academico profesional AC Edunity */
+#dashboard .dashboard-student-hero {
+    position: relative !important;
+    isolation: isolate !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 460px) !important;
+    align-items: center !important;
+    gap: clamp(22px, 3vw, 42px) !important;
+    padding: clamp(26px, 4vw, 42px) !important;
+    min-height: 300px !important;
+    margin-bottom: 24px !important;
+    border-radius: 34px !important;
+    border: 1px solid rgba(148, 163, 184, 0.20) !important;
+    background:
+        radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.18), transparent 34%),
+        radial-gradient(circle at 86% 18%, rgba(236, 72, 153, 0.16), transparent 30%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 82, 0.90) 42%, rgba(68, 35, 72, 0.86) 100%) !important;
+    box-shadow: 0 28px 76px rgba(2, 6, 23, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+    overflow: hidden !important;
+}
+
+#dashboard .dashboard-student-hero::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 1px !important;
+    z-index: -1 !important;
+    border-radius: 33px !important;
+    background:
+        linear-gradient(90deg, rgba(56, 189, 248, 0.16), transparent 22%, rgba(139, 92, 246, 0.14) 62%, rgba(236, 72, 153, 0.12)),
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px) !important;
+    background-size: auto, 46px 46px, 46px 46px !important;
+    pointer-events: none !important;
+}
+
+#dashboard .dashboard-hero-copy {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 16px !important;
+}
+
+#dashboard .dashboard-eyebrow {
+    width: fit-content !important;
+    padding: 9px 16px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    background: rgba(14, 165, 233, 0.12) !important;
+    color: #67e8f9 !important;
+    font-size: 0.76rem !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+}
+
+#dashboard .dashboard-hero-copy h1 {
+    margin: 0 !important;
+    max-width: 760px !important;
+    color: #f8fafc !important;
+    font-size: clamp(2.35rem, 4.9vw, 5rem) !important;
+    line-height: 0.98 !important;
+    letter-spacing: 0 !important;
+}
+
+#dashboard .dashboard-hero-copy p {
+    max-width: 620px !important;
+    margin: 0 !important;
+    color: rgba(226, 232, 240, 0.82) !important;
+    font-size: clamp(1rem, 1.4vw, 1.22rem) !important;
+    line-height: 1.45 !important;
+}
+
+#dashboard .dashboard-hero-meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+
+#dashboard .dashboard-hero-meta span {
+    min-height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 8px 14px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(226, 232, 240, 0.14) !important;
+    background: rgba(15, 23, 42, 0.30) !important;
+    color: rgba(248, 250, 252, 0.86) !important;
+    font-size: 0.82rem !important;
+    font-weight: 850 !important;
+}
+
+#dashboard .dashboard-hero-actions {
+    width: min(100%, 680px) !important;
+    max-width: 680px !important;
+    margin: 12px 0 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+}
+
+#dashboard .dashboard-hero-actions button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: #e0f2fe !important;
+    font-size: 0.92rem !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 14px 34px rgba(2, 6, 23, 0.18) !important;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease !important;
+}
+
+#dashboard .dashboard-hero-actions button span {
+    width: 22px !important;
+    height: 22px !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    border-radius: 8px !important;
+    background: linear-gradient(135deg, #38bdf8, #8b5cf6) !important;
+    color: #ffffff !important;
+    line-height: 1 !important;
+}
+
+#dashboard .dashboard-hero-actions button:hover {
+    transform: translateY(-2px) !important;
+    border-color: rgba(56, 189, 248, 0.44) !important;
+    background: rgba(14, 165, 233, 0.14) !important;
+}
+
+#dashboard .dashboard-hero-widget {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    justify-self: stretch !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px !important;
+    align-content: center !important;
+    padding: 24px !important;
+    border-radius: 28px !important;
+    border: 1px solid rgba(125, 211, 252, 0.22) !important;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.045)),
+        rgba(15, 23, 42, 0.34) !important;
+    backdrop-filter: blur(18px) !important;
+    box-shadow: 0 24px 56px rgba(2, 6, 23, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+#dashboard .dashboard-hero-widget-main {
+    display: grid !important;
+    grid-template-columns: 64px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 18px !important;
+    min-width: 0 !important;
+}
+
+#dashboard .dashboard-hero-widget .hero-widget-icon {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    border-radius: 20px !important;
+    background: linear-gradient(135deg, #6366f1, #38bdf8) !important;
+    box-shadow: 0 18px 36px rgba(56, 189, 248, 0.22) !important;
+}
+
+#dashboard .dashboard-hero-widget strong {
+    display: block !important;
+    margin: 0 0 5px !important;
+    color: #ffffff !important;
+    font-size: clamp(1.35rem, 2vw, 1.75rem) !important;
+    font-weight: 950 !important;
+    line-height: 1.1 !important;
+}
+
+#dashboard .dashboard-hero-widget p {
+    margin: 0 !important;
+    color: rgba(226, 232, 240, 0.78) !important;
+    line-height: 1.45 !important;
+}
+
+#dashboard .dashboard-hero-widget .btn-primary {
+    width: 100% !important;
+    min-height: 52px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 18px !important;
+    background: linear-gradient(135deg, #38bdf8, #6366f1 58%, #ec4899) !important;
+    color: #ffffff !important;
+    font-weight: 950 !important;
+    box-shadow: 0 18px 38px rgba(56, 189, 248, 0.20) !important;
+}
+
+body.light-mode #dashboard .dashboard-student-hero,
+body.light-theme #dashboard .dashboard-student-hero,
+[data-theme="light"] #dashboard .dashboard-student-hero {
+    border-color: #dbeafe !important;
+    background:
+        radial-gradient(circle at 12% 20%, rgba(56, 189, 248, 0.16), transparent 36%),
+        linear-gradient(135deg, #ffffff 0%, #eef6ff 48%, #fff0f8 100%) !important;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.10) !important;
+}
+
+body.light-mode #dashboard .dashboard-hero-copy h1,
+body.light-theme #dashboard .dashboard-hero-copy h1,
+[data-theme="light"] #dashboard .dashboard-hero-copy h1,
+body.light-mode #dashboard .dashboard-hero-widget strong,
+body.light-theme #dashboard .dashboard-hero-widget strong,
+[data-theme="light"] #dashboard .dashboard-hero-widget strong {
+    color: #0f172a !important;
+}
+
+body.light-mode #dashboard .dashboard-hero-copy p,
+body.light-theme #dashboard .dashboard-hero-copy p,
+[data-theme="light"] #dashboard .dashboard-hero-copy p,
+body.light-mode #dashboard .dashboard-hero-widget p,
+body.light-theme #dashboard .dashboard-hero-widget p,
+[data-theme="light"] #dashboard .dashboard-hero-widget p {
+    color: #475569 !important;
+}
+
+body.light-mode #dashboard .dashboard-hero-meta span,
+body.light-theme #dashboard .dashboard-hero-meta span,
+[data-theme="light"] #dashboard .dashboard-hero-meta span,
+body.light-mode #dashboard .dashboard-hero-actions button,
+body.light-theme #dashboard .dashboard-hero-actions button,
+[data-theme="light"] #dashboard .dashboard-hero-actions button,
+body.light-mode #dashboard .dashboard-hero-widget,
+body.light-theme #dashboard .dashboard-hero-widget,
+[data-theme="light"] #dashboard .dashboard-hero-widget {
+    border-color: #dbeafe !important;
+    background: rgba(255, 255, 255, 0.72) !important;
+    color: #1e293b !important;
+}
+
+@media (max-width: 1180px) {
+    #dashboard .dashboard-student-hero {
+        grid-template-columns: 1fr !important;
+    }
+
+    #dashboard .dashboard-hero-widget {
+        max-width: 720px !important;
+    }
+}
+
+@media (max-width: 820px) {
+    #dashboard .dashboard-hero-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    #dashboard .dashboard-student-hero {
+        padding: 22px !important;
+        border-radius: 26px !important;
+    }
+
+    #dashboard .dashboard-hero-actions {
+        grid-template-columns: 1fr !important;
+    }
+
+    #dashboard .dashboard-hero-widget-main {
+        grid-template-columns: 54px minmax(0, 1fr) !important;
+        gap: 14px !important;
+    }
+
+    #dashboard .dashboard-hero-widget .hero-widget-icon {
+        width: 54px !important;
+        height: 54px !important;
+        min-width: 54px !important;
+        border-radius: 18px !important;
+    }
+}
+
