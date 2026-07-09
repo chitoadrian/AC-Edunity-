@@ -4836,6 +4836,21 @@ function showTutorThinking() {
     return thinking;
 }
 
+function setTutorSendingState(isSending) {
+    const sendButton = document.querySelector('#ai-assistant .tutor-send');
+    const input = document.getElementById('ai-topic');
+
+    if (sendButton) {
+        sendButton.disabled = Boolean(isSending);
+        sendButton.classList.toggle('is-loading', Boolean(isSending));
+        sendButton.textContent = isSending ? 'Pensando...' : 'Enviar';
+    }
+
+    if (input) {
+        input.setAttribute('aria-busy', String(Boolean(isSending)));
+    }
+}
+
 function detectTutorIntent(message) {
     const text = normalizeTutorText(message);
 
@@ -5456,6 +5471,20 @@ function getTutorWorkspaceContext() {
     };
 }
 
+function getTutorConversationContext() {
+    const history = tutorState.history.slice(-12);
+    if (history[history.length - 1]?.role === 'user') {
+        history.pop();
+    }
+
+    return history
+        .filter(item => item?.content)
+        .map(item => ({
+            role: item.role === 'assistant' ? 'assistant' : 'user',
+            content: String(item.content || '').slice(0, 4000)
+        }));
+}
+
 async function requestTutorAI(userMessage) {
     const sb = getSupabaseClient();
     const { data: sessionData, error: sessionError } = await sb.auth.getSession();
@@ -5471,33 +5500,26 @@ async function requestTutorAI(userMessage) {
     const { data, error } = await sb.functions.invoke("tutor-ai", {
         body: {
             message: userMessage,
+            history: getTutorConversationContext(),
             context: getTutorWorkspaceContext()
         }
     });
 
-    console.log("[TUTOR IA RESPONSE]", { data, error });
-
     if (error) {
-        const isFallback = isTutorBillingError(error);
         const answer = getTutorAIErrorAnswer(error, userMessage);
-        if (!isFallback) {
-            console.error("[TUTOR IA INVOKE ERROR]", error);
-        }
+        console.error("[TUTOR IA INVOKE ERROR]", error);
         return {
-            ok: isFallback,
+            ok: false,
             answer
         };
     }
 
     if (!data || data.ok === false) {
         const dataError = data?.error || data;
-        const isFallback = isTutorBillingError(dataError);
         const answer = getTutorAIErrorAnswer(dataError, userMessage);
-        if (!isFallback) {
-            console.error("[TUTOR IA DATA ERROR]", data);
-        }
+        console.error("[TUTOR IA DATA ERROR]", data);
         return {
-            ok: isFallback,
+            ok: false,
             answer
         };
     }
@@ -5531,8 +5553,7 @@ function stringifyTutorAIError(error) {
 }
 
 function isTutorBillingError(error) {
-    const text = normalizeTutorText(stringifyTutorAIError(error));
-    return /(saldo|credito|creditos|quota|insufficient_quota|limite|limit)/.test(text);
+    return false;
 }
 
 function getTutorAIErrorAnswer(error, userMessage) {
@@ -5541,7 +5562,7 @@ function getTutorAIErrorAnswer(error, userMessage) {
         return `Estoy listo para ayudarte. Aquí tienes una explicación sencilla:\n\n${generateTutorDemoAnswer(userMessage)}`;
     }
 
-    return "No pude responder ahora. Intenta nuevamente.";
+    return "No pude conectar con Tutor IA. Intenta nuevamente.";
 }
 
 function generateTutorDemoAnswer(message) {
@@ -5618,7 +5639,7 @@ function getTutorAIErrorAnswer(error, userMessage) {
         return `Estoy listo para ayudarte. Aqui tienes una explicacion sencilla:\n\n${generateTutorDemoAnswer(userMessage)}`;
     }
 
-    return "No pude responder ahora. Intenta nuevamente.";
+    return "No pude conectar con Tutor IA. Intenta nuevamente.";
 }
 
 function generateTutorDemoAnswer(message) {
@@ -6066,6 +6087,7 @@ async function sendTutorMessage(userMessage, displayMessage = userMessage) {
 
     if (tutorRequestInProgress) return;
     tutorRequestInProgress = true;
+    setTutorSendingState(true);
 
     const input = document.getElementById('ai-topic');
     appendTutorMessage('user', visibleMessage);
@@ -6079,19 +6101,16 @@ async function sendTutorMessage(userMessage, displayMessage = userMessage) {
         if (thinking) thinking.remove();
 
         appendTutorMessage('bot', result.answer, 'Tutor');
-        if (result.ok) {
-            addTutorHistory('assistant', result.answer);
-        }
+        addTutorHistory('assistant', result.answer);
     } catch (error) {
         if (thinking) thinking.remove();
         const answer = getTutorAIErrorAnswer(error, cleanMessage);
-        if (!isTutorBillingError(error)) {
-            console.error("[TUTOR IA UNEXPECTED ERROR]", error);
-        }
+        console.error("[TUTOR IA UNEXPECTED ERROR]", error);
         appendTutorMessage('bot', answer, 'Tutor');
         addTutorHistory('assistant', answer);
     } finally {
         tutorRequestInProgress = false;
+        setTutorSendingState(false);
         if (input) input.focus();
     }
 }
@@ -6230,7 +6249,7 @@ function renderDashboard(workspace) {
         <div class="dashboard-hero dashboard-student-hero">
             <div class="dashboard-hero-copy">
                 <span class="dashboard-eyebrow">Panel académico</span>
-                <h1>Hola, ${escapeHTML(firstName)}</h1>
+                <h1>Hola, ${escapeHTML(firstName)} <span aria-hidden="true">&#128075;</span></h1>
                 <p>${isEmpty ? 'Empieza configurando tu espacio académico.' : 'Listo para seguir aprendiendo hoy.'}</p>
                 <div class="dashboard-hero-meta">
                     <span>${escapeHTML(readableDate)}</span>
@@ -6244,18 +6263,8 @@ function renderDashboard(workspace) {
                 </div>
             </div>
             <div class="dashboard-hero-widget">
-                <div class="dashboard-tutor-mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                        <rect x="5" y="7" width="14" height="11" rx="4"></rect>
-                        <path d="M12 3v4"></path>
-                        <path d="M8.5 12h.01"></path>
-                        <path d="M15.5 12h.01"></path>
-                        <path d="M9.5 15h5"></path>
-                        <path d="M4 11H2.5"></path>
-                        <path d="M21.5 11H20"></path>
-                    </svg>
-                </div>
-                <div class="dashboard-tutor-copy">
+                ${appIconHTML('bot', 'hero-widget-icon stat-icon stat-icon-assistant dashboard-icon')}
+                <div>
                     <strong>Tutor IA</strong>
                     <p>Pregunta, resume apuntes o prepara un examen.</p>
                 </div>
