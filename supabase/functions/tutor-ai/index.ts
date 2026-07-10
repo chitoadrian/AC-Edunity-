@@ -4,8 +4,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const GEMINI_MODEL = "gemini-3.5-flash";
-const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions";
+const GEMINI_MODEL = "gemini-1.5-flash";
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 type TutorHistoryItem = {
   role?: string;
@@ -44,20 +44,22 @@ function compactWorkspaceContext(context: TutorRequestBody["context"]) {
   return JSON.stringify({ subjects, tasks, resources }).slice(0, 8000);
 }
 
-function buildGeminiInput(message: string, history: TutorHistoryItem[] = []) {
+function buildGeminiContents(message: string, history: TutorHistoryItem[] = []) {
   const safeHistory = history
     .slice(-10)
-    .map((item) => {
-      const role = item.role === "assistant" || item.role === "model" ? "Tutor IA" : "Estudiante";
-      const content = cleanText(item.content, 3000);
-      return content ? `${role}: ${content}` : "";
-    })
-    .filter(Boolean)
-    .join("\n");
+    .map((item) => ({
+      role: item.role === "assistant" || item.role === "model" ? "model" : "user",
+      parts: [{ text: cleanText(item.content, 3000) }],
+    }))
+    .filter((item) => item.parts[0].text);
 
-  return safeHistory
-    ? `Historial reciente de la conversacion:\n${safeHistory}\n\nPregunta actual del estudiante:\n${message}`
-    : message;
+  return [
+    ...safeHistory,
+    {
+      role: "user",
+      parts: [{ text: message }],
+    },
+  ];
 }
 
 function extractGeminiAnswer(data: Record<string, unknown>) {
@@ -122,30 +124,37 @@ Deno.serve(async (request) => {
     }
 
     const workspaceContext = compactWorkspaceContext(body.context);
-    const input = buildGeminiInput(message, body.history);
+    const contents = buildGeminiContents(message, body.history);
 
-    const geminiResponse = await fetch(GEMINI_ENDPOINT, {
+    const geminiResponse = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
-        model: GEMINI_MODEL,
-        store: false,
-        system_instruction:
-          "Eres Tutor IA de AC Edunity, un asistente educativo para estudiantes. " +
-          "Responde siempre en espanol claro, profesional y didactico. " +
-          "Explica paso a paso cuando sea util. Crea ejercicios, preguntas tipo examen, flashcards y resumenes si el usuario lo pide. " +
-          "No inventes datos personales. Usa el contexto academico del usuario solo para adaptar ejemplos. " +
-          "Si el usuario pide respuestas largas, organiza la explicacion con subtitulos breves. " +
-          `Contexto academico disponible en AC Edunity: ${workspaceContext}`,
-        input,
-        generation_config: {
-          temperature: 0.55,
-          top_p: 0.9,
-          max_output_tokens: 1200,
+        systemInstruction: {
+          parts: [{
+            text:
+              "Eres Tutor IA de AC Edunity, un asistente educativo para estudiantes. " +
+              "Responde siempre en espanol claro, profesional y didactico. " +
+              "Explica paso a paso cuando sea util. Crea ejercicios, preguntas tipo examen, flashcards y resumenes si el usuario lo pide. " +
+              "No inventes datos personales. Usa el contexto academico del usuario solo para adaptar ejemplos. " +
+              "Si el usuario pide respuestas largas, organiza la explicacion con subtitulos breves. " +
+              `Contexto academico disponible en AC Edunity: ${workspaceContext}`,
+          }],
         },
+        contents,
+        generationConfig: {
+          temperature: 0.55,
+          topP: 0.9,
+          maxOutputTokens: 1200,
+        },
+        safetySettings: [
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+        ],
       }),
     });
 
