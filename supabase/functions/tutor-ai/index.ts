@@ -33,7 +33,7 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 }
 
 function cleanText(value: unknown, maxLength = 6000) {
-  return String(value || "").trim().slice(0, maxLength);
+  return String(value ?? "").trim().slice(0, maxLength);
 }
 
 function compactWorkspaceContext(context: TutorRequestBody["context"]) {
@@ -63,41 +63,14 @@ function buildGeminiContents(message: string, history: TutorHistoryItem[] = []) 
 }
 
 function extractGeminiAnswer(data: Record<string, unknown>) {
-  if (typeof data?.output_text === "string") {
-    return data.output_text.trim();
-  }
-
-  const steps = Array.isArray(data?.steps) ? data.steps : [];
-  for (const step of steps.slice().reverse()) {
-    const content = (step as { content?: unknown })?.content;
-    if (typeof content === "string" && content.trim()) {
-      return content.trim();
-    }
-    if (Array.isArray(content)) {
-      const text = content
-        .map((part) => {
-          if (typeof part === "string") return part;
-          if (part && typeof part === "object" && "text" in part) {
-            return String((part as { text?: unknown }).text || "");
-          }
-          return "";
-        })
-        .join("")
-        .trim();
-      if (text) return text;
-    }
-  }
-
   const candidates = Array.isArray(data?.candidates) ? data.candidates : [];
-  const candidateText = candidates
+  return candidates
     .flatMap((candidate) => {
       const parts = (candidate as { content?: { parts?: { text?: string }[] } })?.content?.parts;
       return Array.isArray(parts) ? parts.map((part) => part.text || "") : [];
     })
     .join("")
     .trim();
-
-  return candidateText;
 }
 
 Deno.serve(async (request) => {
@@ -106,7 +79,7 @@ Deno.serve(async (request) => {
   }
 
   if (request.method !== "POST") {
-    return jsonResponse({ ok: false, error: "Metodo no permitido" }, 405);
+    return jsonResponse({ ok: false, error: "Método no permitido" }, 405);
   }
 
   const apiKey = Deno.env.get("GEMINI_API_KEY");
@@ -120,13 +93,13 @@ Deno.serve(async (request) => {
     const message = cleanText(body.message);
 
     if (!message) {
-      return jsonResponse({ ok: false, error: "Mensaje vacio" }, 400);
+      return jsonResponse({ ok: false, error: "Mensaje vacío" }, 400);
     }
 
     const workspaceContext = compactWorkspaceContext(body.context);
     const contents = buildGeminiContents(message, body.history);
 
-    const geminiResponse = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+    const geminiResponse = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -136,11 +109,11 @@ Deno.serve(async (request) => {
           parts: [{
             text:
               "Eres Tutor IA de AC Edunity, un asistente educativo para estudiantes. " +
-              "Responde siempre en espanol claro, profesional y didactico. " +
-              "Explica paso a paso cuando sea util. Crea ejercicios, preguntas tipo examen, flashcards y resumenes si el usuario lo pide. " +
-              "No inventes datos personales. Usa el contexto academico del usuario solo para adaptar ejemplos. " +
-              "Si el usuario pide respuestas largas, organiza la explicacion con subtitulos breves. " +
-              `Contexto academico disponible en AC Edunity: ${workspaceContext}`,
+              "Responde siempre en español claro, profesional y didáctico. " +
+              "Explica paso a paso cuando sea útil. Crea ejercicios, preguntas tipo examen, flashcards y resúmenes si el usuario lo pide. " +
+              "No inventes datos personales. Usa el contexto académico del usuario solo para adaptar ejemplos. " +
+              "Si el usuario pide respuestas largas, organiza la explicación con subtítulos breves. " +
+              `Contexto académico disponible en AC Edunity: ${workspaceContext}`,
           }],
         },
         contents,
@@ -149,30 +122,24 @@ Deno.serve(async (request) => {
           topP: 0.9,
           maxOutputTokens: 1200,
         },
-        safetySettings: [
-          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-        ],
       }),
     });
 
+    const data = await geminiResponse.json().catch(() => ({}));
+
     if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error("[tutor-ai] Error Gemini:", geminiResponse.status, errorText);
-      return jsonResponse({ ok: false, error: "Gemini no respondio" }, 502);
+      console.error("[tutor-ai] Error Gemini:", geminiResponse.status, JSON.stringify(data));
+      return jsonResponse({ ok: false, error: "Gemini no respondió" }, 502);
     }
 
-    const data = await geminiResponse.json();
     const answer = extractGeminiAnswer(data);
 
     if (!answer) {
-      console.error("[tutor-ai] Respuesta vacia de Gemini", data);
-      return jsonResponse({ ok: false, error: "Respuesta vacia" }, 502);
+      console.error("[tutor-ai] Respuesta vacía de Gemini:", JSON.stringify(data));
+      return jsonResponse({ ok: false, error: "Respuesta vacía" }, 502);
     }
 
-    return jsonResponse({ ok: true, answer });
+    return jsonResponse({ ok: true, answer, model: GEMINI_MODEL });
   } catch (error) {
     console.error("[tutor-ai] Error inesperado:", error);
     return jsonResponse({ ok: false, error: "Error interno del Tutor" }, 500);
